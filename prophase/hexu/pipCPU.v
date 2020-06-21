@@ -20,19 +20,20 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module pipCPU
+module pipCPU//还差相关的处理。。。。。。。。。。。。。。。。。。。。。。。。。。。。。同时读写
     (input clk,
     input rst
     );
-reg [31:0] a,b,wd,d1,pc,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
-reg [15:0] r_imm;
-reg [7:0] ad0,ad1;
+reg [31:0] a,b,wd,d1,pc,r_pc,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
+reg [15:0] r_imm,b2value;
+reg [7:0] ad0,ad1,dpra,bvalue;
 reg [5:0] inscode,inscode1,inscode2,inscode3,inscode4;//指令码
 reg [4:0] ra0,ra1,wa;
 reg [3:0] m;
-reg [1:0] c_pc;
-reg zero,we,we1,jump,va,va1,va2,va3,va4,zf1,cf1,of1,zf2,cf2,of2,c_inscode1,c_inscode2,c_inscode3,c_inscode4,c_ir1,c_ir2,c_ir3,c_ir4;//c_ir太多...................
-wire [31:0] y,rd0,rd1,spo0,spo1,addr32,addr0,addr_0,shamt32;
+reg [2:0] c_pc;
+reg [1:0] jump;
+reg zero,pd,pd1,we,we1,va,va1,va2,va3,va4,zf1,cf1,of1,zf2,cf2,of2,c_inscode1,c_inscode2,c_inscode3,c_inscode4,c_ir1,c_ir2,c_ir3,c_ir4;//c_ir太多...................
+wire [31:0] y,pc_8,rd0,rd1,spo0,spo1,addr32,addr0,addr_0,shamt32;
 wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。。。。。。。。
 wire [7:0] pc1;
 wire [5:0] op,funct,op1,funct1,op2,funct2,op3,funct3,op4,funct4;//可以优化................................
@@ -43,7 +44,7 @@ wire zf,cf,of,q1;
 alu alu1(y,zf,cf,of,a,b,m);
 register_file register_file(clk,ra0,rd0,ra1,rd1,wa,we,wd,rst);
 dist_mem_gen_0 dist_mem_gen_0(ad0,spo0);//指令存储器256深度
-dist_mem_gen_1 dist_mem_gen_1(ad1,d1,clk,we1,spo1);//数据存储器256深度
+dist_mem_gen_1 dist_mem_gen_1(ad1,d1,dpra,clk,we1,spo1);//数据存储器256深度,双端口
 
 assign pc1=pc[9:2];//截断操作
 
@@ -92,6 +93,7 @@ assign addr32={q1,q1,q1,q1,q1,q1,q1,q1,q1,q1,q1,q1,q1,q1,q1,q1,r_imm};//位拓�
 assign addr0={zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,r_imm};
 assign addr_0={r_imm,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero};
 assign shamt32={zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,shamt2};
+assign pc_8=pc-8;
 
 initial zero=0;
 initial va=1;
@@ -119,6 +121,14 @@ begin
     va4<=va3;
     r_a2<=r_a1;
     r_b2<=r_b1;
+    r_pc<=pc-8;
+    r_bpo<={{24{bvalue[7]}},bvalue};
+    r_bpo0<={{24{zero}},bvalue};
+    r_b2po<={{16{b2value[15]}},b2value};
+    r_b2po0<={{16{zero}},b2value};
+    if(r_y[0]==0) pd<=1; else pd<=0;
+    if(r_y%4==0) pd1<=1; else pd1<=0;
+    r_spo<=spo1;
 end
 
 always@(posedge clk,posedge jump)//有效位
@@ -136,6 +146,8 @@ begin
         0:;
         1:pc<=pc+4;
         2:pc<=pc-8+4*r_addr32;//跳转时pc加过了12
+        3:pc<={pc_8[31:28],4*ir3[25:0]};
+        4:pc<=r_a1;
      endcase
      
      case(c_inscode1)//指令码继承
@@ -165,13 +177,15 @@ begin
      
 end
 
-always@(*)//取指
+always@(*)//取指             例外后面补上,特权暂未处理，系统调用接口待定
 begin
     if(rst) ;
     else 
         begin
             ad0=pc1;ir=spo0;
-            if(jump) begin va=0; c_pc=2; end//若jump则无效
+            if(jump==1) begin va=0; c_pc=2; end//若jump则无效
+            else if(jump==2) begin va=0; c_pc=3; end
+            else if(jump==3) begin va=0; c_pc=4; end
             else begin va=1; c_pc=1; end
             if (op==6'b000000) //指令码生成，此处省略不必要的零值，增加新指令或伪指令会冲突
                 begin//inscode==0表示空指令
@@ -283,16 +297,60 @@ begin
     else if(inscode2==28) begin a=r_a; b=r_b; m=9; end
     else if(inscode2==29) begin a=r_a; b=r_b; m=1; end//另一个alu暂未加上，可加。。。。。。。。。。。。
     else if(inscode2==30) begin a=r_a; b=r_b; m=1; end
+    else if((inscode3==47)||(inscode3==48)) begin a=r_a; b=addr32; m=0; end
+    else if((inscode3==49)||(inscode3==50)) begin a=r_a; b=addr32; m=0; end
+    else if((inscode3==51)||(inscode3==52)) begin a=r_a; b=addr32; m=0; end
+    else if((inscode3==53)||(inscode3==54)) begin a=r_a; b=addr32; m=0; end
 end
 
-always@(*)//存储器访问...之后化繁为简，需用到inscode,rs       rt,rd     此处实现跳转
+always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转
 begin
     c_inscode3=1;
     c_ir3=1;//可以优化。。。。。。。。。。。。。。。。。。。。
     if(va3==0) jump=0;  
-    else if(inscode3==29) begin if(zf1==1) jump=1; else jump=0; end
-    else if(inscode3==30) begin if(zf1==0) jump=1; else jump=0; end
-  
+    else if(inscode3==29) begin if(zf1==1) jump=1; else jump=0; we1=0; end
+    else if(inscode3==30) begin if(zf1==0) jump=1; else jump=0; we1=0; end
+    else if(inscode3==31) begin if(r_a1[31]==0) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==32) begin if((r_a1[31]==0)&&(r_a1!=0)) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==33) begin if((r_a1[31]==1)||(r_a1==0)) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==34) begin if(r_a1[31]==1) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==35) begin if(r_a1[31]==1) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==36) begin if(r_a1[31]==0) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==37) begin jump=2; we1=0; end//默认rs为有符号数
+    else if(inscode3==38) begin jump=2; we1=0; end//默认rs为有符号数
+    else if(inscode3==39) begin jump=3; we1=0; end//默认rs为有符号数
+    else if(inscode3==40) begin jump=3; we1=0; end//默认rs为有符号数
+    else if((inscode3==47)||(inscode3==48)) begin jump=0; ad1=r_y/4; we1=0;
+                                case(r_y%4)
+                                    0:bvalue=spo1[31:24];
+                                    1:bvalue=spo1[23:16];
+                                    2:bvalue=spo1[15:8];
+                                    3:bvalue=spo1[7:0];
+                                endcase 
+                          end
+    else if((inscode3==49)||(inscode3==50)) begin jump=0; we1=0; ad1=r_y/4; 
+                                case(r_y%4)
+                                    0:b2value=spo1[31:16];
+                                    2:b2value=spo1[15:0];
+                                endcase
+                          end
+    else if(inscode3==51) begin jump=0; we1=0; ad1=r_y/4; end
+    else if(inscode3==52) begin jump=0; we1=1; ad1=r_y/4; dpra=r_y/4;
+                                case(r_y%4)
+                                    0:d1={r_b1[7:0],spo1[23:0]};
+                                    1:d1={spo1[31:24],r_b1[7:0],spo1[15:0]};
+                                    2:d1={spo1[31:16],r_b1[7:0],spo1[7:0]};
+                                    3:d1={spo1[31:8],r_b1[7:0]};
+                                endcase
+                          end
+    else if(inscode3==53) begin jump=0; ad1=r_y/4; dpra=r_y/4; if(r_y[0]==0) we1=1; else we1=0;
+                                case(r_y%4)
+                                    0:d1={r_b1[15:0],spo1[15:0]};
+                                    2:d1={spo1[31:16],r_b1[15:0]};
+                                endcase
+                          end
+    else if(inscode3==54) begin jump=0; ad1=r_y/4; dpra=r_y/4; if(r_y%4==0) we1=1; else we1=0; d1=r_b1; end
+    else begin jump=0; we1=0; end
 end
 
 always@(*)//寄存器写回...之后化繁为简，需用到inscode,rt,rd
@@ -328,8 +386,20 @@ begin
     else if(inscode4==26) begin we=1; wa=rd04; wd=r_y1; end
     else if(inscode4==27) begin we=1; wa=rd04; wd=r_y1; end
     else if(inscode4==28) begin we=1; wa=rd04; wd=r_y1; end
-  
-    
+    else if(inscode4==35) begin we=1; wa=31; wd=r_pc; end
+    else if(inscode4==36) begin we=1; wa=31; wd=r_pc; end
+    else if(inscode4==38) begin we=1; wa=31; wd=r_pc; end
+    else if(inscode4==40) begin we=1; wa=rd04; wd=r_pc; end
+    else if(inscode4==41) begin we=1; wa=rd04; wd=HI; end
+    else if(inscode4==42) begin we=1; wa=rd04; wd=LO; end
+    else if(inscode4==43) begin we=0; HI=r_a2; end
+    else if(inscode4==44) begin we=0; LO=r_a2; end
+    else if(inscode4==47) begin we=1; wa=rt4; wd=r_bpo; end
+    else if(inscode4==48) begin we=1; wa=rt4; wd=r_bpo0; end
+    else if(inscode4==49) begin if (pd) we=1; else we=0; wa=rt4; wd=r_b2po; end
+    else if(inscode4==50) begin if (pd) we=1; else we=0; wa=rt4; wd=r_b2po; end
+    else if(inscode4==51) begin if (pd) we=1; else we=0; wa=rt4; wd=r_spo; end
+    else we=0;
 end
 
 endmodule
