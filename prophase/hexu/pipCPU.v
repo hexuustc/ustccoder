@@ -24,11 +24,11 @@ module pipCPU//还差相关的处理。。。。。。。。。。。。。。�
     (input clk,
     input rst
     );
-reg [31:0] a,b,wd,d1,pc,r_pc,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
+reg [31:0] a,b,wd,d1,aimdata,aimdata1,aimdata2,pc,r_pc,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
 reg [15:0] r_imm,b2value;
 reg [7:0] ad0,ad1,dpra,bvalue;
 reg [5:0] inscode,inscode1,inscode2,inscode3,inscode4;//指令码
-reg [4:0] ra0,ra1,wa;
+reg [4:0] ra0,ra1,wa,aimaddr,aimaddr1,aimaddr2;
 reg [3:0] m;
 reg [2:0] c_pc;
 reg [1:0] jump;
@@ -113,6 +113,7 @@ begin
     va3<=va2;
     r_a1<=r_a;
     r_b1<=r_b;
+    aimaddr1<=aimaddr;
     
     r_y1<=r_y;//存储器访问
     zf2<=zf1;
@@ -129,6 +130,8 @@ begin
     if(r_y[0]==0) pd<=1; else pd<=0;
     if(r_y%4==0) pd1<=1; else pd1<=0;
     r_spo<=spo1;
+    aimaddr2<=aimaddr1;
+    aimdata2<=aimdata1;
 end
 
 always@(posedge clk,posedge jump)//有效位
@@ -267,59 +270,72 @@ always@(*)//执行...之后化繁为简，需用到inscode,shamt     rt,rd
 begin
     c_inscode2=1;
     c_ir2=1;//可以优化。。。。。。。。。。。。。。。。
-    if(inscode2==1) begin a=r_a; b=r_b; m=0; end
-    else if(inscode2==2) begin a=r_a; b=addr32; m=0; end
-    else if(inscode2==3) begin a=r_a; b=r_b; m=0; end
-    else if(inscode2==4) begin a=r_a; b=addr32; m=0; end
-    else if(inscode2==5) begin a=r_a; b=r_b; m=1; end
-    else if(inscode2==6) begin a=r_a; b=r_b; m=1; end
-    else if(inscode2==7) begin a=r_a; b=r_b; m=1; end
-    else if(inscode2==8) begin a=r_a; b=addr32; m=1; end
-    else if(inscode2==9) begin a=r_a; b=r_b; m=1; end
-    else if(inscode2==10) begin a=r_a; b=addr32; m=1; end
-    else if(inscode2==11) begin a=r_a; b=r_b; m=7; end//除法待优化。。。。。。。。。。。。。。。。
-    else if(inscode2==12) begin a=r_a; b=r_b; m=7; end//未区分，除法待优化。。。。。。。。。。。。。。。。
-    else if(inscode2==13) begin a=r_a; b=r_b; m=5; end//乘法算法待优化
-    else if(inscode2==14) begin a=r_a; b=r_b; m=6; end//乘法算法待优化
-    else if(inscode2==15) begin a=r_a; b=r_b; m=2; end
-    else if(inscode2==16) begin a=r_a; b=addr0; m=2; end
-    else if(inscode2==17) begin a=0; b=addr_0; m=0; end
-    else if(inscode2==18) begin a=r_a; b=r_b; m=3; end
-    else if(inscode2==19) begin a=r_a; b=r_b; m=3; end
-    else if(inscode2==20) begin a=r_a; b=addr0; m=3; end
-    else if(inscode2==21) begin a=r_a; b=r_b; m=4; end
-    else if(inscode2==22) begin a=r_a; b=addr0; m=4; end
-    else if(inscode2==23) begin a=shamt32; b=r_b; m=8; end
-    else if(inscode2==24) begin a=r_a; b=r_b; m=8; end
-    else if(inscode2==25) begin a=shamt32; b=r_b; m=10; end
-    else if(inscode2==26) begin a=r_a; b=r_b; m=10; end
-    else if(inscode2==27) begin a=shamt32; b=r_b; m=9; end
-    else if(inscode2==28) begin a=r_a; b=r_b; m=9; end
-    else if(inscode2==29) begin a=r_a; b=r_b; m=1; end//另一个alu暂未加上，可加。。。。。。。。。。。。
-    else if(inscode2==30) begin a=r_a; b=r_b; m=1; end
-    else if((inscode3==47)||(inscode3==48)) begin a=r_a; b=addr32; m=0; end
-    else if((inscode3==49)||(inscode3==50)) begin a=r_a; b=addr32; m=0; end
-    else if((inscode3==51)||(inscode3==52)) begin a=r_a; b=addr32; m=0; end
-    else if((inscode3==53)||(inscode3==54)) begin a=r_a; b=addr32; m=0; end
+    if(rs2==aimaddr1) r_ar=aimdata1;
+    else if(rs2==aimaddr2) r_ar=aimdata2;
+    else r_ar=r_a;
+    if(rt2==aimaddr1) r_br=aimdata1;
+    else if(rt2==aimaddr2) r_br=aimdata2;
+    else r_br=r_b;
+    if(va2==0) aimaddr=0;
+    else if(inscode2==1) begin a=r_ar; b=r_br; m=0; aimaddr=rd02;  end
+    else if(inscode2==2) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if(inscode2==3) begin a=r_ar; b=r_br; m=0; aimaddr=rd02; end
+    else if(inscode2==4) begin a=r_ar; b=addr32; m=0; aimaddr=rt2;end
+    else if(inscode2==5) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end
+    else if(inscode2==6) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end
+    else if(inscode2==7) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end//不是要存值
+    else if(inscode2==8) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end//不是要存值
+    else if(inscode2==9) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end//不是要存值
+    else if(inscode2==10) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end//不是要存值
+    else if(inscode2==11) begin a=r_ar; b=r_br; m=7; end//除法待优化。。。。。。。。。。。。。。。。
+    else if(inscode2==12) begin a=r_ar; b=r_br; m=7; end//未区分，除法待优化。。。。。。。。。。。。。。。。
+    else if(inscode2==13) begin a=r_ar; b=r_br; m=5; end//乘法算法待优化
+    else if(inscode2==14) begin a=r_ar; b=r_br; m=6; end//乘法算法待优化
+    else if(inscode2==15) begin a=r_ar; b=r_br; m=2; aimaddr=rd02; end
+    else if(inscode2==16) begin a=r_ar; b=addr0; m=2; aimaddr=rt2; end
+    else if(inscode2==17) begin a=0; b=addr_0; m=0; aimaddr=rt2; end
+    else if(inscode2==18) begin a=r_ar; b=r_br; m=3; aimaddr=rd02; end
+    else if(inscode2==19) begin a=r_ar; b=r_br; m=3; aimaddr=rd02; end
+    else if(inscode2==20) begin a=r_ar; b=addr0; m=3; aimaddr=rt2; end
+    else if(inscode2==21) begin a=r_ar; b=r_br; m=4; aimaddr=rd02; end
+    else if(inscode2==22) begin a=r_ar; b=addr0; m=4; aimaddr=rt2; end
+    else if(inscode2==23) begin a=shamt32; b=r_br; m=8; aimaddr=rd02; end
+    else if(inscode2==24) begin a=r_ar; b=r_br; m=8; aimaddr=rd02; end
+    else if(inscode2==25) begin a=shamt32; b=r_br; m=10; aimaddr=rd02; end
+    else if(inscode2==26) begin a=r_ar; b=r_br; m=10; aimaddr=rd02; end
+    else if(inscode2==27) begin a=shamt32; b=r_br; m=9; aimaddr=rd02; end
+    else if(inscode2==28) begin a=r_ar; b=r_br; m=9; aimaddr=rd02; end
+    else if(inscode2==29) begin a=r_ar; b=r_br; m=1; aimaddr=0; end//另一个alu暂未加上，可加。。。。。。。。。。。。
+    else if(inscode2==30) begin a=r_ar; b=r_br; m=1; aimaddr=0; end
+    else if((inscode3==47)||(inscode3==48)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if((inscode3==49)||(inscode3==50)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if((inscode3==51)||(inscode3==52)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if((inscode3==53)||(inscode3==54)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if((inscode3==35)||(inscode3==36)||(inscode3==38)) aimaddr=31;
+    else if((inscode3==40)||(inscode3==41)||(inscode3==42)) aimaddr=rd02;
 end
 
 always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转
 begin
     c_inscode3=1;
-    c_ir3=1;//可以优化。。。。。。。。。。。。。。。。。。。。
+    c_ir3=1;//可以优化。。。。。。。。。。。。。。。。。。。。  
+    if(rs3==aimaddr2) r_a1r=aimdata2;
+    else r_a1r=r_a1;   
+    if(rt3==aimaddr2) r_b1r=aimdata2;
+    else r_b1r=r_b1;
     if(va3==0) jump=0;  
     else if(inscode3==29) begin if(zf1==1) jump=1; else jump=0; we1=0; end
     else if(inscode3==30) begin if(zf1==0) jump=1; else jump=0; we1=0; end
-    else if(inscode3==31) begin if(r_a1[31]==0) jump=1; else jump=0; we1=0; end//默认rs为有符号数
-    else if(inscode3==32) begin if((r_a1[31]==0)&&(r_a1!=0)) jump=1; else jump=0; we1=0; end//默认rs为有符号数
-    else if(inscode3==33) begin if((r_a1[31]==1)||(r_a1==0)) jump=1; else jump=0; we1=0; end//默认rs为有符号数
-    else if(inscode3==34) begin if(r_a1[31]==1) jump=1; else jump=0; we1=0; end//默认rs为有符号数
-    else if(inscode3==35) begin if(r_a1[31]==1) jump=1; else jump=0; we1=0; end//默认rs为有符号数
-    else if(inscode3==36) begin if(r_a1[31]==0) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==31) begin if(r_a1r[31]==0) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==32) begin if((r_a1r[31]==0)&&(r_a1r!=0)) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==33) begin if((r_a1r[31]==1)||(r_a1r==0)) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==34) begin if(r_a1r[31]==1) jump=1; else jump=0; we1=0; end//默认rs为有符号数
+    else if(inscode3==35) begin if(r_a1r[31]==1) jump=1; else jump=0; we1=0; aimdata1=pc-8; end//默认rs为有符号数
+    else if(inscode3==36) begin if(r_a1r[31]==0) jump=1; else jump=0; we1=0; aimdata1=pc-8; end//默认rs为有符号数
     else if(inscode3==37) begin jump=2; we1=0; end//默认rs为有符号数
-    else if(inscode3==38) begin jump=2; we1=0; end//默认rs为有符号数
+    else if(inscode3==38) begin jump=2; we1=0; aimdata1=pc-8; end//默认rs为有符号数
     else if(inscode3==39) begin jump=3; we1=0; end//默认rs为有符号数
-    else if(inscode3==40) begin jump=3; we1=0; end//默认rs为有符号数
+    else if(inscode3==40) begin jump=3; we1=0; aimdata1=pc-8; end//默认rs为有符号数
     else if((inscode3==47)||(inscode3==48)) begin jump=0; ad1=r_y/4; we1=0;
                                 case(r_y%4)
                                     0:bvalue=spo1[31:24];
@@ -327,14 +343,16 @@ begin
                                     2:bvalue=spo1[15:8];
                                     3:bvalue=spo1[7:0];
                                 endcase 
+                                if(inscode3==47) aimdata1={{24{bvalue[7]}},bvalue}; else aimdata1={{24{zero}},bvalue};
                           end
     else if((inscode3==49)||(inscode3==50)) begin jump=0; we1=0; ad1=r_y/4; 
                                 case(r_y%4)
                                     0:b2value=spo1[31:16];
                                     2:b2value=spo1[15:0];
                                 endcase
+                                if(inscode3==49) aimdata1={{16{b2value[15]}},b2value}; else aimdata1={{16{zero}},b2value};                                
                           end
-    else if(inscode3==51) begin jump=0; we1=0; ad1=r_y/4; end
+    else if(inscode3==51) begin jump=0; we1=0; ad1=r_y/4;aimdata1=spo1; end
     else if(inscode3==52) begin jump=0; we1=1; ad1=r_y/4; dpra=r_y/4;
                                 case(r_y%4)
                                     0:d1={r_b1[7:0],spo1[23:0]};
@@ -350,7 +368,13 @@ begin
                                 endcase
                           end
     else if(inscode3==54) begin jump=0; ad1=r_y/4; dpra=r_y/4; if(r_y%4==0) we1=1; else we1=0; d1=r_b1; end
-    else begin jump=0; we1=0; end
+    else if(inscode3==7) begin if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;  end
+    else if(inscode3==8) begin if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;end
+    else if(inscode3==9) begin if(cf1&~zf1) aimdata1=1;else aimdata1=0; end
+    else if(inscode3==10) begin if(cf1&~zf1) aimdata1=1;else aimdata1=0;end
+    else if(inscode3==41) aimdata1=HI;
+    else if(inscode3==42) aimdata1=LO;
+    else begin jump=0; we1=0; aimdata1=r_y; end
 end
 
 always@(*)//寄存器写回...之后化繁为简，需用到inscode,rt,rd
@@ -386,19 +410,19 @@ begin
     else if(inscode4==26) begin we=1; wa=rd04; wd=r_y1; end
     else if(inscode4==27) begin we=1; wa=rd04; wd=r_y1; end
     else if(inscode4==28) begin we=1; wa=rd04; wd=r_y1; end
-    else if(inscode4==35) begin we=1; wa=31; wd=r_pc; end
-    else if(inscode4==36) begin we=1; wa=31; wd=r_pc; end
-    else if(inscode4==38) begin we=1; wa=31; wd=r_pc; end
-    else if(inscode4==40) begin we=1; wa=rd04; wd=r_pc; end
-    else if(inscode4==41) begin we=1; wa=rd04; wd=HI; end
-    else if(inscode4==42) begin we=1; wa=rd04; wd=LO; end
+    else if(inscode4==35) begin we=1; wa=31; wd=r_pc; end//此存
+    else if(inscode4==36) begin we=1; wa=31; wd=r_pc; end//此存
+    else if(inscode4==38) begin we=1; wa=31; wd=r_pc; end//此存
+    else if(inscode4==40) begin we=1; wa=rd04; wd=r_pc; end//此存
+    else if(inscode4==41) begin we=1; wa=rd04; wd=HI; end//此存
+    else if(inscode4==42) begin we=1; wa=rd04; wd=LO; end//此存
     else if(inscode4==43) begin we=0; HI=r_a2; end
     else if(inscode4==44) begin we=0; LO=r_a2; end
-    else if(inscode4==47) begin we=1; wa=rt4; wd=r_bpo; end
-    else if(inscode4==48) begin we=1; wa=rt4; wd=r_bpo0; end
-    else if(inscode4==49) begin if (pd) we=1; else we=0; wa=rt4; wd=r_b2po; end
-    else if(inscode4==50) begin if (pd) we=1; else we=0; wa=rt4; wd=r_b2po; end
-    else if(inscode4==51) begin if (pd) we=1; else we=0; wa=rt4; wd=r_spo; end
+    else if(inscode4==47) begin we=1; wa=rt4; wd=r_bpo; end//此存
+    else if(inscode4==48) begin we=1; wa=rt4; wd=r_bpo0; end//此存
+    else if(inscode4==49) begin if (pd) we=1; else we=0; wa=rt4; wd=r_b2po; end//此存
+    else if(inscode4==50) begin if (pd) we=1; else we=0; wa=rt4; wd=r_b2po0; end//此存
+    else if(inscode4==51) begin if (pd1) we=1; else we=0; wa=rt4; wd=r_spo; end//此存
     else we=0;
 end
 
