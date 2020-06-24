@@ -38,13 +38,14 @@ reg [4:0] MEM_WB_WA;
 reg MEM_WB_memtoreg, MEM_WB_regwrite;
 
 wire [WIDTH-1:0]instruction, pc_plus_4, data_to_write, extend_imm, data_a, data_b, imm_left_2;
-wire [WIDTH-1:0]write_address, alu_input_1, branch_addr, alu_result, read_data, next_pc, jump_address, temp_addr_0;
+wire [WIDTH-1:0]alu_input_1, branch_addr, alu_result, read_data, next_pc, jump_address, temp_addr_0;
 wire [WIDTH-1:0]forwarded_A, forwarded_B;
 wire regdst,branch, memtoreg, regwrite, memwrite, alusrc, zero, jump, memread, branch_success;
 wire [2:0]aluop;
 wire [2:0]alu_manage;
 wire [1:0]forward_A, forward_B;
 wire PC_retain, IF_ID_retain, ID_EX_flush, IF_ID_flush, ID_EX_blocked;
+wire [4:0]write_address;
 
 assign jump_address[31:28] = IF_ID_NPC[31:28];
 assign branch_success = zero & ID_EX_branch;
