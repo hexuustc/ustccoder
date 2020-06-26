@@ -356,19 +356,19 @@ begin
     else if(inscode3==51) begin jump=0; we1=0; ad1=r_y/4;aimdata1=spo1; end
     else if(inscode3==52) begin jump=0; we1=1; ad1=r_y/4; dpra=r_y/4;
                                 case(r_y%4)
-                                    0:d1={r_b1[7:0],spo1[23:0]};
-                                    1:d1={spo1[31:24],r_b1[7:0],spo1[15:0]};
-                                    2:d1={spo1[31:16],r_b1[7:0],spo1[7:0]};
-                                    3:d1={spo1[31:8],r_b1[7:0]};
+                                    0:d1={r_b1r[7:0],spo1[23:0]};
+                                    1:d1={spo1[31:24],r_b1r[7:0],spo1[15:0]};
+                                    2:d1={spo1[31:16],r_b1r[7:0],spo1[7:0]};
+                                    3:d1={spo1[31:8],r_b1r[7:0]};
                                 endcase
                           end
     else if(inscode3==53) begin jump=0; ad1=r_y/4; dpra=r_y/4; if(r_y[0]==0) we1=1; else we1=0;
                                 case(r_y%4)
-                                    0:d1={r_b1[15:0],spo1[15:0]};
-                                    2:d1={spo1[31:16],r_b1[15:0]};
+                                    0:d1={r_b1r[15:0],spo1[15:0]};
+                                    2:d1={spo1[31:16],r_b1r[15:0]};
                                 endcase
                           end
-    else if(inscode3==54) begin jump=0; ad1=r_y/4; dpra=r_y/4; if(r_y%4==0) we1=1; else we1=0; d1=r_b1; end
+    else if(inscode3==54) begin jump=0; ad1=r_y/4; dpra=r_y/4; if(r_y%4==0) we1=1; else we1=0; d1=r_b1r; end
     else if(inscode3==7) begin if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;  end
     else if(inscode3==8) begin if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;end
     else if(inscode3==9) begin if(cf1&~zf1) aimdata1=1;else aimdata1=0; end
@@ -399,10 +399,10 @@ begin
     else if(inscode4==8) begin we=1;if((~of2&r_y1[31]&~zf2)|(of2&~r_y1[31]&~zf2))wd=1;else wd=0; wa=rt4; end
     else if(inscode4==9) begin we=1;if(cf2&~zf2) wd=1;else wd=0; wa=rd04; end
     else if(inscode4==10) begin we=1;if(cf2&~zf2) wd=1;else wd=0; wa=rt4; end
-    else if(inscode4==11) begin we=0; LO=r_y1; HI=r_a2%r_b; end//这个寄存器可以在前面写回，省去传递
-    else if(inscode4==12) begin we=0; LO=r_y1; HI=r_a2%r_b2; end//这个寄存器可以在前面写回，省去传递
-    else if(inscode4==13) begin we=0; HI=r_y1; LO=r_a2*r_b2; end//这个寄存器可以在前面写回，省去传递
-    else if(inscode4==14) begin we=0; HI=r_y1; LO=r_a2*r_b2; end//这个寄存器可以在前面写回，省去传递
+    else if(inscode4==11) begin we=0; LO=r_y1; HI=r_a2r%r_b2r; end//这个寄存器可以在前面写回，省去传递
+    else if(inscode4==12) begin we=0; LO=r_y1; HI=r_a2r%r_b2r; end//这个寄存器可以在前面写回，省去传递
+    else if(inscode4==13) begin we=0; HI=r_y1; LO=r_a2r*r_b2r; end//这个寄存器可以在前面写回，省去传递
+    else if(inscode4==14) begin we=0; HI=r_y1; LO=r_a2r*r_b2r; end//这个寄存器可以在前面写回，省去传递
     else if(inscode4==15) begin we=1; wa=rd04; wd=r_y1; end
     else if(inscode4==16) begin we=1; wa=rt4; wd=r_y1; end
     else if(inscode4==17) begin we=1; wa=rt4; wd=r_y1; end
@@ -423,8 +423,8 @@ begin
     else if(inscode4==40) begin we=1; wa=rd04; wd=r_pc; end//此存
     else if(inscode4==41) begin we=1; wa=rd04; wd=HI; end//此存
     else if(inscode4==42) begin we=1; wa=rd04; wd=LO; end//此存
-    else if(inscode4==43) begin we=0; HI=r_a2; end
-    else if(inscode4==44) begin we=0; LO=r_a2; end
+    else if(inscode4==43) begin we=0; HI=r_a2r; end
+    else if(inscode4==44) begin we=0; LO=r_a2r; end
     else if(inscode4==47) begin we=1; wa=rt4; wd=r_bpo; end//此存
     else if(inscode4==48) begin we=1; wa=rt4; wd=r_bpo0; end//此存
     else if(inscode4==49) begin if (pd) we=1; else we=0; wa=rt4; wd=r_b2po; end//此存
