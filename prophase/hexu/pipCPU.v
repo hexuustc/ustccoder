@@ -24,11 +24,11 @@ module pipCPU//还差相关的处理。。。。。。。。。。。。。。�
     (input clk,
     input rst
     );
-reg [31:0] a,b,wd,d1,aimdata,aimdata1,aimdata2,pc,r_pc,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
+reg [31:0] a,b,wd,d1,aimdata,aimdata1,aimdata2,aimdata3,pc,r_pc,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
 reg [15:0] r_imm,b2value;
 reg [7:0] ad0,ad1,dpra,bvalue;
 reg [5:0] inscode,inscode1,inscode2,inscode3,inscode4;//指令码
-reg [4:0] ra0,ra1,wa,aimaddr,aimaddr1,aimaddr2;
+reg [4:0] ra0,ra1,wa,aimaddr,aimaddr1,aimaddr2,aimaddr3;
 reg [3:0] m;
 reg [2:0] c_pc;
 reg [1:0] jump;
@@ -44,7 +44,7 @@ wire zf,cf,of,q1;
 alu alu1(y,zf,cf,of,a,b,m);
 register_file register_file(clk,ra0,rd0,ra1,rd1,wa,we,wd,rst);
 dist_mem_gen_0 dist_mem_gen_0(ad0,spo0);//指令存储器256深度
-dist_mem_gen_1 dist_mem_gen_1(ad1,d1,dpra,clk,we1,spo1);//数据存储器256深度,双端口
+dist_mem_gen_1 dist_mem_gen_1(dpra,d1,ad1,clk,we1,spo1);//数据存储器256深度,双端口
 
 assign pc1=pc[9:2];//截断操作
 
@@ -97,13 +97,18 @@ assign pc_8=pc-8;
 
 initial zero=0;
 initial va=1;
+initial pc=0;
 
 always@(posedge clk)//寄存器直接传递
 begin
+    inscode1<=inscode;//取指
+    ir1<=ir;
 
     r_a<=rd0;//译码
     r_b<=rd1;
     r_imm<=addr1;
+    inscode2<=inscode1;
+    ir2<=ir1;
     
     r_y<=y;//执行
     zf1<=zf;
@@ -114,6 +119,7 @@ begin
     r_a1<=r_a;
     r_b1<=r_b;
     aimaddr1<=aimaddr;
+    ir3<=ir2;
     
     r_y1<=r_y;//存储器访问
     zf2<=zf1;
@@ -132,6 +138,10 @@ begin
     r_spo<=spo1;
     aimaddr2<=aimaddr1;
     aimdata2<=aimdata1;
+    ir4<=ir3;
+    
+    aimaddr3<=aimaddr2;
+    aimdata3<=aimdata2;
 end
 
 always@(posedge clk,posedge jump)//有效位
@@ -140,7 +150,7 @@ begin
     else va1<=va;
     
     if (jump) va2<=0;
-    else va2<=va;
+    else va2<=va1;
 end
 
 always@(posedge clk)//多项选择器
@@ -153,16 +163,6 @@ begin
         4:pc<=r_a1;
      endcase
      
-     case(c_inscode1)//指令码继承
-        0:;
-        1:inscode1<=inscode;
-     endcase 
-     
-     case(c_inscode2)//指令码继承
-        0:;
-        1:inscode2<=inscode1;
-     endcase 
-     
      case(c_inscode3)//指令码继承
         0:;
         1:inscode3<=inscode2;
@@ -171,11 +171,6 @@ begin
      case(c_inscode4)//指令码继承
         0:;
         1:inscode4<=inscode3;
-     endcase
-     
-     case(c_ir1)//指令继承
-        0:;
-        1:ir1<=ir;
      endcase
      
 end
@@ -261,20 +256,22 @@ end
 
 always@(*)//译码...之后化繁为简，需用到inscode,rs,rt,addr   rd,shamt
 begin
-    c_inscode1=1;//指令码继承
-    c_ir1=1;//指令继承
-    ra0=rs1;ra1=rt1;
+    ra0<=rs1;ra1<=rt1;
 end
 
 always@(*)//执行...之后化繁为简，需用到inscode,shamt     rt,rd
 begin
-    c_inscode2=1;
+    
     c_ir2=1;//可以优化。。。。。。。。。。。。。。。。
-    if(rs2==aimaddr1) r_ar=aimdata1;
+    if(rs2==0) r_ar=0;
+    else if(rs2==aimaddr1) r_ar=aimdata1;
     else if(rs2==aimaddr2) r_ar=aimdata2;
+    else if(rs2==aimaddr3) r_ar=aimdata3;
     else r_ar=r_a;
-    if(rt2==aimaddr1) r_br=aimdata1;
+    if(rt2==0) r_br=0;
+    else if(rt2==aimaddr1) r_br=aimdata1;
     else if(rt2==aimaddr2) r_br=aimdata2;
+    else if(rt2==aimaddr3) r_br=aimdata3;
     else r_br=r_b;
     if(va2==0) aimaddr=0;
     else if(inscode2==1) begin a=r_ar; b=r_br; m=0; aimaddr=rd02;  end
@@ -307,21 +304,25 @@ begin
     else if(inscode2==28) begin a=r_ar; b=r_br; m=9; aimaddr=rd02; end
     else if(inscode2==29) begin a=r_ar; b=r_br; m=1; aimaddr=0; end//另一个alu暂未加上，可加。。。。。。。。。。。。
     else if(inscode2==30) begin a=r_ar; b=r_br; m=1; aimaddr=0; end
-    else if((inscode3==47)||(inscode3==48)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
-    else if((inscode3==49)||(inscode3==50)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
-    else if((inscode3==51)||(inscode3==52)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
-    else if((inscode3==53)||(inscode3==54)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
-    else if((inscode3==35)||(inscode3==36)||(inscode3==38)) aimaddr=31;
-    else if((inscode3==40)||(inscode3==41)||(inscode3==42)) aimaddr=rd02;
+    else if((inscode2==47)||(inscode2==48)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if((inscode2==49)||(inscode2==50)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if((inscode2==51)||(inscode2==52)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if((inscode2==53)||(inscode2==54)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if((inscode2==35)||(inscode2==36)||(inscode2==38)) aimaddr=31;
+    else if((inscode2==40)||(inscode2==41)||(inscode2==42)) aimaddr=rd02;
 end
 
 always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转
 begin
     c_inscode3=1;
     c_ir3=1;//可以优化。。。。。。。。。。。。。。。。。。。。  
-    if(rs3==aimaddr2) r_a1r=aimdata2;
+    if (rs3==0) r_a1r=0;
+    else if(rs3==aimaddr2) r_a1r=aimdata2;
+    else if(rs3==aimaddr3) r_a1r=aimdata3;
     else r_a1r=r_a1;   
-    if(rt3==aimaddr2) r_b1r=aimdata2;
+    if (rt3==0) r_b1r=0;
+    else if(rt3==aimaddr2) r_b1r=aimdata2;
+    else if(rt3==aimaddr3) r_b1r=aimdata3;
     else r_b1r=r_b1;
     if(va3==0) jump=0;  
     else if(inscode3==29) begin if(zf1==1) jump=1; else jump=0; we1=0; end
@@ -379,6 +380,12 @@ end
 
 always@(*)//寄存器写回...之后化繁为简，需用到inscode,rt,rd
 begin
+    if(rs4==0) r_a2r=0;
+    else if(rs4==aimaddr3) r_a2r=aimdata3;
+    else r_a2r=r_a2; 
+    if(rt4==0) r_b2r=0;  
+    else if(rt4==aimaddr3) r_b2r=aimdata3;
+    else r_b2r=r_b2;
     c_inscode4=1;
     c_ir4=1;//可以优化。。。。。。。。。。。。。。。。
     if(va4==0) begin we=0; end
