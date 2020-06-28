@@ -199,4 +199,28 @@ assign wlast   = !w_state[3] & !w_state[1];
 //write response channel
 assign bready  = w_state[1] & w_state[0];
 
+cpu mycpu(
+    .int    (ext_int ),
+    
+    .clk    (aclk    ),
+    .resetn (aresetn ),
+    
+    .inst_sram_en    (inst_sram_en   ),
+    .inst_sram_wen   (inst_sram_wen  ),
+    .inst_sram_addr  (inst_sram_addr ),
+    .inst_sram_wdata (inst_sram_wdata),
+    .inst_sram_rdata (inst_sram_rdata),
+    
+    .data_sram_en    (data_sram_en   ),
+    .data_sram_wen   (data_sram_wen  ),
+    .data_sram_addr  (data_sram_addr ),
+    .data_sram_wdata (data_sram_wdata),
+    .data_sram_rdata (data_sram_rdata),
+    
+    .debug_wb_pc       (debug_wb_pc        ),
+    .debug_wb_rf_wen   (debug_wb_pcrf_wen  ),
+    .debug_wb_rf_wnum  (debug_wb_pcrf_wnum ),
+    .debug_wb_rf_wdata (debug_wb_pcrf_wdata)
+);
+
 endmodule
