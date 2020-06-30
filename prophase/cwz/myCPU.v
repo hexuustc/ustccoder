@@ -78,15 +78,24 @@ module mycpu_top
 wire        inst_sram_en   ;
 wire [4 :0] inst_sram_wen  ;
 wire [31:0] inst_sram_addr ;
+wire [1 :0] inst_sram_size ;
 wire [31:0] inst_sram_wdata;
 wire [31:0] inst_sram_rdata;
+wire        inst_sram_data_ok;
+wire        inst_sram_addr_ok;
 
 //for data
 wire        data_sram_en   ;
 wire [4 :0] data_sram_wen  ;
 wire [31:0] data_sram_addr ;
+wire [1 :0] data_sram_size ;
 wire [31:0] data_sram_wdata;
 wire [31:0] data_sram_rdata;
+wire        data_sram_data_ok;
+wire        data_sram_addr_ok;
+
+wire [1 :0] do_size_r;
+wire [31:0] do_addr_r;
 
 reg [2 :0] r_state, r_next_state;
 localparam R_NO_TASK             = 3'b101;
@@ -120,7 +129,7 @@ end
 
 //read address channel
 assign arid    = {3'b000, r_state[1]};    //1 means read data, 0 means read instruction
-assign araddr  = arid ? {2'b00, data_sram_addr[31:2]}: {2'b00, inst_sram_addr[31:2]}; //address from byte to word
+assign araddr  = arid[0] ? {2'b00, data_sram_addr[31:2]}: {2'b00, inst_sram_addr[31:2]}; //address from byte to word
 assign arsize  = 3'b010;        //4 bytes in transfer
 assign arvalid = !r_state[2] & !r_state[0];    //r_state[0] = 0 means read addr handshake, 1 means read data handshake
                                                //r_state[2] = 1 means have no task, 0 means have task
@@ -131,8 +140,8 @@ assign arlen   = 4'b0000;
 assign arburst = 2'b01;
 
 //read data channel
-assign inst_sram_rdata = rid ? 0 : rdata; //read instruction
-assign data_sram_rdata = rid ? rdata : 0; //read data
+assign inst_sram_rdata = rid[0] ? 0 : rdata; //read instruction
+assign data_sram_rdata = rid[0] ? rdata : 0; //read data
 assign rready = !r_state[2] & r_state[0];
 
 reg [3 :0] w_state, w_next_state;
@@ -179,9 +188,9 @@ begin
 end
 
 //write address channel
-assign awid    = {3'b000, w_state[2]};
-assign awaddr  = awid ? {2'b00, data_sram_addr[31:2]} : {2'b00, inst_sram_addr[31:2]};
-assign awvalid = !w_state[3] & !w_state[0];
+assign awid    = {3'b000, w_state[2]}; //1 means write data, 0 means write instruction
+assign awaddr  = awid[0] ? {2'b00, data_sram_addr[31:2]} : {2'b00, inst_sram_addr[31:2]};
+assign awvalid = !w_state[3] & !w_state[0]; // address handshake has not finished
 assign awlen   = 4'b0000;
 assign awburst = 2'b01;
 assign awcache = 4'b0000;
@@ -191,13 +200,21 @@ assign awsize  = 3'b010;
 
 //write data channel
 assign wid     = {3'b000, w_state[2]};
-assign wdata   = wid ? data_sram_wdata : inst_sram_wdata;
-assign wvalid  = !w_state[3] & !w_state[1];
-assign wstrb   = 4'hf;
-assign wlast   = !w_state[3] & !w_state[1];
+assign wdata   = wid[0] ? data_sram_wdata : inst_sram_wdata;
+assign wvalid  = !w_state[3] & !w_state[1]; //data handshake has not finnished
+assign wstrb   = do_size_r==2'd0 ? 4'b0001<<do_addr_r[1:0] :
+                do_size_r==2'd1 ? 4'b0011<<do_addr_r[1:0] : 4'b1111;
+assign wlast   = !w_state[3] & !w_state[1]; // Temporarily, all write burst's length is 1.
 
 //write response channel
 assign bready  = w_state[1] & w_state[0];
+
+assign do_size_r = wid[0] ? data_sram_size :inst_sram_size;
+assign do_addr_r = wid[0] ? data_sram_addr :inst_sram_addr;
+assign inst_sram_data_ok = (r_state == R_INST_DATA_HANDSHAKE & rvalid) | (w_state == W_INST_RESP & bvalid);
+assign inst_sram_addr_ok = (r_state == R_INST_ADDR_HANDSHAKE & arready) | (w_next_state == W_INST_RESP);
+assign data_sram_data_ok = (r_state == R_DATA_DATA_HANDSHAKE & rvalid) | (w_state == W_DATA_RESP & bvalid);
+assign data_sram_addr_ok = (r_state == R_DATA_ADDR_HANDSHAKE & arready) | (w_next_state == W_DATA_RESP);
 
 cpu mycpu(
     .int    (ext_int ),
@@ -205,17 +222,23 @@ cpu mycpu(
     .clk    (aclk    ),
     .resetn (aresetn ),
     
-    .inst_sram_en    (inst_sram_en   ),
-    .inst_sram_wen   (inst_sram_wen  ),
-    .inst_sram_addr  (inst_sram_addr ),
-    .inst_sram_wdata (inst_sram_wdata),
-    .inst_sram_rdata (inst_sram_rdata),
+    .inst_sram_en      (inst_sram_en     ),
+    .inst_sram_wen     (inst_sram_wen    ),
+    .inst_sram_addr    (inst_sram_addr   ),
+    .inst_sram_size    (inst_sram_size   ),
+    .inst_sram_wdata   (inst_sram_wdata  ),
+    .inst_sram_rdata   (inst_sram_rdata  ),
+    .inst_sram_data_ok (inst_sram_data_ok),
+    .inst_sram_addr_ok (inst_sram_addr_ok),
     
-    .data_sram_en    (data_sram_en   ),
-    .data_sram_wen   (data_sram_wen  ),
-    .data_sram_addr  (data_sram_addr ),
-    .data_sram_wdata (data_sram_wdata),
-    .data_sram_rdata (data_sram_rdata),
+    .data_sram_en      (data_sram_en     ),
+    .data_sram_wen     (data_sram_wen    ),
+    .data_sram_addr    (data_sram_addr   ),
+    .data_sram_size    (data_sram_size   ),
+    .data_sram_wdata   (data_sram_wdata  ),
+    .data_sram_rdata   (data_sram_rdata  ),
+    .data_sram_data_ok (data_sram_data_ok),
+    .data_sram_addr_ok (data_sram_addr_ok),
     
     .debug_wb_pc       (debug_wb_pc        ),
     .debug_wb_rf_wen   (debug_wb_pcrf_wen  ),
