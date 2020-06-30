@@ -24,27 +24,28 @@ module pipCPU//还差相关的处理。。。。。。。。。。。。。。�
     (input clk,
     input rst
     );
-reg [31:0] a,b,wd,d1,aimdata,aimdata1,aimdata2,aimdata3,pc,r_pc,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
+reg [31:0] a,b,wd,d1,cp0_data,aimdata,aimdata1,aimdata2,aimdata3,pc,r_pc,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
 reg [15:0] r_imm,b2value;
 reg [7:0] ad0,ad1,dpra,bvalue;
 reg [5:0] inscode,inscode1,inscode2,inscode3,inscode4;//指令码
-reg [4:0] ra0,ra1,wa,aimaddr,aimaddr1,aimaddr2,aimaddr3;
+reg [4:0] ra0,ra1,wa,aimaddr,aimaddr1,aimaddr2,aimaddr3,cp0_num;
 reg [3:0] m;
-reg [2:0] c_pc;
+reg [2:0] c_pc,sel;
 reg [1:0] jump;
-reg zero,pd,pd1,we,we1,va,va1,va2,va3,va4,zf1,cf1,of1,zf2,cf2,of2,c_inscode1,c_inscode2,c_inscode3,c_inscode4,c_ir1,c_ir2,c_ir3,c_ir4;//c_ir太多...................
-wire [31:0] y,pc_8,rd0,rd1,spo0,spo1,addr32,addr0,addr_0,shamt32;
+reg zero,pd,reins,reins1,reins2,pd1,we,we1,va,va1,va2,va3,va4,zf1,cf1,of1,zf2,cf2,of2,c_inscode1,c_inscode2,c_inscode3,c_inscode4,c_ir1,c_ir2,c_ir3,c_ir4;//c_ir太多...................
+wire [31:0] y,pc_8,rd0,rd1,spo0,spo1,addr32,addr0,addr_0,shamt32,BadVAddr,Count,Status,Cause,EPC;
 wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。。。。。。。。
 wire [7:0] pc1;
 wire [5:0] op,funct,op1,funct1,op2,funct2,op3,funct3,op4,funct4;//可以优化................................
 wire [4:0] rs,rt,rd,shamt,rs1,rt1,rd01,shamt1,rs2,rt2,rd02,shamt2,rs3,rt3,rd03,shamt3,rs4,rt4,rd04,shamt4;//可以优化。。。。。。。。。。。。。。。。。
-wire zf,cf,of,q1;
+wire zf,cf,of,q1,exc,back;
 
 
 alu alu1(y,zf,cf,of,a,b,m);
 register_file register_file(clk,ra0,rd0,ra1,rd1,wa,we,wd,rst);
 dist_mem_gen_0 dist_mem_gen_0(ad0,spo0);//指令存储器256深度
 dist_mem_gen_1 dist_mem_gen_1(dpra,d1,ad1,clk,we1,spo1);//数据存储器256深度,双端口
+CP0 CP0(pc,y,cp0_data,inscode2,inscode3,cp0_num,sel,clk,rst,of,va2,va3,reins2,exc,back,BadVAddr,Count,Status,Cause,EPC);
 
 assign pc1=pc[9:2];//截断操作
 
@@ -103,19 +104,20 @@ always@(posedge clk)//寄存器直接传递
 begin
     inscode1<=inscode;//取指
     ir1<=ir;
+    reins1<=reins;
 
     r_a<=rd0;//译码
     r_b<=rd1;
     r_imm<=addr1;
     inscode2<=inscode1;
     ir2<=ir1;
+    reins2<=reins1;
     
     r_y<=y;//执行
     zf1<=zf;
     of1<=of;
     cf1<=cf;
-    r_addr32<=addr32;
-    va3<=va2;
+    r_addr32<=addr32;    
     r_a1<=r_a;
     r_b1<=r_b;
     aimaddr1<=aimaddr;
@@ -144,23 +146,28 @@ begin
     aimdata3<=aimdata2;
 end
 
-always@(posedge clk,posedge jump)//有效位
+always@(posedge clk,posedge jump,posedge back,posedge exc)//有效位
 begin
-    if (jump) va1<=0;
+    if (jump||back||exc) va1<=0;
     else va1<=va;
     
-    if (jump) va2<=0;
+    if (jump||back||exc) va2<=0;
     else va2<=va1;
+    
+    if(back||exc) va3<=0;
+    else va3<=va2;    
 end
 
 always@(posedge clk)//多项选择器
 begin
-     case(c_pc)//pc取指，跳转增加新数，待完成。。。。。。。。。。。。。。。。
+     case(c_pc)//pc取指
         0:;
         1:pc<=pc+4;
         2:pc<=pc-8+4*r_addr32;//跳转时pc加过了12
         3:pc<={pc_8[31:28],4*ir3[25:0]};
         4:pc<=r_a1;
+        5:pc<=32'hbfc00380;
+        6:pc<=EPC;
      endcase
      
      case(c_inscode3)//指令码继承
@@ -180,8 +187,11 @@ begin
     if(rst) ;
     else 
         begin
+            reins=0;//保留指令
             ad0=pc1;ir=spo0;
-            if(jump==1) begin va=0; c_pc=2; end//若jump则无效
+            if(back) begin va=0; c_pc=6; end
+            else if(exc) begin va=0; c_pc=5; end
+            else if(jump==1) begin va=0; c_pc=2; end//若jump则无效
             else if(jump==2) begin va=0; c_pc=3; end
             else if(jump==3) begin va=0; c_pc=4; end
             else begin va=1; c_pc=1; end
@@ -251,6 +261,7 @@ begin
                     else if(rs==5'b00000) inscode=56;
                     else if(rs==5'b00100) inscode=57;
                 end
+            else reins=1;
         end
 end
 
@@ -310,6 +321,8 @@ begin
     else if((inscode2==53)||(inscode2==54)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
     else if((inscode2==35)||(inscode2==36)||(inscode2==38)) aimaddr=31;
     else if((inscode2==40)||(inscode2==41)||(inscode2==42)) aimaddr=rd02;
+    else if(inscode2==56) aimaddr=rt2;
+    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; end
 end
 
 always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转
@@ -369,13 +382,36 @@ begin
                                 endcase
                           end
     else if(inscode3==54) begin jump=0; ad1=r_y/4; dpra=r_y/4; if(r_y%4==0) we1=1; else we1=0; d1=r_b1r; end
-    else if(inscode3==7) begin if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;  end
-    else if(inscode3==8) begin if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;end
-    else if(inscode3==9) begin if(cf1&~zf1) aimdata1=1;else aimdata1=0; end
-    else if(inscode3==10) begin if(cf1&~zf1) aimdata1=1;else aimdata1=0;end
-    else if(inscode3==41) aimdata1=HI;
-    else if(inscode3==42) aimdata1=LO;
+    else if(inscode3==7) begin jump=0; we1=0; if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;  end
+    else if(inscode3==8) begin jump=0; we1=0; if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;end
+    else if(inscode3==9) begin jump=0; we1=0; if(cf1&~zf1) aimdata1=1;else aimdata1=0; end
+    else if(inscode3==10) begin jump=0; we1=0; if(cf1&~zf1) aimdata1=1;else aimdata1=0;end
+    else if(inscode3==41) begin jump=0; we1=0; aimdata1=HI; end
+    else if(inscode3==42) begin jump=0; we1=0; aimdata1=LO; end
+    else if(inscode3==56) begin jump=0; we1=0; 
+                            if(funct3[2:0]==0)
+                            begin
+                                case(rd03)
+                                    8:aimdata1=BadVAddr;
+                                    9:aimdata1=Count;
+                                    12:aimdata1=Status;
+                                    13:aimdata1=Cause;
+                                    14:aimdata1=EPC;
+                                default: aimdata1=0;//默认其他为0；暂未考虑地址错误例外...........
+                                endcase
+                            end
+                            else aimdata1=0;
+                          end
+    else if(inscode3==57) 
+        begin
+            jump=0; 
+            we1=0;
+            sel=funct3[2:0];
+            cp0_num=rd03;
+            cp0_data=r_y;
+        end
     else begin jump=0; we1=0; aimdata1=r_y; end
+
 end
 
 always@(*)//寄存器写回...之后化繁为简，需用到inscode,rt,rd
@@ -430,6 +466,7 @@ begin
     else if(inscode4==49) begin if (pd) we=1; else we=0; wa=rt4; wd=r_b2po; end//此存
     else if(inscode4==50) begin if (pd) we=1; else we=0; wa=rt4; wd=r_b2po0; end//此存
     else if(inscode4==51) begin if (pd1) we=1; else we=0; wa=rt4; wd=r_spo; end//此存
+    else if(inscode4==56) begin we=1; wa=rt4; wd=aimdata2;end
     else we=0;
 end
 
