@@ -4,6 +4,7 @@ My design sources of 5 stage pipeline cpu with forwarding unit and hazard detect
 Note: The pipeline cpu has passed test 1 and test 2 in cod experiment 5.
 
 ### axi interface for CPU
-myCPU.v is the axi interface for a CPU with a normal sram interface. It has never been tested or simulated yet.
+myCPU.v is my axi interface for a CPU with a sram-like interface. It has never been tested or simulated yet. Moreover, after I try to write this interface, I know how good cpu_axi_interface.v is. My code is worse than that code, need much resources and maybe have bugs...
+If we need to write a cache before long, maybe I can rewrite my code.
 
 cpu_axi_interface.v is the interface provided by the Loongson. We can use it first.
