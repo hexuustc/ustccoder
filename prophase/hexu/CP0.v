@@ -20,9 +20,9 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module CP0//给定指令默认为分支延迟槽的形式，即分支后一条指令必执行，与CPU有出入
+module CP0//给定指令默认为分支延迟槽的形式，即分支后一条指令必执行，与CPU有出入;计时器中断由于暂无输入比较，暂不考虑
     (input [31:0] pc,y,cp0_data,
-    input [5:0] inscode2,inscode3,
+    input [5:0] inscode2,inscode3,ext_int,
     input [4:0] cp0_num,
     input [2:0] sel,
     input clk,rst,of,va2,va3,reins,
@@ -53,14 +53,16 @@ begin
     Cause[1:0]<=0;
     pc1<=pc;
     pc2<=pc1;
+    Status[15:10]<=ext_int;
+    Cause[15:10]<=ext_int;
     if(rst) begin
-                Status[15:8]<=0;
                 Status[1]<=0;
                 Status[0]<=1;
+                Status[9:8]<=0;
                 BadVAddr<=0;
                 Cause[31]<=0;
                 Cause[30]<=0;
-                Cause[15:8]<=0;
+                Cause[9:8]<=0;
                 Cause[6:2]<=0;
                 EPC<=0;
                 exc<=0;
@@ -71,14 +73,24 @@ begin
             Status[0]<=1;
             exc<=0;
         end
-    else if(va3&&(inscode3==57))
+    else if(va3&&(inscode3==57))//特权指令存值
         begin
             if(sel==0)
                 begin
-                    if(cp0_num==12) begin Status[15:8]<=cp0_data[15:8]; Status[1:0]<=cp0_data[1:0];end
-                    else if(cp0_num==13) Cause[9:8]<=cp0_data[9:8];
+                    if(cp0_num==12) begin Status[9:8]<=cp0_data[9:8]; Cause[9:8]<=cp0_data[9:8];Status[1:0]<=cp0_data[1:0];end
+                    else if(cp0_num==13)begin Status[9:8]<=cp0_data[9:8]; Cause[9:8]<=cp0_data[9:8];end
                     else if(cp0_num==14) EPC<=cp0_data;
                 end
+        end
+    else if(~EXL&&Status[0]&&Status[15:8])//中断
+        begin
+            Status[1]<=1;
+            Status[0]<=0;
+            if(va3&&(inscode3>=29)&&(inscode3<=40)) begin Cause[31]<=1; EPC<=pc-12; end
+                 else begin Cause[31]<=0;EPC<=pc-8; end//注意pc可改变了
+            Cause[30]<=0;
+            Cause[6:2]<=0;
+            exc<=1;         
         end
     else if(va2&&((inscode2==1)||(inscode2==2)||(inscode2==5))) //整形溢出例外
          begin 
