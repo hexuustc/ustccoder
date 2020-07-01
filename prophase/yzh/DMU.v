@@ -33,12 +33,12 @@ module dmu
 wire [63:0] mult,umult,div,udiv;
 reg [2:0] count;
 reg len;
-always @ (posedge en or posedge clk)
+always @ (posedge clk)
 begin
 if(en & ~len) begin count<=0;ff<=1; end
-else count<=count+1;
+count<=count+1;
 len<=en;
-if(count==3'b101) ff<=0;
+if(count==3'b100) ff<=0;
 end
 mult_gen_0 MM(.CLK(clk),
            .A(a),
