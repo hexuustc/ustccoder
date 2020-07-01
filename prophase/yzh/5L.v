@@ -34,11 +34,12 @@ reg [31:0] mdat;
 wire [2:0] wdx,wdx1,wdx2,wdx3,lsc,lsc1,lsc2,zhx,zhx1,zhx2,wb,wb1,wb2,wb3,m,m1,m2;
 wire [3:0] aluop,aluop1;
 wire [5:0] ft;
-wire dmh,dml,mh,ml,rst,jr,zf,zf1,iff,dm,v,mtw,mtr,alrc,tzx,ert,of,j,zd,blzl,blzlop,blzlf,rst3;
+wire ff,dmh,dml,mh,ml,rst,jr,zf,zf1,iff,dm,v,mtw,mtr,alrc,tzx,ert,of,j,zd,blzl,blzlop,blzlf,rst3;
 reg [31:0] CP0[15:0];
 //数据通路
-assign rst=rst1|iff;
-assign iff=pcsrc|j|liwai|jr;
+assign rst=rst3|ff;//rst为IF/ID,ID/EX用，跳转和乘法都会将其置1。
+assign rst3=rst1|iff;//3种rst信号，rst3为EX/MEM用，只有跳转会将其置1，rst1为MEM/WB用，不会置一。
+assign iff=pcsrc|m2[0]|liwai|m2[1];
 PC PC1 (clk,rst1,pcin,addr);
 insmem mem1 (.a(addr[31:2]),.spo(ins));
 assign npc=addr+32'b100;
@@ -73,19 +74,19 @@ CT1 CON(.insop(ins1[31:26]),
         .lsc(lsc),
         .op(aluop));
 //ID/EX
-Rn #(32) A(clk,rst,d1,d1n);
-Rn #(32) B(clk,rst,d2,d2n);
-Rn #(32) IMM(clk,rst,tz,imm);
-Rn #(32) NPC1(clk,rst,npc1,npc2);
-Rn #(5) WA0(clk,rst,ins1[20:16],wa0);
-Rn #(5) WA1(clk,rst,ins1[15:11],wa1);
+Rn #(32) A(clk,rst1,d1,d1n);
+Rn #(32) B(clk,rst1,d2,d2n);
+Rn #(32) IMM(clk,rst1,tz,imm);
+Rn #(32) NPC1(clk,rst1,npc1,npc2);
+Rn #(5) WA0(clk,rst1,ins1[20:16],wa0);
+Rn #(5) WA1(clk,rst1,ins1[15:11],wa1);
 Rn #(5) EX(clk,rst,ex,ex1);
 Rn #(3) M(clk,rst,m,m1);
 Rn #(3) WB(clk,rst,wb,wb1);
-Rn #(6) FT(clk,rst,ins1[5:0],ft);
-Rn #(5) RA1(clk,rst,ins1[25:21],ra1);
-Rn #(5) RA2(clk,rst,ins1[20:16],ra2);
-Rn #(32) IR1(clk,rst,ins1,ins2);
+Rn #(6) FT(clk,rst1,ins1[5:0],ft);
+Rn #(5) RA1(clk,rst1,ins1[25:21],ra1);
+Rn #(5) RA2(clk,rst1,ins1[20:16],ra2);
+Rn #(32) IR1(clk,rst1,ins1,ins2);
 Rn #(3) ZHX(clk,rst,zhx,zhx1);
 Rn #(3) LSC(clk,rst,lsc,lsc1);
 Rn #(4) ALUOP(clk,rst,aluop,aluop1);
@@ -99,27 +100,26 @@ assign a1x=ex1[3]?32'h00000010:ax;
 assign b1x=ex1[4]?0:bx;
 assign wax=ex1[1]?wa1:wa0;
 alut #(32) ALU (y,zf,,of,a,b,aluc);
-dmu #(32) DMU (hi,lo,d1n,d2n,aluc,dm);
+dmu #(32) DMU (hi,lo,ff,d1n,d2n,aluc,dm,clk);//修改DMU
 ALUC AC (ft,aluop,aluc,dm,dmh,dml,v,blzlf,mh,ml);
 assign cp0=CP0[wa1];
 assign ja={npc2[31:28],ins2[25:0],2'b00};
 assign blzl=blzlop|blzlf;
 //EX/MEM
-assign rst3=rst|m2[1];
 Rn #(32) NPC2(clk,rst,npc3,npc4);
-Rn #(1) ZF(clk,rst,zf,zf1);
+Rn #(1) ZF(clk,rst3,zf,zf1);
 Rn #(32) Y(clk,rst,y,y1);
 Rn #(32) B1(clk,rst,d2n,b1);
 Rn #(5) WAX(clk,rst,wax,wax1);
-Rn #(3) M1(clk,rst,m1,m2);
-Rn #(3) WB1(clk,rst,wb1,wb2);
+Rn #(3) M1(clk,rst3,m1,m2);
+Rn #(3) WB1(clk,rst3,wb1,wb2);
 Rn #(32) HI(clk,rst,hi,hi1);
 Rn #(32) LO(clk,rst,lo,lo1);
 Rn #(32) CP1(clk,rst,cp0,cpa);
 Rn #(32) JA(clk,rst,ja,ja1);
-Rn #(5) ASHU(clk,rst,{dm,dmh,dml,mh,ml},ashu);
-Rn #(3) ZHX1(clk,rst,zhx1,zhx2);
-Rn #(3) LSC1(clk,rst,lsc1,lsc2);
+Rn #(5) ASHU(clk,rst3,{dm,dmh,dml,mh,ml},ashu);
+Rn #(3) ZHX1(clk,rst3,zhx1,zhx2);
+Rn #(3) LSC1(clk,rst3,lsc1,lsc2);
 //MEM
 always @ *
 case(zhx2)
