@@ -20,9 +20,10 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module pipCPU//还差相关的处理。。。。。。。。。。。。。。。。。。。。。。。。。。。。。同时读写
+module pipCPU
     (input clk,
-    input rst
+    input resetn,
+    input [5:0] ext_int//硬件中断信号
     );
 reg [31:0] a,b,wd,d1,cp0_data,aimdata,aimdata1,aimdata2,aimdata3,pc,r_pc,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
 reg [15:0] r_imm,b2value;
@@ -38,14 +39,14 @@ wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。�
 wire [7:0] pc1;
 wire [5:0] op,funct,op1,funct1,op2,funct2,op3,funct3,op4,funct4;//可以优化................................
 wire [4:0] rs,rt,rd,shamt,rs1,rt1,rd01,shamt1,rs2,rt2,rd02,shamt2,rs3,rt3,rd03,shamt3,rs4,rt4,rd04,shamt4;//可以优化。。。。。。。。。。。。。。。。。
-wire zf,cf,of,q1,exc,back;
+wire zf,cf,of,q1,exc,back,rst;
 
 
 alu alu1(y,zf,cf,of,a,b,m);
 register_file register_file(clk,ra0,rd0,ra1,rd1,wa,we,wd,rst);
 dist_mem_gen_0 dist_mem_gen_0(ad0,spo0);//指令存储器256深度
 dist_mem_gen_1 dist_mem_gen_1(dpra,d1,ad1,clk,we1,spo1);//数据存储器256深度,双端口
-CP0 CP0(pc,y,cp0_data,inscode2,inscode3,cp0_num,sel,clk,rst,of,va2,va3,reins2,exc,back,BadVAddr,Count,Status,Cause,EPC);
+CP0 CP0(pc,y,cp0_data,inscode2,inscode3,ext_int,cp0_num,sel,clk,rst,of,va2,va3,reins2,exc,back,BadVAddr,Count,Status,Cause,EPC);
 
 assign pc1=pc[9:2];//截断操作
 
@@ -95,6 +96,7 @@ assign addr0={zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,z
 assign addr_0={r_imm,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero};
 assign shamt32={zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,shamt2};
 assign pc_8=pc-8;
+assign rst=resetn;//sram接口信号
 
 initial zero=0;
 initial va=1;
@@ -182,7 +184,7 @@ begin
      
 end
 
-always@(*)//取指             例外后面补上,特权暂未处理，系统调用接口待定
+always@(*)//取指             系统调用接口待定
 begin
     if(rst) ;
     else 
