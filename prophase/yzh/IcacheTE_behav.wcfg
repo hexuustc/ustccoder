@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="IcacheTE_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="IcacheTE" />
+            <top_module name="glbl" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="360000000fs"></ZoomEndTime>
+      <Cursor1Time time="172662000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="144"></NameColumnWidth>
+      <ValueColumnWidth column_width="133"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="23" />
+   <wvobject fp_name="/IcacheTE/miss" type="logic">
+      <obj_property name="ElementShortName">miss</obj_property>
+      <obj_property name="ObjectShortName">miss</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/stall" type="logic">
+      <obj_property name="ElementShortName">stall</obj_property>
+      <obj_property name="ObjectShortName">stall</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/read_req" type="logic">
+      <obj_property name="ElementShortName">read_req</obj_property>
+      <obj_property name="ObjectShortName">read_req</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/rst" type="logic">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/ok" type="logic">
+      <obj_property name="ElementShortName">ok</obj_property>
+      <obj_property name="ObjectShortName">ok</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/req" type="logic">
+      <obj_property name="ElementShortName">req</obj_property>
+      <obj_property name="ObjectShortName">req</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/addr" type="array">
+      <obj_property name="ElementShortName">addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">addr[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/ins" type="array">
+      <obj_property name="ElementShortName">ins[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ins[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/insaddr" type="array">
+      <obj_property name="ElementShortName">insaddr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">insaddr[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/data" type="array">
+      <obj_property name="ElementShortName">data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">data[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/s" type="array">
+      <obj_property name="ElementShortName">s[1:0]</obj_property>
+      <obj_property name="ObjectShortName">s[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/ns" type="array">
+      <obj_property name="ElementShortName">ns[1:0]</obj_property>
+      <obj_property name="ObjectShortName">ns[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/lux" type="array">
+      <obj_property name="ElementShortName">lux[1:0]</obj_property>
+      <obj_property name="ObjectShortName">lux[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/suoyin" type="array">
+      <obj_property name="ElementShortName">suoyin[7:0]</obj_property>
+      <obj_property name="ObjectShortName">suoyin[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/bj" type="array">
+      <obj_property name="ElementShortName">bj[21:0]</obj_property>
+      <obj_property name="ObjectShortName">bj[21:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/suoyin" type="array">
+      <obj_property name="ElementShortName">suoyin[7:0]</obj_property>
+      <obj_property name="ObjectShortName">suoyin[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/biaoji" type="array">
+      <obj_property name="ElementShortName">biaoji[3:0][255:0][21:0]</obj_property>
+      <obj_property name="ObjectShortName">biaoji[3:0][255:0][21:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/youxiao" type="array">
+      <obj_property name="ElementShortName">youxiao[3:0][255:0]</obj_property>
+      <obj_property name="ObjectShortName">youxiao[3:0][255:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/mz0" type="logic">
+      <obj_property name="ElementShortName">mz0</obj_property>
+      <obj_property name="ObjectShortName">mz0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/mz1" type="logic">
+      <obj_property name="ElementShortName">mz1</obj_property>
+      <obj_property name="ObjectShortName">mz1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/mz2" type="logic">
+      <obj_property name="ElementShortName">mz2</obj_property>
+      <obj_property name="ObjectShortName">mz2</obj_property>
+   </wvobject>
+   <wvobject fp_name="/IcacheTE/C1/mz3" type="logic">
+      <obj_property name="ElementShortName">mz3</obj_property>
+      <obj_property name="ObjectShortName">mz3</obj_property>
+   </wvobject>
+</wave_config>
