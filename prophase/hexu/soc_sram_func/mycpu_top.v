@@ -33,7 +33,7 @@ module mycpu_top//常规指令增加
     
     output data_sram_en,
     output reg [3:0] data_sram_wen,
-    output reg [31:0] data_sram_addr,
+    output [31:0] data_sram_addr,
     output reg [31:0] data_sram_wdata,
     input [31:0] data_sram_rdata,
     
@@ -42,7 +42,7 @@ module mycpu_top//常规指令增加
     output [4:0] debug_wb_rf_wnum,
     output [31:0] debug_wb_rf_wdata
     );
-reg [31:0] a,b,wd,d1,cp0_data,inst_sram_rdata1,aimdata,aimdata1,aimdata2,aimdata3,aimdata4,aimdata5,pc,pc1,pc2,pc3,pc4,r_pc,r_pc_8,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
+reg [31:0] a,b,wd,r_wd,d1,cp0_data,inst_sram_rdata1,data_sram_addr1,aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5,pc,pc1,pc2,pc3,pc4,r_pc,r_pc_8,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
 reg [15:0] r_imm,b2value;
 reg [7:0] ad0,ad1,dpra,bvalue;
 reg [5:0] inscode,inscode1,inscode2,inscode3,inscode4;//指令码
@@ -50,7 +50,7 @@ reg [4:0] ra0,ra1,wa,aimaddr,aimaddr1,aimaddr2,aimaddr3,aimaddr4,aimaddr5,r_aima
 reg [3:0] m;
 reg [2:0] c_pc,sel;
 reg [1:0] jump;
-reg zero,pd,delay_block,delay_block1,pause,pause1,pause1_1,pause2,pause3,pause4,pause5,pause6,pause7,reins,reins1,reins2,pd1,we,we1,va,r_va,va1,r_va1,va2,va3,va4,va5,va6,va7,zf1,cf1,of1,zf2,cf2,of2,c_inscode1,c_inscode2,c_inscode3,c_inscode4,c_ir1,c_ir2,c_ir3,c_ir4;//c_ir太多...................
+reg zero,pd,delay_block,delay_block1,pause,pause1,pause1_1,pause2,pause3,pause4,pause4_1,pause5,pause6,pause7,reins,reins1,reins2,pd1,we,we1,va,r_va,va1,r_va1,va2,va3,va4,va5,va6,va7,zf1,cf1,of1,zf2,cf2,of2,c_inscode1,c_inscode2,c_inscode3,c_inscode4,c_ir1,c_ir2,c_ir3,c_ir4;//c_ir太多...................
 wire [31:0] y,pc_8,rd0,rd1,spo0,spo1,addr32,addr0,addr_0,shamt32,BadVAddr,Count,Status,Cause,EPC;
 wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。。。。。。。。
 wire [5:0] op,funct,op1,funct1,op2,funct2,op3,funct3,op4,funct4;//可以优化................................
@@ -121,6 +121,7 @@ assign debug_wb_pc=pc4;
 assign debug_wb_rf_wen=we*4'b1111;
 assign debug_wb_rf_wnum=aimaddr2;
 assign debug_wb_rf_wdata=aimdata2;
+assign data_sram_addr={{3{zero}},data_sram_addr1[28:0]};//前三位归零，为什么？
 
 initial zero=0;
 initial va=1;
@@ -140,11 +141,14 @@ begin
     //reins1<=reins;
     inst_sram_rdata1<=inst_sram_rdata;
     pause1_1<=pause1;
+    pause4_1<=pause4;
     delay_block1<=delay_block;
     if(pause1) pc1<=pc1;
     else pc1<=pc;
     if(pause1) r_va<=r_va;
     else r_va<=va;
+    r_wd<=wd;
+    r_aimdata1<=aimdata1;
 
 //译码
 if(pause2)
@@ -273,11 +277,11 @@ begin
     else va3<=va2;    
 end
 
-always@(posedge clk,posedge delay_block1)
+always@(*)
 begin
-    if(delay_block1) aimdata2<=wd;
-    else if(pause4) aimdata2<=aimdata2;
-    else aimdata2<=aimdata1;
+    if((inscode4==47)||(inscode4==48)||(inscode4==49)||(inscode4==50)||(inscode4==51)) aimdata2=wd;
+    else if(pause4_1) aimdata2=aimdata2;
+    else aimdata2=r_aimdata1;
 end
 
 always@(posedge clk)
@@ -510,7 +514,7 @@ begin
     else aimaddr=0;
 end
 
-always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转
+always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转。。。。。前三位归零，原因何在？？？？？
 begin
     delay_block=0;
     if(pause3) begin c_inscode3=0; c_ir3=0; end 
@@ -539,7 +543,7 @@ begin
     else if(inscode3==38) begin jump=2; data_sram_wen=0; aimdata1=pc-4; end//默认rs为有符号数
     else if(inscode3==39) begin jump=3; data_sram_wen=0; end//默认rs为有符号数
     else if(inscode3==40) begin jump=3; data_sram_wen=0; aimdata1=pc-4; end//默认rs为有符号数
-    else if((inscode3==47)||(inscode3==48)) begin jump=0; data_sram_addr=r_y; data_sram_wen=0;
+    else if((inscode3==47)||(inscode3==48)) begin jump=0; data_sram_addr1=r_y; data_sram_wen=0;
                               if((rs2==aimaddr1)||(rt2==aimaddr1)) delay_block=1;
                               else delay_block=0;
                               /*  case(r_y%4)
@@ -550,7 +554,7 @@ begin
                                 endcase 
                                 if(inscode3==47) aimdata1={{24{bvalue[7]}},bvalue}; else aimdata1={{24{zero}},bvalue};
                        */   end//要后期存数
-    else if((inscode3==49)||(inscode3==50)) begin jump=0; data_sram_wen=0; data_sram_addr=r_y;
+    else if((inscode3==49)||(inscode3==50)) begin jump=0; data_sram_wen=0; data_sram_addr1=r_y;
                                 if(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0])) delay_block=1;
                               else delay_block=0; 
                               /*  case(r_y%4)
@@ -561,11 +565,11 @@ begin
                         */  end//要后期存数
     else if(inscode3==51) 
         begin 
-            jump=0; data_sram_wen=0; data_sram_addr=r_y; aimdata1=spo1;
+            jump=0; data_sram_wen=0; data_sram_addr1=r_y; aimdata1=0;
             if(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0])) delay_block=1;
                 else delay_block=0; 
         end//要后期存数
-    else if(inscode3==52) begin jump=0; data_sram_addr=r_y;//写字节与数据就是位置对应关系。。。。。。。。。。。
+    else if(inscode3==52) begin jump=0; data_sram_addr1=r_y;//写字节与数据就是位置对应关系。。。。。。。。。。。
                                 case(r_y[1:0])
                                     0:begin data_sram_wen=4'b1000;data_sram_wdata[31:24]=r_b1r[7:0]; end //小尾端暂未考虑。。。。。。。。。。。
                                     1:begin data_sram_wen=4'b0100;data_sram_wdata[23:16]=r_b1r[7:0]; end//小尾端暂未考虑。。。。。。。。。。。
@@ -573,14 +577,14 @@ begin
                                     3:begin data_sram_wen=4'b0001;data_sram_wdata[7:0]=r_b1r[7:0]; end//小尾端暂未考虑。。。。。。。。。。。
                                 endcase
                           end
-    else if(inscode3==53) begin jump=0; data_sram_addr=r_y;
+    else if(inscode3==53) begin jump=0; data_sram_addr1=r_y;
                                 case(r_y[1:0])
                                     0:begin data_sram_wen=4'b1100;data_sram_wdata[31:16]=r_b1r[15:0]; end//小尾端暂未考虑。。。。。。。。。。。
                                     2:begin data_sram_wen=4'b0011;data_sram_wdata[15:0]=r_b1r[15:0]; end//小尾端暂未考虑。。。。。。。。。。。
                                 default:data_sram_wen=4'b0000;//小尾端暂未考虑。。。。。。。。。。。
                                 endcase
                           end
-    else if(inscode3==54) begin jump=0; data_sram_addr=r_y; if(r_y[1:0]==0) data_sram_wen=4'b1111; else data_sram_wen=0; data_sram_wdata=r_b1r; end
+    else if(inscode3==54) begin jump=0; data_sram_addr1=r_y; if(r_y[1:0]==0) data_sram_wen=4'b1111; else data_sram_wen=0; data_sram_wdata=r_b1r; end
     else if(inscode3==7) begin jump=0; data_sram_wen=0; if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;  end
     else if(inscode3==8) begin jump=0; data_sram_wen=0; if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;end
     else if(inscode3==9) begin jump=0; data_sram_wen=0; if(cf1&~zf1) aimdata1=1;else aimdata1=0; end
