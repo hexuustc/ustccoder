@@ -42,7 +42,7 @@ module mycpu_top//常规指令增加
     output [4:0] debug_wb_rf_wnum,
     output [31:0] debug_wb_rf_wdata
     );
-reg [31:0] a,b,wd,r_wd,d1,cp0_data,inst_sram_rdata1,data_sram_addr1,aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5,pc,pc1,pc2,pc3,pc4,r_pc,r_pc_8,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
+reg [31:0] a,b,wd,r_wd,d1,cp0_data,inst_sram_rdata1,data_sram_addr1,aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5,pc,pc1,pc2,pc3,pc4,r_pc,r_pc_8,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_ar_abs,r_br,r_br_abs,r_a1r,r_b1r,r_a2r,r_a2r_abs,r_b2r,r_b2r_abs,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
 reg [15:0] r_imm,b2value;
 reg [7:0] ad0,ad1,dpra,bvalue;
 reg [5:0] inscode,inscode1,inscode2,inscode3,inscode4;//指令码
@@ -284,6 +284,14 @@ begin
     else aimdata2=r_aimdata1;
 end
 
+always@(*)
+begin
+    if(r_ar[31]) r_ar_abs=-r_ar; else r_ar_abs=r_ar;
+    if(r_br[31]) r_br_abs=-r_br; else r_br_abs=r_br;
+    if(r_a2r[31]) r_a2r_abs=-r_a2r; else r_a2r_abs=r_a2r;
+    if(r_b2r[31]) r_b2r_abs=-r_b2r; else r_b2r_abs=r_b2r;
+end
+
 always@(posedge clk)
 begin
     r_aimaddr<=aimaddr;
@@ -454,9 +462,9 @@ end
 
 always@(*)//执行...之后化繁为简，需用到inscode,shamt     rt,rd
 begin
-    if(rst) va2=0;
+    if(rst) va2=0;//这就是分支延迟槽
     else if(pause2) va2=va2;
-    else if(jump) va2=0;
+    //else if(jump) va2=0;
     else if (back||exc) va2=0;
     else va2=r_va1;
     if(delay_block) pause2=1;
@@ -483,7 +491,7 @@ begin
     else if(inscode2==8) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end//不是要存值
     else if(inscode2==9) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end//不是要存值
     else if(inscode2==10) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end//不是要存值
-    else if(inscode2==11) begin a=r_ar; b=r_br; m=7; end//除法待优化。。。。。。。。。。。。。。。。
+    else if(inscode2==11) begin a=r_ar_abs; b=r_br_abs; m=7; end//除法待优化。。。。。。。。。。。。。。。。
     else if(inscode2==12) begin a=r_ar; b=r_br; m=7; end//未区分，除法待优化。。。。。。。。。。。。。。。。
     else if(inscode2==13) begin a=r_ar; b=r_br; m=5; end//乘法算法待优化
     else if(inscode2==14) begin a=r_ar; b=r_br; m=6; end//乘法算法待优化
@@ -505,8 +513,8 @@ begin
     else if(inscode2==30) begin a=r_ar; b=r_br; m=1; aimaddr=0; end
     else if((inscode2==47)||(inscode2==48)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
     else if((inscode2==49)||(inscode2==50)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
-    else if((inscode2==51)||(inscode2==52)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
-    else if((inscode2==53)||(inscode2==54)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if(inscode2==51) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
+    else if((inscode2==52)||(inscode2==53)||(inscode2==54)) begin a=r_ar; b=addr32; m=0; aimaddr=0; end
     else if((inscode2==35)||(inscode2==36)||(inscode2==38)) aimaddr=31;
     else if((inscode2==40)||(inscode2==41)||(inscode2==42)) aimaddr=rd02;
     else if(inscode2==56) aimaddr=rt2;
@@ -613,6 +621,7 @@ begin
             cp0_num=rd03;
             cp0_data=r_y;
         end
+    else if(inscode3==18) begin jump=0; data_sram_wen=0; aimdata1=~r_y; end
     else begin jump=0; data_sram_wen=0; aimdata1=r_y; end
 
 end
@@ -642,7 +651,11 @@ begin
     else if(inscode4==8) begin we=1;if((~of2&r_y1[31]&~zf2)|(of2&~r_y1[31]&~zf2))wd=1;else wd=0; wa=rt4; end
     else if(inscode4==9) begin we=1;if(cf2&~zf2) wd=1;else wd=0; wa=rd04; end
     else if(inscode4==10) begin we=1;if(cf2&~zf2) wd=1;else wd=0; wa=rt4; end
-    else if(inscode4==11) begin we=0; LO=r_y1; HI=r_a2r%r_b2r; end//这个寄存器可以在前面写回，省去传递
+    else if(inscode4==11) begin 
+                              we=0;
+                              if(r_a2r[31]==r_b2r[31]) LO=r_y1; else LO=-r_y1;
+                              if(r_a2r[31]==0) HI=r_a2r_abs%r_b2r_abs; else HI=-(r_a2r_abs%r_b2r_abs);
+                          end//这个寄存器可以在前面写回，省去传递
     else if(inscode4==12) begin we=0; LO=r_y1; HI=r_a2r%r_b2r; end//这个寄存器可以在前面写回，省去传递
     else if(inscode4==13) begin we=0; HI=r_y1; LO=r_a2r*r_b2r; end//这个寄存器可以在前面写回，省去传递
     else if(inscode4==14) begin we=0; HI=r_y1; LO=r_a2r*r_b2r; end//这个寄存器可以在前面写回，省去传递
