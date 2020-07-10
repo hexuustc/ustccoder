@@ -170,11 +170,6 @@ wire [1 :0] d_bresp;
 wire        d_bvalid;
 wire        d_bready;
 
-assign i_en = d_data_ok;
-assign i_wen = 0;
-assign i_addr = 0;
-assign i_write_data = 0;
-
 cache_to_axi #(1'b1) icache_to_axi (
     .clk    (aclk   ),
     .rstn   (aresetn),
@@ -229,11 +224,6 @@ cache_to_axi #(1'b1) icache_to_axi (
     .bvalid     (i_bvalid ),
     .bready     (i_bready )
 );
-
-assign d_en = 1;
-assign d_wen = 1;
-assign d_addr = 32'h0;
-assign d_write_data = 0;
 
 cache_to_axi #(1'b0) dcache_to_axi (
     .clk    (aclk   ),
