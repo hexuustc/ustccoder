@@ -40,7 +40,7 @@ module Icache1
     input addr_ok,
     input data_ok,
     input burst,
-    output [31:0] wdata.//向类SRAM写入的数据
+    output reg [31:0] wdata.//向类SRAM写入的数据
     output [31:0] addr,//地址
     input [31:0] sdata//从类SRAM读取的数据
 );
