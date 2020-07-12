@@ -28,20 +28,21 @@ module Icache1
   (
     input clk,
     input rst,
-    input [31:0] insaddr,
-    input [31:0] din,
-    output reg [31:0] ins,
-    input req,
-    input we,
-    output miss,
-    output reg ok,
-    output reg wen,
-    output reg sen,
+    input [31:0] insaddr,//地址
+    input [31:0] din,//写入的数据
+    output reg [31:0] ins,//读取的数据
+    input req,//请求
+    input we,//写使能
+    output miss,//缺失
+    output reg ok,//写入完成或读取完成
+    output reg wen,//接类SRAM的写使能
+    output reg sen,//接类Sram的使能
     input addr_ok,
     input data_ok,
     input burst,
-    output [31:0] addr,
-    input [31:0] sdata
+    output [31:0] wdata.//向类SRAM写入的数据
+    output [31:0] addr,//地址
+    input [31:0] sdata//从类SRAM读取的数据
 );
 
 wire [suoyin_len - 1:0]    suoyin;
@@ -62,7 +63,7 @@ wire [1:0]                 lruin [3:0] ;
 reg  [3:0]                 lruc        ;
 wire [31:0]                data        ;
 reg                        wdx         ;
-//����ͨ·
+//数据通路
 assign lruin[0]=lruc[0]?2'b00:(lru[0]+1);
 assign lruin[1]=lruc[1]?2'b00:(lru[1]+1);
 assign lruin[2]=lruc[2]?2'b00:(lru[2]+1);
@@ -517,13 +518,13 @@ lru  L3 (.addra(suoyin),
 wire [3:0] mz;
 reg  [1:0] lux;
 reg  [1:0] count;
-//�ж��Ƿ�ȱʧ
+//判断是否缺失
 assign mz[0]=(bj==tag[0])&v[0];
 assign mz[1]=(bj==tag[1])&v[1];
 assign mz[2]=(bj==tag[2])&v[2];
 assign mz[3]=(bj==tag[3])&v[3];
 assign miss=~(mz[0]|mz[1]|mz[2]|mz[3]);
-//ѡ����һ·
+//选择那一路
 always @ *
 begin
   if(mz[0]) lux=2'b00;
@@ -545,13 +546,13 @@ begin
     end
   end
 end
-//ʹ�ܿ���
+//使能控制
 always @ *
 begin
   en=4'b0;
   en[lux]=1;
 end
-//״̬��
+//状态机
 localparam FREE = 3'b000;
 localparam PD   = 3'b001;
 localparam WB   = 3'b010;
@@ -582,15 +583,15 @@ end
 
 always @ *
 begin
-  wet=4'b0;wel=4'b0;lruc=4'b0;ok=0;sen=0;wen=0;wed=16'b0;wdx=0;
+  wet=4'b0;wel=4'b0;lruc=4'b0;ok=0;sen=0;wen=0;wed=16'b0;wdx=0;ins=32'b0;
   if(rst)  begin  v[0]=0;v[1]=0;v[2]=0;v[3]=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0; end
   case(s)
   FREE:;
   PD:  if(we&~miss) begin wed[linex]=1;wdx=1;ok=1; end
        else if(~miss) begin ins=cdat[lux][linex];ok=1; end
-  WB:  ;//д��
-  RD:  ;//��ȡ
-  FH:  begin if(we) begin wed[linex]=1;wdx=1;ok=1;dir[lux][suoyin]=1; end
+  WB:  ;//写回
+  RD:  ;//读取
+  FH:  begin if(we) begin ins=cdat[lux][linex];wed[linex]=1;wdx=1;ok=1;dir[lux][suoyin]=1; end
              else   begin ins=cdat[lux][linex];ok=1; end
              wet[lux]=1;v[lux][suoyin]=1;
              if(lru[0]<lru[lux]) wel[0]=1;
