@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="C1TE_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="C1TE" />
+            <top_module name="glbl" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="125334000fs"></ZoomStartTime>
+      <ZoomEndTime time="250434001fs"></ZoomEndTime>
+      <Cursor1Time time="3165000000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="144"></NameColumnWidth>
+      <ValueColumnWidth column_width="133"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="25" />
+   <wvobject fp_name="/C1TE/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/rst" type="logic">
+      <obj_property name="ElementShortName">rst</obj_property>
+      <obj_property name="ObjectShortName">rst</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/req" type="logic">
+      <obj_property name="ElementShortName">req</obj_property>
+      <obj_property name="ObjectShortName">req</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/wreq" type="logic">
+      <obj_property name="ElementShortName">wreq</obj_property>
+      <obj_property name="ObjectShortName">wreq</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/addr_ok" type="logic">
+      <obj_property name="ElementShortName">addr_ok</obj_property>
+      <obj_property name="ObjectShortName">addr_ok</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/data_ok" type="logic">
+      <obj_property name="ElementShortName">data_ok</obj_property>
+      <obj_property name="ObjectShortName">data_ok</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/burst" type="logic">
+      <obj_property name="ElementShortName">burst</obj_property>
+      <obj_property name="ObjectShortName">burst</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/IC1/v" type="array">
+      <obj_property name="ElementShortName">v[3:0][255:0]</obj_property>
+      <obj_property name="ObjectShortName">v[3:0][255:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/IC1/lux" type="array">
+      <obj_property name="ElementShortName">lux[1:0]</obj_property>
+      <obj_property name="ObjectShortName">lux[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/IC1/lru" type="array">
+      <obj_property name="ElementShortName">lru[3:0][1:0]</obj_property>
+      <obj_property name="ObjectShortName">lru[3:0][1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/IC1/wed" type="array">
+      <obj_property name="ElementShortName">wed[15:0][3:0]</obj_property>
+      <obj_property name="ObjectShortName">wed[15:0][3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/IC1/count" type="array">
+      <obj_property name="ElementShortName">count[4:0]</obj_property>
+      <obj_property name="ObjectShortName">count[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/IC1/cdat" type="array">
+      <obj_property name="ElementShortName">cdat[3:0][15:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">cdat[3:0][15:0][31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/wbyte" type="array">
+      <obj_property name="ElementShortName">wbyte[3:0]</obj_property>
+      <obj_property name="ObjectShortName">wbyte[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/insaddr" type="array">
+      <obj_property name="ElementShortName">insaddr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">insaddr[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/din" type="array">
+      <obj_property name="ElementShortName">din[31:0]</obj_property>
+      <obj_property name="ObjectShortName">din[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/sdata" type="array">
+      <obj_property name="ElementShortName">sdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">sdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/ins" type="array">
+      <obj_property name="ElementShortName">ins[31:0]</obj_property>
+      <obj_property name="ObjectShortName">ins[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/wdata" type="array">
+      <obj_property name="ElementShortName">wdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">wdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/addr" type="array">
+      <obj_property name="ElementShortName">addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">addr[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/miss" type="logic">
+      <obj_property name="ElementShortName">miss</obj_property>
+      <obj_property name="ObjectShortName">miss</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/stall" type="logic">
+      <obj_property name="ElementShortName">stall</obj_property>
+      <obj_property name="ObjectShortName">stall</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/ok" type="logic">
+      <obj_property name="ElementShortName">ok</obj_property>
+      <obj_property name="ObjectShortName">ok</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/wen" type="logic">
+      <obj_property name="ElementShortName">wen</obj_property>
+      <obj_property name="ObjectShortName">wen</obj_property>
+   </wvobject>
+   <wvobject fp_name="/C1TE/sen" type="logic">
+      <obj_property name="ElementShortName">sen</obj_property>
+      <obj_property name="ObjectShortName">sen</obj_property>
+   </wvobject>
+</wave_config>
