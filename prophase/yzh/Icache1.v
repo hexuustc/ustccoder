@@ -28,29 +28,31 @@ module Icache1
   (
     input clk,
     input rst,
-    input [31:0] insaddr,//地址
-    input [31:0] din,//写入的数据
-    output reg [31:0] ins,//读取的数据
-    input req,//请求
-    input we,//写使能
-    output miss,//缺失
-    output reg ok,//写入完成或读取完成
-    output reg wen,//接类SRAM的写使能
-    output reg sen,//接类Sram的使能
+    input [31:0] insaddr,
+    input [31:0] din,
+    output reg [31:0] ins,
+    input req,
+    input wreq,
+    input [3:0] wbyte,
+    output miss,
+    output reg stall,
+    output reg ok,
+    output reg wen,
+    output reg sen,
     input addr_ok,
     input data_ok,
     input burst,
-    output reg [31:0] wdata.//向类SRAM写入的数据
-    output [31:0] addr,//地址
-    input [31:0] sdata//从类SRAM读取的数据
+    output reg [31:0] wdata,
+    output [31:0] addr,
+    input [31:0] sdata
 );
 
 wire [suoyin_len - 1:0]    suoyin;
 wire [tag_len - 1   :0]    tag   [3:0] ;
 wire [1:0]                 lru   [3:0] ;
-reg  [suoyin_len - 1:0]    v     [3:0] ;
-reg  [suoyin_len - 1:0]    dir   [3:0] ;
-reg  [line_c-1      :0]    wed         ;
+reg  [255:0]               v     [3:0] ;
+reg  [255:0]               dir   [3:0] ;
+reg  [3:0]                 wed   [15:0];
 reg  [3:0]                 wet         ;
 reg  [3:0]                 wel         ;
 reg  [3:0]                 en          ;
@@ -63,7 +65,7 @@ wire [1:0]                 lruin [3:0] ;
 reg  [3:0]                 lruc        ;
 wire [31:0]                data        ;
 reg                        wdx         ;
-//数据通路
+//����ͨ·
 assign lruin[0]=lruc[0]?2'b00:(lru[0]+1);
 assign lruin[1]=lruc[1]?2'b00:(lru[1]+1);
 assign lruin[2]=lruc[2]?2'b00:(lru[2]+1);
@@ -517,26 +519,29 @@ lru  L3 (.addra(suoyin),
 //control
 wire [3:0] mz;
 reg  [1:0] lux;
-reg  [1:0] count;
-//判断是否缺失
-assign mz[0]=(bj==tag[0])&v[0];
-assign mz[1]=(bj==tag[1])&v[1];
-assign mz[2]=(bj==tag[2])&v[2];
-assign mz[3]=(bj==tag[3])&v[3];
+reg  [4:0] count;
+//�ж��Ƿ�ȱʧ
+assign mz[0]=(bj==tag[0])&v[0][suoyin];
+assign mz[1]=(bj==tag[1])&v[1][suoyin];
+assign mz[2]=(bj==tag[2])&v[2][suoyin];
+assign mz[3]=(bj==tag[3])&v[3][suoyin];
 assign miss=~(mz[0]|mz[1]|mz[2]|mz[3]);
-//选择那一路
+//ѡ����һ·
 always @ *
 begin
+  if(rst) lux=2'b00;
+  else if(s==PD)
+  begin
   if(mz[0]) lux=2'b00;
   else if(mz[1]) lux=2'b01;
   else if(mz[2]) lux=2'b10;
   else if(mz[3]) lux=2'b11;
   else
   begin
-    if(~v[0]) lux=2'b00;
-    else if(~v[1]) lux=2'b01;
-    else if(~v[2]) lux=2'b10;
-    else if(~v[3]) lux=2'b11;
+    if(~v[0][suoyin]) lux=2'b00;
+    else if(~v[1][suoyin]) lux=2'b01;
+    else if(~v[2][suoyin]) lux=2'b10;
+    else if(~v[3][suoyin]) lux=2'b11;
     else
     begin
       lux=2'b00;
@@ -545,20 +550,22 @@ begin
       if(lru[3]>lru[lux]) lux=2'b11;
     end
   end
+  end
 end
-//使能控制
+//ʹ�ܿ���
 always @ *
 begin
   en=4'b0;
   en[lux]=1;
 end
-//状态机
+//״̬��
 localparam FREE = 3'b000;
 localparam PD   = 3'b001;
 localparam WB   = 3'b010;
 localparam RD   = 3'b011;
 localparam FH   = 3'b100;
 reg [2:0] s,ns;
+reg we;
 
 always @ (posedge clk or posedge rst)
 if(rst) s<=FREE;
@@ -568,39 +575,54 @@ always @ *
 begin
   case(s)
   FREE: if(req) ns=PD;
-      else    ns=FREE;
-  PD:   if(miss&dir[lux]) ns=WB;
-      else if(miss&~dir[lux]) ns=RD;
-      else ns=FREE;
+        else    ns=FREE;
+  PD:   if(miss&dir[lux][suoyin]) ns=WB;
+        else if(miss&~dir[lux][suoyin]) ns=RD;
+        else if(req) ns=PD;
+        else ns=FREE;
   WB:   if(burst) ns=RD;
-      else      ns=WB;
+        else      ns=WB;
   RD:   if(burst) ns=FH;
-      else      ns=RD;
-  FH:   ns=FREE;
+        else      ns=RD;
+  FH:   if(req) ns=PD;
+        else    ns=FREE;
   default: ns=FREE;
   endcase
 end
 
+always @ (posedge data_ok or posedge addr_ok)
+if(addr_ok) count<=0;
+else        count<=count+1;
+
 always @ *
 begin
-  wet=4'b0;wel=4'b0;lruc=4'b0;ok=0;sen=0;wen=0;wed=16'b0;wdx=0;ins=32'b0;
-  if(rst)  begin  v[0]=0;v[1]=0;v[2]=0;v[3]=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0; end
+  wet=4'b0;wel=4'b0;lruc=4'b0;ok=0;sen=0;wen=0;wdx=0;stall=0;
+  wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
+  wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0;
+  if(rst)  begin  wdata=0;we=0;ins=32'b0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0; end
   case(s)
-  FREE:;
-  PD:  if(we&~miss) begin wed[linex]=1;wdx=1;ok=1; end
-       else if(~miss) begin ins=cdat[lux][linex];ok=1; end
-  WB:  ;//写回
-  RD:  ;//读取
-  FH:  begin if(we) begin ins=cdat[lux][linex];wed[linex]=1;wdx=1;ok=1;dir[lux][suoyin]=1; end
-             else   begin ins=cdat[lux][linex];ok=1; end
-             wet[lux]=1;v[lux][suoyin]=1;
-             if(lru[0]<lru[lux]) wel[0]=1;
-             if(lru[1]<lru[lux]) wel[1]=1;
-             if(lru[2]<lru[lux]) wel[2]=1;
-             if(lru[3]<lru[lux]) wel[3]=1;
+  FREE:we=0;
+  PD:  if(wreq&~miss) begin ins=din;wdx=1;ok=1;we=1;wed[linex]=wbyte;dir[lux][suoyin]=1; end
+       else if(~wreq&~miss) begin ins=cdat[lux][linex];ok=1;we=0; end
+       else if(wreq&miss) we=1;
+       else we=0;
+  WB:  begin stall=1;sen=1;wen=1;
+             if(addr_ok) wdata=cdat[lux][0];
+             else if(data_ok) wdata=cdat[lux][count[3:0]];
+       end//д��
+  RD:  begin stall=1;sen=1;
+             if(data_ok) wed[count-1]=4'b1111;
+       end//��ȡ
+  FH:  begin if(we) begin ins=din;wdx=1;ok=1;dir[lux][suoyin]=1;wed[linex]=wbyte; end
+             else   begin ins=cdat[lux][linex];ok=1;dir[lux][suoyin]=0; end
+             wet[lux]=1;v[lux][suoyin]=1;stall=1;
+             if(lru[0]<=lru[lux]) wel[0]=1;
+             if(lru[1]<=lru[lux]) wel[1]=1;
+             if(lru[2]<=lru[lux]) wel[2]=1;
+             if(lru[3]<=lru[lux]) wel[3]=1;
              wel[lux]=1;lruc[lux]=1;
        end     
-  default:;
+  default:we=0;
   endcase
 end
 endmodule
