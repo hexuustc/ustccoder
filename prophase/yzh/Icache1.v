@@ -28,23 +28,25 @@ module Icache1
   (
     input clk,
     input rst,
-    input [31:0] insaddr,
-    input [31:0] din,
-    output reg [31:0] ins,
-    input req,
-    input wreq,
-    input [3:0] wbyte,
-    output miss,
-    output reg stall,
-    output reg ok,
-    output reg wen,
-    output reg sen,
-    input addr_ok,
+    //对CPU
+    input [31:0] insaddr,         //CPU访问地址
+    input [31:0] din,             //CPU要写入的数据
+    output reg [31:0] ins,       //读出的数据
+    input req,                   //请求 无论读或写都要为1（1个周期）
+    input wreq,                  //写请求（1个周期）
+    input [3:0] wbyte,           //写字节使能，每一位对应1个字节，比如1000是要把din的高8位写入insaddr地址对应数据的高8位中
+    output miss,                 //缺失信号
+    output reg stall,            //stall为1时，应阻塞流水线
+    output reg ok,               //读或写完成时，ok=1，持续一个周期
+    //对总线
+    output reg wen,              //写使能，写的时候一直为1
+    output reg sen,              //使能，读和写的时候都为1
+    input addr_ok,               
     input data_ok,
     input burst,
-    output reg [31:0] wdata,
-    output [31:0] addr,
-    input [31:0] sdata
+    output reg [31:0] wdata,    //向总线写的数据
+    output [31:0] addr,         //读或写的地址
+    input [31:0] sdata          //从总线读的数据
 );
 
 wire [suoyin_len - 1:0]    suoyin;
@@ -65,6 +67,7 @@ wire [1:0]                 lruin [3:0] ;
 reg  [3:0]                 lruc        ;
 wire [31:0]                data        ;
 reg                        wdx         ;
+wire [31:0] addr0,addr1;
 //数据通路
 assign lruin[0]=lruc[0]?2'b00:(lru[0]+1);
 assign lruin[1]=lruc[1]?2'b00:(lru[1]+1);
@@ -74,7 +77,6 @@ assign lruin[3]=lruc[3]?2'b00:(lru[3]+1);
 assign bj       = insaddr[31         : 32 - tag_len ];
 assign suoyin   = insaddr[31-tag_len : 2  + line_len];
 assign linex    = insaddr[1 +line_len: 2]            ;
-assign addr     = {insaddr[31:2+line_len],6'b0};
 assign data     = wdx?din:sdata;
 
 assign vg=1;
@@ -552,6 +554,10 @@ begin
   end
   end
 end
+//地址选择
+assign addr0    = {insaddr[31:2+line_len],6'b0};
+assign addr1    = {tag[lux],suoyin,6'b0};
+assign addr     = wen?addr1:addr0;
 //使能控制
 always @ *
 begin
