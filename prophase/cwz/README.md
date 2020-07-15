@@ -4,7 +4,7 @@ My design sources of 5 stage pipeline cpu with forwarding unit and hazard detect
 Note: The pipeline cpu has passed test 1 and test 2 in cod experiment 5.
 
 ### axi interface for cache
-cache_to_axi.v acts as the interface from cache to axi interface. It has passed a single read burst test, a single write burst test as well as read after write.
+cache_to_axi.v acts as the interface from cache to axi interface. It has passed on-board test together with cod multi-cycle CPU.
 
 ### arbiter between icache and dcache
-myCPU_top.v uses Xilinx IP core axi_crossbar as an arbiter between icache and dcache.
+myCPU_top.v is the top file of my test. It uses Xilinx IP core axi_crossbar as an arbiter between icache and dcache. It also uses Xilinx IP core axi_clock_converter and block memory. The CPU is multi-cycle CPU.
