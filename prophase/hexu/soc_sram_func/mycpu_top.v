@@ -462,7 +462,7 @@ begin
                     else if(rs1==5'b00000) inscode1=56;
                     else if(rs1==5'b00100) inscode1=57;
                 end
-            else reins=1;
+            else if(va1) begin reins1=1; inscode1=0; end
     ra0=rs1;ra1=rt1;
 end
 
@@ -558,7 +558,7 @@ begin
     else if(inscode3==39) begin jump=3; data_sram_wen=0; end//默认rs为有符号数
     else if(inscode3==40) begin jump=3; data_sram_wen=0; aimdata1=pc-4; end//默认rs为有符号数
     else if((inscode3==47)||(inscode3==48)) begin jump=0; data_sram_addr1=r_y; data_sram_wen=0;
-                              if((rs2==aimaddr1)||(rt2==aimaddr1)) delay_block=1;
+                              if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
                               else delay_block=0;
                               /*  case(r_y%4)
                                     0:bvalue=spo1[31:24];
@@ -569,7 +569,7 @@ begin
                                 if(inscode3==47) aimdata1={{24{bvalue[7]}},bvalue}; else aimdata1={{24{zero}},bvalue};
                        */   end//要后期存数
     else if((inscode3==49)||(inscode3==50)) begin jump=0; data_sram_wen=0; data_sram_addr1=r_y;
-                                if(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0])) delay_block=1;
+                                if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0]))) delay_block=1;
                               else delay_block=0; 
                               /*  case(r_y%4)
                                     0:b2value=spo1[31:16];
@@ -580,7 +580,7 @@ begin
     else if(inscode3==51) 
         begin 
             jump=0; data_sram_wen=0; data_sram_addr1=r_y; aimdata1=0;
-            if(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0])) delay_block=1;
+            if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0]))) delay_block=1;
                 else delay_block=0; 
         end//要后期存数
     else if(inscode3==52) begin jump=0; data_sram_addr1=r_y;//写字节与数据就是位置对应关系。。。。。。。。。。。
