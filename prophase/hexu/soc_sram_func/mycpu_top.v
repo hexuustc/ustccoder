@@ -42,7 +42,8 @@ module mycpu_top//常规指令增加
     output [4:0] debug_wb_rf_wnum,
     output [31:0] debug_wb_rf_wdata
     );
-reg [31:0] a,b,wd,r_wd,d1,cp0_data,inst_sram_rdata1,data_sram_addr1,aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5,pc,pc1,pc2,pc3,pc4,r_pc,r_pc_8,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_ar_abs,r_br,r_br_abs,r_a1r,r_b1r,r_a2r,r_a2r_abs,r_b2r,r_b2r_abs,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
+
+reg [31:0] a,b,wd,r_wd,d1,cp0_data,inst_sram_rdata1,data_sram_addr1,aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5,pc,pc1,pc2,pc3,pc4,r_pc,r_pc_8,r_spo,r_bpo,r_bpo0,r_b2po,r_b2po0,HI,LO,r_mult,r_a,r_b,r_a1,r_b1,r_a2,r_b2,r_ar,r_ar_abs,r_br,r_br_abs,r_a1r,r_b1r,r_a2r,r_a2r_abs,r_b2r,r_b2r_abs,ir,ir1,ir2,ir3,ir4,r_y,r_y1,r_addr32;//ir太多.........................
 reg [15:0] r_imm,b2value;
 reg [7:0] ad0,ad1,dpra,bvalue;
 reg [5:0] inscode,inscode1,inscode2,inscode3,inscode4;//指令码
@@ -51,18 +52,22 @@ reg [3:0] m;
 reg [2:0] c_pc,sel;
 reg [1:0] jump;
 reg zero,pd,delay_block,delay_block1,pause,pause1,pause1_1,pause2,pause3,pause4,pause4_1,pause5,pause6,pause7,reins,reins1,reins2,pd1,we,we1,va,r_va,va1,r_va1,va2,va3,va4,va5,va6,va7,zf1,cf1,of1,zf2,cf2,of2,c_inscode1,c_inscode2,c_inscode3,c_inscode4,c_ir1,c_ir2,c_ir3,c_ir4;//c_ir太多...................
+wire [31:0] cp0[31:0];
 wire [31:0] y,pc_8,rd0,rd1,spo0,spo1,addr32,addr0,addr_0,shamt32,BadVAddr,Count,Status,Cause,EPC;
 wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。。。。。。。。
 wire [5:0] op,funct,op1,funct1,op2,funct2,op3,funct3,op4,funct4;//可以优化................................
 wire [4:0] rs,rt,rd,shamt,rs1,rt1,rd01,shamt1,rs2,rt2,rd02,shamt2,rs3,rt3,rd03,shamt3,rs4,rt4,rd04,shamt4;//可以优化。。。。。。。。。。。。。。。。。
-wire zf,cf,of,q1,exc,back,rst;
+wire [1:0] exc;
+wire zf,cf,of,q1,back,rst;
 
 
 alu alu1(y,zf,cf,of,a,b,m);
 register_file register_file(clk,ra0,rd0,ra1,rd1,wa,we,wd,rst);
 //dist_mem_gen_0 dist_mem_gen_0(ad0,spo0);//指令存储器256深度
 //dist_mem_gen_1 dist_mem_gen_1(dpra,d1,ad1,clk,we1,spo1);//数据存储器256深度,双端口
-CP0 CP0(pc,y,cp0_data,inscode2,inscode3,ext_int,cp0_num,sel,clk,rst,of,va2,va3,reins2,exc,back,BadVAddr,Count,Status,Cause,EPC);
+CP0 CP0(pc,y,cp0_data,inscode2,inscode3,ext_int,cp0_num,sel,clk,rst,of,va2,va3,reins2,exc,back,BadVAddr,Count,Status,Cause,EPC,
+        cp0[0],cp0[1],cp0[2],cp0[3],cp0[4],cp0[5],cp0[6],cp0[7],cp0[8],cp0[9],cp0[10],cp0[11],cp0[12],cp0[13],cp0[14],cp0[15],cp0[16],cp0[17],cp0[18],cp0[19],
+        cp0[20],cp0[21],cp0[22],cp0[23],cp0[24],cp0[25],cp0[26],cp0[27],cp0[28],cp0[29],cp0[30],cp0[31]);//怎么简化写法
 
 //assign pc1=pc[9:2];//截断操作
 
@@ -251,10 +256,6 @@ end
 
 always@(posedge clk,posedge rst)
 begin
-    if(rst) va4<=0;
-    else if(pause4) va4<=va4;
-    else va4<=va3;
-    
     if(rst) va5<=0;
     else if(pause5) va5<=va5;
     else va5<=va4;
@@ -268,13 +269,18 @@ begin
     else va7<=va6;
 end
 
-always@(posedge clk,posedge rst,posedge back,posedge exc)//有效位
+always@(posedge clk,posedge rst,posedge exc)//有效位
 begin 
     if(rst) va3<=0;
     else if(delay_block) va3<=0;
     else if(pause3) va3<=va3;
-    else if(back||exc) va3<=0;
-    else va3<=va2;    
+    else if(exc) va3<=0;
+    else va3<=va2;  
+    
+    if(rst) va4<=0;
+    else if(pause4) va4<=va4;
+    else if(exc==2) va4<=0;
+    else va4<=va3;  
 end
 
 always@(*)
@@ -465,7 +471,7 @@ begin
     if(rst) va2=0;//这就是分支延迟槽
     else if(pause2) va2=va2;
     //else if(jump) va2=0;
-    else if (back||exc) va2=0;
+    else if (exc) va2=0;
     else va2=r_va1;
     if(delay_block) pause2=1;
     else pause2=0;
@@ -491,10 +497,10 @@ begin
     else if(inscode2==8) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end//不是要存值
     else if(inscode2==9) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end//不是要存值
     else if(inscode2==10) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end//不是要存值
-    else if(inscode2==11) begin a=r_ar_abs; b=r_br_abs; m=7; end//除法待优化。。。。。。。。。。。。。。。。
-    else if(inscode2==12) begin a=r_ar; b=r_br; m=7; end//未区分，除法待优化。。。。。。。。。。。。。。。。
-    else if(inscode2==13) begin a=r_ar; b=r_br; m=5; end//乘法算法待优化
-    else if(inscode2==14) begin a=r_ar; b=r_br; m=6; end//乘法算法待优化
+    else if(inscode2==11) begin a=r_ar_abs; b=r_br_abs; m=7;aimaddr=0; end//除法待优化。。。。。。。。。。。。。。。。
+    else if(inscode2==12) begin a=r_ar; b=r_br; m=7;aimaddr=0; end//未区分，除法待优化。。。。。。。。。。。。。。。。
+    else if(inscode2==13) begin a=r_ar_abs; b=r_br_abs; m=5; aimaddr=0;end//乘法算法待优化
+    else if(inscode2==14) begin a=r_ar; b=r_br; m=6;aimaddr=0; end//乘法算法待优化
     else if(inscode2==15) begin a=r_ar; b=r_br; m=2; aimaddr=rd02; end
     else if(inscode2==16) begin a=r_ar; b=addr0; m=2; aimaddr=rt2; end
     else if(inscode2==17) begin a=0; b=addr_0; m=0; aimaddr=rt2; end
@@ -504,11 +510,11 @@ begin
     else if(inscode2==21) begin a=r_ar; b=r_br; m=4; aimaddr=rd02; end
     else if(inscode2==22) begin a=r_ar; b=addr0; m=4; aimaddr=rt2; end
     else if(inscode2==23) begin a=shamt32; b=r_br; m=8; aimaddr=rd02; end
-    else if(inscode2==24) begin a=r_ar; b=r_br; m=8; aimaddr=rd02; end
+    else if(inscode2==24) begin a={{26{zero}},r_ar[4:0]}; b=r_br; m=8; aimaddr=rd02; end
     else if(inscode2==25) begin a=shamt32; b=r_br; m=10; aimaddr=rd02; end
-    else if(inscode2==26) begin a=r_ar; b=r_br; m=10; aimaddr=rd02; end
+    else if(inscode2==26) begin a={{26{zero}},r_ar[4:0]}; b=r_br; m=10; aimaddr=rd02; end
     else if(inscode2==27) begin a=shamt32; b=r_br; m=9; aimaddr=rd02; end
-    else if(inscode2==28) begin a=r_ar; b=r_br; m=9; aimaddr=rd02; end
+    else if(inscode2==28) begin a={{26{zero}},r_ar[4:0]}; b=r_br; m=9; aimaddr=rd02; end
     else if(inscode2==29) begin a=r_ar; b=r_br; m=1; aimaddr=0; end//另一个alu暂未加上，可加。。。。。。。。。。。。
     else if(inscode2==30) begin a=r_ar; b=r_br; m=1; aimaddr=0; end
     else if((inscode2==47)||(inscode2==48)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
@@ -518,7 +524,7 @@ begin
     else if((inscode2==35)||(inscode2==36)||(inscode2==38)) aimaddr=31;
     else if((inscode2==40)||(inscode2==41)||(inscode2==42)) aimaddr=rd02;
     else if(inscode2==56) aimaddr=rt2;
-    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; end
+    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; cp0_num=rd02; cp0_data=y;end
     else aimaddr=0;
 end
 
@@ -579,17 +585,17 @@ begin
         end//要后期存数
     else if(inscode3==52) begin jump=0; data_sram_addr1=r_y;//写字节与数据就是位置对应关系。。。。。。。。。。。
                                 case(r_y[1:0])
-                                    0:begin data_sram_wen=4'b1000;data_sram_wdata[31:24]=r_b1r[7:0]; end //小尾端暂未考虑。。。。。。。。。。。
-                                    1:begin data_sram_wen=4'b0100;data_sram_wdata[23:16]=r_b1r[7:0]; end//小尾端暂未考虑。。。。。。。。。。。
-                                    2:begin data_sram_wen=4'b0010;data_sram_wdata[15:8]=r_b1r[7:0]; end//小尾端暂未考虑。。。。。。。。。。。
-                                    3:begin data_sram_wen=4'b0001;data_sram_wdata[7:0]=r_b1r[7:0]; end//小尾端暂未考虑。。。。。。。。。。。
+                                    0:begin data_sram_wen=4'b0001;data_sram_wdata[7:0]=r_b1r[7:0]; end //已进行小尾端处理
+                                    1:begin data_sram_wen=4'b0010;data_sram_wdata[15:8]=r_b1r[7:0]; end//已进行小尾端处理
+                                    2:begin data_sram_wen=4'b0100;data_sram_wdata[23:16]=r_b1r[7:0]; end//已进行小尾端处理。
+                                    3:begin data_sram_wen=4'b1000;data_sram_wdata[31:24]=r_b1r[7:0]; end//已进行小尾端处理
                                 endcase
                           end
     else if(inscode3==53) begin jump=0; data_sram_addr1=r_y;
                                 case(r_y[1:0])
-                                    0:begin data_sram_wen=4'b1100;data_sram_wdata[31:16]=r_b1r[15:0]; end//小尾端暂未考虑。。。。。。。。。。。
-                                    2:begin data_sram_wen=4'b0011;data_sram_wdata[15:0]=r_b1r[15:0]; end//小尾端暂未考虑。。。。。。。。。。。
-                                default:data_sram_wen=4'b0000;//小尾端暂未考虑。。。。。。。。。。。
+                                    0:begin data_sram_wen=4'b0011;data_sram_wdata[15:0]=r_b1r[15:0]; end//已进行小尾端处理
+                                    2:begin data_sram_wen=4'b1100;data_sram_wdata[31:16]=r_b1r[15:0]; end//已进行小尾端处理
+                                default:data_sram_wen=4'b0000;//已进行小尾端处理
                                 endcase
                           end
     else if(inscode3==54) begin jump=0; data_sram_addr1=r_y; if(r_y[1:0]==0) data_sram_wen=4'b1111; else data_sram_wen=0; data_sram_wdata=r_b1r; end
@@ -603,11 +609,38 @@ begin
                             if(funct3[2:0]==0)
                             begin
                                 case(rd03)
+                                    0:aimdata1=cp0[0];
+                                    1:aimdata1=cp0[1];
+                                    2:aimdata1=cp0[2];
+                                    3:aimdata1=cp0[3];
+                                    4:aimdata1=cp0[4];
+                                    5:aimdata1=cp0[5];
+                                    6:aimdata1=cp0[6];
+                                    7:aimdata1=cp0[7];
                                     8:aimdata1=BadVAddr;
                                     9:aimdata1=Count;
+                                    10:aimdata1=cp0[10];
+                                    11:aimdata1=cp0[11];
                                     12:aimdata1=Status;
                                     13:aimdata1=Cause;
                                     14:aimdata1=EPC;
+                                    15:aimdata1=cp0[15];
+                                    16:aimdata1=cp0[16];
+                                    17:aimdata1=cp0[17];
+                                    18:aimdata1=cp0[18];
+                                    19:aimdata1=cp0[19];
+                                    20:aimdata1=cp0[20];
+                                    21:aimdata1=cp0[21];
+                                    22:aimdata1=cp0[22];
+                                    23:aimdata1=cp0[23];
+                                    24:aimdata1=cp0[24];
+                                    25:aimdata1=cp0[25];
+                                    26:aimdata1=cp0[26];
+                                    27:aimdata1=cp0[27];
+                                    28:aimdata1=cp0[28];
+                                    29:aimdata1=cp0[29];
+                                    30:aimdata1=cp0[30];
+                                    31:aimdata1=cp0[31];
                                 default: aimdata1=0;//默认其他为0；暂未考虑地址错误例外...........
                                 endcase
                             end
@@ -617,9 +650,6 @@ begin
         begin
             jump=0; 
             data_sram_wen=0;
-            sel=funct3[2:0];
-            cp0_num=rd03;
-            cp0_data=r_y;
         end
     else if(inscode3==18) begin jump=0; data_sram_wen=0; aimdata1=~r_y; end
     else begin jump=0; data_sram_wen=0; aimdata1=r_y; end
@@ -657,7 +687,23 @@ begin
                               if(r_a2r[31]==0) HI=r_a2r_abs%r_b2r_abs; else HI=-(r_a2r_abs%r_b2r_abs);
                           end//这个寄存器可以在前面写回，省去传递
     else if(inscode4==12) begin we=0; LO=r_y1; HI=r_a2r%r_b2r; end//这个寄存器可以在前面写回，省去传递
-    else if(inscode4==13) begin we=0; HI=r_y1; LO=r_a2r*r_b2r; end//这个寄存器可以在前面写回，省去传递
+    else if(inscode4==13) begin //此为有符号乘法
+                              we=0; HI=r_y1; LO=r_a2r*r_b2r; 
+                              r_mult=r_a2r_abs*r_b2r_abs;
+                              if(r_a2r[31]==r_b2r[31])
+                              begin
+                                HI=r_y1;LO=r_mult;
+                              end
+                              else
+                              begin
+                                if((r_a2r==0)||(r_b2r==0)) begin HI=0; LO=0; end
+                                else begin
+                                          LO=-r_mult;
+                                          if(r_mult==0) HI=-r_y1;
+                                          else HI=~r_y1;
+                                     end
+                              end
+                          end//这个寄存器可以在前面写回，省去传递
     else if(inscode4==14) begin we=0; HI=r_y1; LO=r_a2r*r_b2r; end//这个寄存器可以在前面写回，省去传递
     else if(inscode4==15) begin we=1; wa=rd04; wd=r_y1; end
     else if(inscode4==16) begin we=1; wa=rt4; wd=r_y1; end
@@ -684,11 +730,11 @@ begin
     else if((inscode4==47)||(inscode4==48)) 
         begin 
             we=1; wa=rt4; 
-            case(r_y1[1:0])//暂无进行小尾端处理，后期再议。。。。。。。。。。。。。。。。。。。。。
-                0:bvalue=data_sram_rdata[31:24];
-                1:bvalue=data_sram_rdata[23:16];
-                2:bvalue=data_sram_rdata[15:8];
-                3:bvalue=data_sram_rdata[7:0];
+            case(r_y1[1:0])//已进行小尾端处理
+                0:bvalue=data_sram_rdata[7:0];
+                1:bvalue=data_sram_rdata[15:8];
+                2:bvalue=data_sram_rdata[23:16];
+                3:bvalue=data_sram_rdata[31:24];
             endcase
             if(inscode4==47) wd={{24{bvalue[7]}},bvalue};
             else wd={{24{zero}},bvalue};
@@ -696,9 +742,9 @@ begin
     else if((inscode4==49)||(inscode4==50)) 
         begin //CP0判断处理。。。。。。。。。。。。。。。。。。。。。。。。。
             if (pd) we=1; else we=0; wa=rt4; 
-            case(r_y1[1:0])//暂无进行小尾端处理，后期再议。。。。。。。。。。。。。。。。。。。。。
-                0:b2value=data_sram_rdata[31:16];
-                2:b2value=data_sram_rdata[15:0];
+            case(r_y1[1:0])//已进行小尾端处理
+                0:b2value=data_sram_rdata[15:0];
+                2:b2value=data_sram_rdata[31:16];
             endcase
             if (inscode4==49) wd={{16{b2value[15]}},b2value}; 
             else wd={{16{zero}},b2value};
