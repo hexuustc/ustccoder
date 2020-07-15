@@ -21,7 +21,7 @@
 
 
 module cache_to_axi
-#(parameter ID = 1'b0, BURST_BYTES = 64)
+#(parameter ID = 1'b0, BURST_BYTES = 4)
 //ID = 1 means instruction, ID = 0 means data)
 (
     input         clk,
@@ -41,10 +41,10 @@ module cache_to_axi
     //ar
     output [3 :0] arid,
     output [31:0] araddr,
-    output [3 :0] arlen,
+    output [7 :0] arlen,
     output [2 :0] arsize,
     output [1 :0] arburst,
-    output [1 :0] arlock,
+    output        arlock,
     output [3 :0] arcache,
     output [2 :0] arprot,
     output        arvalid,
@@ -59,10 +59,10 @@ module cache_to_axi
     //aw
     output [3 :0] awid,
     output [31:0] awaddr,
-    output [3 :0] awlen,
+    output [7 :0] awlen,
     output [2 :0] awsize,
     output [1 :0] awburst,
-    output [1 :0] awlock,
+    output        awlock,
     output [3 :0] awcache,
     output [2 :0] awprot,
     output        awvalid,
@@ -81,6 +81,13 @@ module cache_to_axi
     output        bready
 );
 
+reg en_reg;
+
+always @(posedge clk)
+begin
+    en_reg <= rstn ? en : 0;
+end
+
 localparam R_NO_TASK = 2'b11;
 localparam R_ADDR_HANDSHAKE = 2'b01;
 localparam R_DATA_HANDSHAKE = 2'b10;
@@ -95,9 +102,9 @@ end
 always @(*)
 begin
     case (r_state)
-        R_NO_TASK: r_next_state = en & ~wen ? R_ADDR_HANDSHAKE : r_state;
+        R_NO_TASK: r_next_state = en & ~en_reg & ~wen ? R_ADDR_HANDSHAKE : r_state;
         R_ADDR_HANDSHAKE: r_next_state = arready ? R_DATA_HANDSHAKE : r_state;
-        R_DATA_HANDSHAKE: r_next_state = rlast ? R_NO_TASK : r_state;
+        R_DATA_HANDSHAKE: r_next_state = rvalid & rready & rlast ? R_NO_TASK : r_state;
         default : r_next_state = R_NO_TASK;
     endcase
 end
@@ -108,7 +115,7 @@ assign araddr   = ~r_state[1] & r_state[0] ? addr : 32'b0;
 assign arlen    = (BURST_BYTES >> 2) - 1;
 assign arsize   = 3'b010;
 assign arburst  = 2'b10;
-assign arlock   = 2'b00;
+assign arlock   = 1'b0;
 assign arcache  = 4'b0000;
 assign arprot   = {2'b00, ID};
 assign arvalid  = ~r_state[1] & r_state[0];
@@ -134,7 +141,7 @@ end
 always @(*)
 begin
     case (w_state)
-        W_NO_TASK: w_next_state = en & wen ? W_ADDR_HANDSHAKE : w_state;
+        W_NO_TASK: w_next_state = en & ~en_reg & wen ? W_ADDR_HANDSHAKE : w_state;
         W_ADDR_HANDSHAKE: w_next_state = awready ? W_DATA_HANDSHAKE : w_state;
         W_DATA_HANDSHAKE: w_next_state = (num == (BURST_BYTES >> 2) - 1) ? W_RESP_HANDSHAKE
                                                    : w_state;
@@ -155,7 +162,7 @@ assign awaddr   = ~w_state[1] & w_state[0] ? addr : 0;
 assign awlen    = (BURST_BYTES >> 2) - 1;
 assign awsize   = 3'b010;
 assign awburst  = 2'b10;
-assign awlock   = 2'b00;
+assign awlock   = 1'b0;
 assign awcache  = 4'b0000;
 assign awprot   = {2'b00, ID};
 assign awvalid  = ~w_state[1] & w_state[0];
@@ -164,7 +171,7 @@ assign awvalid  = ~w_state[1] & w_state[0];
 assign wid    = {3'b000, ID};
 assign wdata  = write_data;
 assign wstrb  = 4'b1111;
-assign wlast  = (num == 15);
+assign wlast  = (num == (BURST_BYTES >> 2) - 1);
 assign wvalid = w_state[1] & ~w_state[0];
 
 //write response channel
@@ -173,5 +180,5 @@ assign bready = ~w_state[1] & ~w_state[0];
 //cache ok signals
 assign addr_ok  = (~r_state[1] & r_state[0] & arvalid & arready) | (~w_state[1] & w_state[0] & awvalid & awready);
 assign data_ok  = (r_state[1] & ~r_state[0] & rvalid & rready) | (w_state[1] & ~w_state[0] & wvalid & wready);
-assign burst_ok = (r_state[1] & ~r_state[0] & rlast) | (~w_state[1] & ~w_state[0] & bvalid & bready);
+assign burst_ok =  (r_state[1] & ~r_state[0] & rvalid & rready & rlast) | (~w_state[1] & ~w_state[0] & bvalid & bready);
 endmodule
