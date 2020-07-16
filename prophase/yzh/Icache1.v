@@ -614,18 +614,22 @@ end
 always @ *
 begin
   wet=4'b0;wel=4'b0;lruc=4'b0;ok=0;sen=0;wen=0;wdx=0;stall=0;
-  wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
-  wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0;
-  if(rst)  begin  wdata=0;we=0;ins=32'b0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0; end
+  if(rst)  begin  wdata=0;we=0;ins=32'b0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;
+                  wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
+                  wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0; end
   case(s)
-  FREE:we=0;
+  FREE:begin we=0;wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
+                  wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0;
+       end
   PD:  if(wreq&~miss) begin ins=din;wdx=1;ok=1;we=1;wed[linex]=wbyte;dir[lux][suoyin]=1; 
              if(lru[0]<=lru[lux]) wel[0]=1;
              if(lru[1]<=lru[lux]) wel[1]=1;
              if(lru[2]<=lru[lux]) wel[2]=1;
              if(lru[3]<=lru[lux]) wel[3]=1;
              wel[lux]=1;lruc[lux]=1;end
-       else if(~wreq&~miss) begin ins=cdat[lux][linex];ok=1;we=0; 
+       else if(~wreq&~miss) begin ins=cdat[lux][linex];ok=1;we=0;wed[0]=0;
+             wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
+             wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0; 
              if(lru[0]<=lru[lux]) wel[0]=1;
              if(lru[1]<=lru[lux]) wel[1]=1;
              if(lru[2]<=lru[lux]) wel[2]=1;
@@ -641,7 +645,7 @@ begin
              if(data_ok) wed[count-1]=4'b1111;
        end//��ȡ
   FH:  begin if(we) begin ins=din;wdx=1;ok=1;dir[lux][suoyin]=1;wed[linex]=wbyte; end
-             else   begin ins=cdat[lux][linex];ok=1;dir[lux][suoyin]=0; end
+             else   begin ins=cdat[lux][linex];ok=1;dir[lux][suoyin]=0;wed[15]=4'b1111; end
              wet[lux]=1;v[lux][suoyin]=1;stall=1;
              if(lru[0]<=lru[lux]) wel[0]=1;
              if(lru[1]<=lru[lux]) wel[1]=1;
