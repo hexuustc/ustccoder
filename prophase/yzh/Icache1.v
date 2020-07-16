@@ -67,8 +67,9 @@ wire [1:0]                 lruin [3:0] ;
 reg  [3:0]                 lruc        ;
 wire [31:0]                data        ;
 reg                        wdx         ;
+reg  [31:0] wrd [15:0];
 wire [31:0] addr0,addr1;
-//Êı¾İÍ¨Â·
+//ï¿½ï¿½ï¿½ï¿½Í¨Â·
 assign lruin[0]=lruc[0]?2'b00:(lru[0]+1);
 assign lruin[1]=lruc[1]?2'b00:(lru[1]+1);
 assign lruin[2]=lruc[2]?2'b00:(lru[2]+1);
@@ -91,97 +92,97 @@ tag0 T0 (.addra(suoyin),
 
 data D00 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[0]),
          .douta(cdat[0][0]),
          .ena(en[0]),
          .wea(wed[0]));
 data D01 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[1]),
          .douta(cdat[0][1]),
          .ena(en[0]),
          .wea(wed[1]));
 data D02 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[2]),
          .douta(cdat[0][2]),
          .ena(en[0]),
          .wea(wed[2]));
 data D03 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[3]),
          .douta(cdat[0][3]),
          .ena(en[0]),
          .wea(wed[3]));
 data D04 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[4]),
          .douta(cdat[0][4]),
          .ena(en[0]),
          .wea(wed[4]));
 data D05 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[5]),
          .douta(cdat[0][5]),
          .ena(en[0]),
          .wea(wed[5]));
 data D06 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[6]),
          .douta(cdat[0][6]),
          .ena(en[0]),
          .wea(wed[6]));
 data D07 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[7]),
          .douta(cdat[0][7]),
          .ena(en[0]),
          .wea(wed[7]));
 data D08 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[8]),
          .douta(cdat[0][8]),
          .ena(en[0]),
          .wea(wed[8]));
 data D09 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[9]),
          .douta(cdat[0][9]),
          .ena(en[0]),
          .wea(wed[9]));
 data D0a (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[10]),
          .douta(cdat[0][10]),
          .ena(en[0]),
          .wea(wed[10]));
 data D0b (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[11]),
          .douta(cdat[0][11]),
          .ena(en[0]),
          .wea(wed[11]));
 data D0c (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[12]),
          .douta(cdat[0][12]),
          .ena(en[0]),
          .wea(wed[12]));
 data D0d (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[13]),
          .douta(cdat[0][13]),
          .ena(en[0]),
          .wea(wed[13]));
 data D0e (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[14]),
          .douta(cdat[0][14]),
          .ena(en[0]),
          .wea(wed[14]));
 data D0f (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[15]),
          .douta(cdat[0][15]),
          .ena(en[0]),
          .wea(wed[15]));
@@ -200,97 +201,97 @@ tag0 T1 (.addra(suoyin),
          .wea(wet[1]));
 data D10 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[0]),
          .douta(cdat[1][0]),
          .ena(en[1]),
          .wea(wed[0]));
 data D11 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[1]),
          .douta(cdat[1][1]),
          .ena(en[1]),
          .wea(wed[1]));
 data D12 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[2]),
          .douta(cdat[1][2]),
          .ena(en[1]),
          .wea(wed[2]));
 data D13 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[3]),
          .douta(cdat[1][3]),
          .ena(en[1]),
          .wea(wed[3]));
 data D14 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[4]),
          .douta(cdat[1][4]),
          .ena(en[1]),
          .wea(wed[4]));
 data D15 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[5]),
          .douta(cdat[1][5]),
          .ena(en[1]),
          .wea(wed[5]));
 data D16 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[6]),
          .douta(cdat[1][6]),
          .ena(en[1]),
          .wea(wed[6]));
 data D17 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[7]),
          .douta(cdat[1][7]),
          .ena(en[1]),
          .wea(wed[7]));
 data D18 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[8]),
          .douta(cdat[1][8]),
          .ena(en[1]),
          .wea(wed[8]));
 data D19 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[9]),
          .douta(cdat[1][9]),
          .ena(en[1]),
          .wea(wed[9]));
 data D1a (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[10]),
          .douta(cdat[1][10]),
          .ena(en[1]),
          .wea(wed[10]));
 data D1b (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[11]),
          .douta(cdat[1][11]),
          .ena(en[1]),
          .wea(wed[11]));
 data D1c (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[12]),
          .douta(cdat[1][12]),
          .ena(en[1]),
          .wea(wed[12]));
 data D1d (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[13]),
          .douta(cdat[1][13]),
          .ena(en[1]),
          .wea(wed[13]));
 data D1e (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[14]),
          .douta(cdat[1][14]),
          .ena(en[1]),
          .wea(wed[14]));
 data D1f (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[15]),
          .douta(cdat[1][15]),
          .ena(en[1]),
          .wea(wed[15]));
@@ -309,97 +310,97 @@ tag0 T2 (.addra(suoyin),
          .wea(wet[2]));
 data D20 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[0]),
          .douta(cdat[2][0]),
          .ena(en[2]),
          .wea(wed[0]));
 data D21 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[1]),
          .douta(cdat[2][1]),
          .ena(en[2]),
          .wea(wed[1]));
 data D22 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[2]),
          .douta(cdat[2][2]),
          .ena(en[2]),
          .wea(wed[2]));
 data D23 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[3]),
          .douta(cdat[2][3]),
          .ena(en[2]),
          .wea(wed[3]));
 data D24 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[4]),
          .douta(cdat[2][4]),
          .ena(en[2]),
          .wea(wed[4]));
 data D25 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[5]),
          .douta(cdat[2][5]),
          .ena(en[2]),
          .wea(wed[5]));
 data D26 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[6]),
          .douta(cdat[2][6]),
          .ena(en[2]),
          .wea(wed[6]));
 data D27 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[7]),
          .douta(cdat[2][7]),
          .ena(en[2]),
          .wea(wed[7]));
 data D28 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[8]),
          .douta(cdat[2][8]),
          .ena(en[2]),
          .wea(wed[8]));
 data D29 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[9]),
          .douta(cdat[2][9]),
          .ena(en[2]),
          .wea(wed[9]));
 data D2a (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[10]),
          .douta(cdat[2][10]),
          .ena(en[2]),
          .wea(wed[10]));
 data D2b (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[11]),
          .douta(cdat[2][11]),
          .ena(en[2]),
          .wea(wed[11]));
 data D2c (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[12]),
          .douta(cdat[2][12]),
          .ena(en[2]),
          .wea(wed[12]));
 data D2d (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[13]),
          .douta(cdat[2][13]),
          .ena(en[2]),
          .wea(wed[13]));
 data D2e (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[14]),
          .douta(cdat[2][14]),
          .ena(en[2]),
          .wea(wed[14]));
 data D2f (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[15]),
          .douta(cdat[2][15]),
          .ena(en[2]),
          .wea(wed[15]));
@@ -418,97 +419,97 @@ tag0 T3 (.addra(suoyin),
          .wea(wet[3]));
 data D30 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[0]),
          .douta(cdat[3][0]),
          .ena(en[3]),
          .wea(wed[0]));
 data D31 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[1]),
          .douta(cdat[3][1]),
          .ena(en[3]),
          .wea(wed[1]));
 data D32 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[2]),
          .douta(cdat[3][2]),
          .ena(en[3]),
          .wea(wed[2]));
 data D33 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[3]),
          .douta(cdat[3][3]),
          .ena(en[3]),
          .wea(wed[3]));
 data D34 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[4]),
          .douta(cdat[3][4]),
          .ena(en[3]),
          .wea(wed[4]));
 data D35 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[5]),
          .douta(cdat[3][5]),
          .ena(en[3]),
          .wea(wed[5]));
 data D36 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[6]),
          .douta(cdat[3][6]),
          .ena(en[3]),
          .wea(wed[6]));
 data D37 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[7]),
          .douta(cdat[3][7]),
          .ena(en[3]),
          .wea(wed[7]));
 data D38 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[8]),
          .douta(cdat[3][8]),
          .ena(en[3]),
          .wea(wed[8]));
 data D39 (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[9]),
          .douta(cdat[3][9]),
          .ena(en[3]),
          .wea(wed[9]));
 data D3a (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[10]),
          .douta(cdat[3][10]),
          .ena(en[3]),
          .wea(wed[10]));
 data D3b (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[11]),
          .douta(cdat[3][11]),
          .ena(en[3]),
          .wea(wed[11]));
 data D3c (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[12]),
          .douta(cdat[3][12]),
          .ena(en[3]),
          .wea(wed[12]));
 data D3d (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[13]),
          .douta(cdat[3][13]),
          .ena(en[3]),
          .wea(wed[13]));
 data D3e (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[14]),
          .douta(cdat[3][14]),
          .ena(en[3]),
          .wea(wed[14]));
 data D3f (.addra(suoyin),
          .clka(clk),
-         .dina(data),
+         .dina(wrd[15]),
          .douta(cdat[3][15]),
          .ena(en[3]),
          .wea(wed[15]));
@@ -522,13 +523,13 @@ lru  L3 (.addra(suoyin),
 wire [3:0] mz;
 reg  [1:0] lux;
 reg  [4:0] count;
-//ÅĞ¶ÏÊÇ·ñÈ±Ê§
+//ï¿½Ğ¶ï¿½ï¿½Ç·ï¿½È±Ê§
 assign mz[0]=(bj==tag[0])&v[0][suoyin];
 assign mz[1]=(bj==tag[1])&v[1][suoyin];
 assign mz[2]=(bj==tag[2])&v[2][suoyin];
 assign mz[3]=(bj==tag[3])&v[3][suoyin];
 assign miss=~(mz[0]|mz[1]|mz[2]|mz[3]);
-//Ñ¡ÔñÄÇÒ»Â·
+//Ñ¡ï¿½ï¿½ï¿½ï¿½Ò»Â·
 always @ *
 begin
   if(rst) lux=2'b00;
@@ -554,17 +555,17 @@ begin
   end
   end
 end
-//µØÖ·Ñ¡Ôñ
+//ï¿½ï¿½Ö·Ñ¡ï¿½ï¿½
 assign addr0    = {insaddr[31:2+line_len],6'b0};
 assign addr1    = {tag[lux],suoyin,6'b0};
 assign addr     = wen?addr1:addr0;
-//Ê¹ÄÜ¿ØÖÆ
+//Ê¹ï¿½Ü¿ï¿½ï¿½ï¿½
 always @ *
 begin
   en=4'b0;
   en[lux]=1;
 end
-//×´Ì¬»ú
+//×´Ì¬ï¿½ï¿½
 localparam FREE = 3'b000;
 localparam PD   = 3'b001;
 localparam WB   = 3'b010;
@@ -596,9 +597,18 @@ begin
   endcase
 end
 
-always @ (posedge data_ok or posedge addr_ok)
-if(addr_ok) count<=0;
-else        count<=count+1;
+always @ (posedge clk)
+if(rst)
+begin
+  count<=0;wrd[0]<=0;wrd[1]<=0;wrd[2]<=0;wrd[3]<=0;wrd[4]<=0;wrd[5]<=0;wrd[6]<=0;wrd[7]<=0;
+  wrd[8]<=0;wrd[9]<=0;wrd[10]<=0;wrd[11]<=0;wrd[12]<=0;wrd[13]<=0;wrd[14]<=0;wrd[15]<=0;
+end
+else if(addr_ok) count<=0;
+else if(data_ok)
+begin
+  count<=count+1;
+  if(s==RD) wrd[count]<=data;
+end
 
 always @ *
 begin
@@ -625,10 +635,10 @@ begin
   WB:  begin stall=1;sen=1;wen=1;
              if(addr_ok) wdata=cdat[lux][0];
              else if(data_ok) wdata=cdat[lux][count[3:0]];
-       end//Ğ´»Ø
+       end//Ğ´ï¿½ï¿½
   RD:  begin stall=1;sen=1;
              if(data_ok) wed[count-1]=4'b1111;
-       end//¶ÁÈ¡
+       end//ï¿½ï¿½È¡
   FH:  begin if(we) begin ins=din;wdx=1;ok=1;dir[lux][suoyin]=1;wed[linex]=wbyte; end
              else   begin ins=cdat[lux][linex];ok=1;dir[lux][suoyin]=0; end
              wet[lux]=1;v[lux][suoyin]=1;stall=1;
