@@ -603,6 +603,7 @@ begin
   count<=0;wrd[0]<=0;wrd[1]<=0;wrd[2]<=0;wrd[3]<=0;wrd[4]<=0;wrd[5]<=0;wrd[6]<=0;wrd[7]<=0;
   wrd[8]<=0;wrd[9]<=0;wrd[10]<=0;wrd[11]<=0;wrd[12]<=0;wrd[13]<=0;wrd[14]<=0;wrd[15]<=0;
 end
+else if(s!=RD&&s!=WB) count<=0;
 else if(addr_ok) count<=0;
 else if(data_ok)
 begin
