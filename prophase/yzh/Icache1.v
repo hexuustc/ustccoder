@@ -31,7 +31,7 @@ module Icache1
     //对CPU
     input [31:0] insaddr,         //CPU访问地址
     input [31:0] din,             //CPU要写入的数据
-    output reg [31:0] ins,       //读出的数据
+    output [31:0] ins,       //读出的数据
     input req,                   //请求 无论读或写都要为1（1个周期）
     input wreq,                  //写请求（1个周期）
     input [3:0] wbyte,           //写字节使能，每一位对应1个字节，比如1000是要把din的高8位写入insaddr地址对应数据的高8位中
@@ -79,7 +79,7 @@ assign bj       = insaddr[31         : 32 - tag_len ];
 assign suoyin   = insaddr[31-tag_len : 2  + line_len];
 assign linex    = insaddr[1 +line_len: 2]            ;
 assign data     = wdx?din:sdata;
-
+assign ins      = we?din:cdat[lux][linex];
 assign vg=1;
 assign dirty=1;
 //way0
@@ -528,7 +528,7 @@ assign mz[0]=(bj==tag[0])&v[0][suoyin];
 assign mz[1]=(bj==tag[1])&v[1][suoyin];
 assign mz[2]=(bj==tag[2])&v[2][suoyin];
 assign mz[3]=(bj==tag[3])&v[3][suoyin];
-assign miss=~(mz[0]|mz[1]|mz[2]|mz[3])&~(s==FREE);
+assign miss=~(mz[0]|mz[1]|mz[2]|mz[3])&(~(s==FREE)|req);
 //选锟斤拷锟斤拷一路
 always @ *
 begin
@@ -614,20 +614,20 @@ end
 always @ *
 begin
   wet=4'b0;wel=4'b0;lruc=4'b0;ok=0;sen=0;wen=0;wdx=0;stall=0;
-  if(rst)  begin  wdata=0;we=0;ins=32'b0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;
+  if(rst)  begin  wdata=0;we=0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;
                   wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
                   wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0; end
   case(s)
   FREE:begin we=0;wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
                   wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0;
        end
-  PD:  if(wreq&~miss) begin ins=din;wdx=1;ok=1;we=1;wed[linex]=wbyte;dir[lux][suoyin]=1; 
+  PD:  if(wreq&~miss) begin wdx=1;ok=1;we=1;wed[linex]=wbyte;dir[lux][suoyin]=1; 
              if(lru[0]<=lru[lux]) wel[0]=1;
              if(lru[1]<=lru[lux]) wel[1]=1;
              if(lru[2]<=lru[lux]) wel[2]=1;
              if(lru[3]<=lru[lux]) wel[3]=1;
              wel[lux]=1;lruc[lux]=1;end
-       else if(~wreq&~miss) begin ins=cdat[lux][linex];ok=1;we=0;wed[0]=0;
+       else if(~wreq&~miss) begin ok=1;we=0;wed[0]=0;
              wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
              wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0; 
              if(lru[0]<=lru[lux]) wel[0]=1;
@@ -644,8 +644,8 @@ begin
   RD:  begin stall=1;sen=1;
              if(data_ok) wed[count-1]=4'b1111;
        end//锟斤拷取
-  FH:  begin if(we) begin ins=din;wdx=1;ok=1;dir[lux][suoyin]=1;wed[linex]=wbyte; end
-             else   begin ins=cdat[lux][linex];ok=1;dir[lux][suoyin]=0;wed[15]=4'b1111; end
+  FH:  begin if(we) begin wdx=1;ok=1;dir[lux][suoyin]=1;wed[linex]=wbyte; end
+             else   begin ok=1;dir[lux][suoyin]=0;wed[15]=4'b1111; end
              wet[lux]=1;v[lux][suoyin]=1;stall=1;
              if(lru[0]<=lru[lux]) wel[0]=1;
              if(lru[1]<=lru[lux]) wel[1]=1;
