@@ -528,7 +528,7 @@ assign mz[0]=(bj==tag[0])&v[0][suoyin];
 assign mz[1]=(bj==tag[1])&v[1][suoyin];
 assign mz[2]=(bj==tag[2])&v[2][suoyin];
 assign mz[3]=(bj==tag[3])&v[3][suoyin];
-assign miss=~(mz[0]|mz[1]|mz[2]|mz[3]);
+assign miss=~(mz[0]|mz[1]|mz[2]|mz[3])&~(s==FREE);
 //ѡ����һ·
 always @ *
 begin
