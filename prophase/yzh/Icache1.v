@@ -49,7 +49,7 @@ module Icache1
     input [31:0] sdata          //�����߶�������
 );
 
-wire [suoyin_len - 1:0]    suoyin;
+wire [suoyin_len - 1:0]    suoyin1;
 wire [tag_len - 1   :0]    tag   [3:0] ;
 wire [1:0]                 lru   [3:0] ;
 reg  [255:0]               v     [3:0] ;
@@ -59,8 +59,12 @@ reg  [3:0]                 wet         ;
 reg  [3:0]                 wel         ;
 reg  [3:0]                 en          ;
 wire [31            :0]    cdat  [3:0] [line_c-1      :0];
-wire [line_len-1    :0]    linex       ;
-wire [tag_len - 1   :0]    bj          ;
+wire [line_len-1    :0]    linex1       ;
+wire [tag_len - 1   :0]    bj1          ;
+reg [line_len-1    :0]    linex       ;
+reg [tag_len - 1   :0]    bj          ;
+reg [suoyin_len - 1:0]    suoyin;
+
 wire                       vg;
 wire                       dirty;
 wire [1:0]                 lruin [3:0] ;
@@ -76,9 +80,9 @@ assign lruin[1]=lruc[1]?2'b00:(lru[1]+1);
 assign lruin[2]=lruc[2]?2'b00:(lru[2]+1);
 assign lruin[3]=lruc[3]?2'b00:(lru[3]+1);
 
-assign bj       = insaddr[31         : 32 - tag_len ];
-assign suoyin   = insaddr[31-tag_len : 2  + line_len];
-assign linex    = insaddr[1 +line_len: 2]            ;
+assign bj1       = insaddr[31         : 32 - tag_len ];
+assign suoyin1   = insaddr[31-tag_len : 2  + line_len];
+assign linex1    = insaddr[1 +line_len: 2]            ;
 assign data     = wdx?din:sdata;
 assign ins      = we?din:cdat[lux][linex];
 assign vg=1;
@@ -529,7 +533,7 @@ assign mz[0]=(bj==tag[0])&v[0][suoyin];
 assign mz[1]=(bj==tag[1])&v[1][suoyin];
 assign mz[2]=(bj==tag[2])&v[2][suoyin];
 assign mz[3]=(bj==tag[3])&v[3][suoyin];
-assign miss=~(mz[0]|mz[1]|mz[2]|mz[3])&(~(s==FREE)|req);
+assign miss =~(mz[0]|mz[1]|mz[2]|mz[3])&(~(s==FREE)|req);
 assign miss1=~(mz[0]|mz[1]|mz[2]|mz[3]);
 assign ok   =~miss1&(~(s==FREE)|req);
 //ѡ����һ·
@@ -618,13 +622,15 @@ always @ *
 begin
   wet=4'b0;wel=4'b0;lruc=4'b0;sen=0;wen=0;wdx=0;stall=0;
   if(rst)  begin  wdata=0;we=0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;
-                  wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
+                  wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;bj=0;suoyin=0;linex=0;
                   wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0; end
   case(s)
   FREE:begin we=0;wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
-                  wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0;
+             wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0;
+             if(req) begin suoyin=suoyin1;bj=bj1;linex=linex1; end
        end
-  PD:  if(wreq&~miss1) begin wdx=1;we=1;wed[linex]=wbyte;dir[lux][suoyin]=1; 
+  PD:  begin suoyin=suoyin1;bj=bj1;linex=linex1;
+       if(wreq&~miss1) begin wdx=1;we=1;wed[linex]=wbyte;dir[lux][suoyin]=1; 
              if(lru[0]<=lru[lux]) wel[0]=1;
              if(lru[1]<=lru[lux]) wel[1]=1;
              if(lru[2]<=lru[lux]) wel[2]=1;
