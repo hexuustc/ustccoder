@@ -28,25 +28,25 @@ module Icache1
   (
     input clk,
     input rst,
-    //¶ÔCPU
-    input [31:0] insaddr,         //CPU·ÃÎÊµØÖ·
-    input [31:0] din,             //CPUÒªÐ´ÈëµÄÊý¾Ý
-    output [31:0] ins,       //¶Á³öµÄÊý¾Ý
-    input req,                   //ÇëÇó ÎÞÂÛ¶Á»òÐ´¶¼ÒªÎª1£¨1¸öÖÜÆÚ£©
-    input wreq,                  //Ð´ÇëÇó£¨1¸öÖÜÆÚ£©
-    input [3:0] wbyte,           //Ð´×Ö½ÚÊ¹ÄÜ£¬Ã¿Ò»Î»¶ÔÓ¦1¸ö×Ö½Ú£¬±ÈÈç1000ÊÇÒª°ÑdinµÄ¸ß8Î»Ð´ÈëinsaddrµØÖ·¶ÔÓ¦Êý¾ÝµÄ¸ß8Î»ÖÐ
-    output miss,                 //È±Ê§ÐÅºÅ
-    output reg stall,            //stallÎª1Ê±£¬Ó¦×èÈûÁ÷Ë®Ïß
-    output reg ok,               //¶Á»òÐ´Íê³ÉÊ±£¬ok=1£¬³ÖÐøÒ»¸öÖÜÆÚ
-    //¶Ô×ÜÏß
-    output reg wen,              //Ð´Ê¹ÄÜ£¬Ð´µÄÊ±ºòÒ»Ö±Îª1
-    output reg sen,              //Ê¹ÄÜ£¬¶ÁºÍÐ´µÄÊ±ºò¶¼Îª1
+    //ï¿½ï¿½CPU
+    input [31:0] insaddr,         //CPUï¿½ï¿½ï¿½Êµï¿½Ö·
+    input [31:0] din,             //CPUÒªÐ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    output [31:0] ins,       //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    input req,                   //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Û¶ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ÒªÎª1ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½
+    input wreq,                  //Ð´ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½
+    input [3:0] wbyte,           //Ð´ï¿½Ö½ï¿½Ê¹ï¿½Ü£ï¿½Ã¿Ò»Î»ï¿½ï¿½Ó¦1ï¿½ï¿½ï¿½Ö½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½1000ï¿½ï¿½Òªï¿½ï¿½dinï¿½Ä¸ï¿½8Î»Ð´ï¿½ï¿½insaddrï¿½ï¿½Ö·ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ÝµÄ¸ï¿½8Î»ï¿½ï¿½
+    output miss,                 //È±Ê§ï¿½Åºï¿½
+    output reg stall,            //stallÎª1Ê±ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë®ï¿½ï¿½
+    output ok,               //ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ok=1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    output reg wen,              //Ð´Ê¹ï¿½Ü£ï¿½Ð´ï¿½ï¿½Ê±ï¿½ï¿½Ò»Ö±Îª1
+    output reg sen,              //Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Ê±ï¿½ï¿½Îª1
     input addr_ok,               
     input data_ok,
     input burst,
-    output reg [31:0] wdata,    //Ïò×ÜÏßÐ´µÄÊý¾Ý
-    output [31:0] addr,         //¶Á»òÐ´µÄµØÖ·
-    input [31:0] sdata          //´Ó×ÜÏß¶ÁµÄÊý¾Ý
+    output reg [31:0] wdata,    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    output [31:0] addr,         //ï¿½ï¿½ï¿½ï¿½Ð´ï¿½Äµï¿½Ö·
+    input [31:0] sdata          //ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 );
 
 wire [suoyin_len - 1:0]    suoyin;
@@ -69,6 +69,7 @@ wire [31:0]                data        ;
 reg                        wdx         ;
 reg  [31:0] wrd [15:0];
 wire [31:0] addr0,addr1;
+wire miss1;
 //ï¿½ï¿½ï¿½ï¿½Í¨Â·
 assign lruin[0]=lruc[0]?2'b00:(lru[0]+1);
 assign lruin[1]=lruc[1]?2'b00:(lru[1]+1);
@@ -529,6 +530,8 @@ assign mz[1]=(bj==tag[1])&v[1][suoyin];
 assign mz[2]=(bj==tag[2])&v[2][suoyin];
 assign mz[3]=(bj==tag[3])&v[3][suoyin];
 assign miss=~(mz[0]|mz[1]|mz[2]|mz[3])&(~(s==FREE)|req);
+assign miss1=~(mz[0]|mz[1]|mz[2]|mz[3]);
+assign ok   =~miss1&(~(s==FREE)|req);
 //Ñ¡ï¿½ï¿½ï¿½ï¿½Ò»Â·
 always @ *
 begin
@@ -583,8 +586,8 @@ begin
   case(s)
   FREE: if(req) ns=PD;
         else    ns=FREE;
-  PD:   if(miss&dir[lux][suoyin]) ns=WB;
-        else if(miss&~dir[lux][suoyin]) ns=RD;
+  PD:   if(miss1&dir[lux][suoyin]) ns=WB;
+        else if(miss1&~dir[lux][suoyin]) ns=RD;
         else if(req) ns=PD;
         else ns=FREE;
   WB:   if(burst) ns=RD;
@@ -613,7 +616,7 @@ end
 
 always @ *
 begin
-  wet=4'b0;wel=4'b0;lruc=4'b0;ok=0;sen=0;wen=0;wdx=0;stall=0;
+  wet=4'b0;wel=4'b0;lruc=4'b0;sen=0;wen=0;wdx=0;stall=0;
   if(rst)  begin  wdata=0;we=0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;
                   wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
                   wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0; end
@@ -621,13 +624,13 @@ begin
   FREE:begin we=0;wed[0]=0;wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
                   wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0;
        end
-  PD:  if(wreq&~miss) begin wdx=1;ok=1;we=1;wed[linex]=wbyte;dir[lux][suoyin]=1; 
+  PD:  if(wreq&~miss1) begin wdx=1;we=1;wed[linex]=wbyte;dir[lux][suoyin]=1; 
              if(lru[0]<=lru[lux]) wel[0]=1;
              if(lru[1]<=lru[lux]) wel[1]=1;
              if(lru[2]<=lru[lux]) wel[2]=1;
              if(lru[3]<=lru[lux]) wel[3]=1;
              wel[lux]=1;lruc[lux]=1;end
-       else if(~wreq&~miss) begin ok=1;we=0;wed[0]=0;
+       else if(~wreq&~miss1) begin we=0;wed[0]=0;
              wed[1]=0;wed[2]=0;wed[3]=0;wed[4]=0;wed[5]=0;wed[6]=0;wed[7]=0;
              wed[8]=0;wed[9]=0;wed[10]=0;wed[11]=0;wed[12]=0;wed[13]=0;wed[14]=0;wed[15]=0; 
              if(lru[0]<=lru[lux]) wel[0]=1;
@@ -635,7 +638,7 @@ begin
              if(lru[2]<=lru[lux]) wel[2]=1;
              if(lru[3]<=lru[lux]) wel[3]=1;
              wel[lux]=1;lruc[lux]=1;end
-       else if(wreq&miss) we=1;
+       else if(wreq&miss1) we=1;
        else we=0;
   WB:  begin stall=1;sen=1;wen=1;
              if(addr_ok) wdata=cdat[lux][0];
@@ -644,8 +647,8 @@ begin
   RD:  begin stall=1;sen=1;
              if(data_ok) wed[count-1]=4'b1111;
        end//ï¿½ï¿½È¡
-  FH:  begin if(we) begin wdx=1;ok=1;dir[lux][suoyin]=1;wed[linex]=wbyte; end
-             else   begin ok=1;dir[lux][suoyin]=0;wed[15]=4'b1111; end
+  FH:  begin if(we) begin wdx=1;dir[lux][suoyin]=1;wed[linex]=wbyte; end
+             else   begin dir[lux][suoyin]=0;wed[15]=4'b1111; end
              wet[lux]=1;v[lux][suoyin]=1;stall=1;
              if(lru[0]<=lru[lux]) wel[0]=1;
              if(lru[1]<=lru[lux]) wel[1]=1;
