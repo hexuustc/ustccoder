@@ -43,27 +43,30 @@ module mycpu_top
     output [31:0] debug_wb_rf_wdata
     );
 
-reg [31:0] a,b,wd,r_wd,cp0_data,inst_sram_rdata1,data_sram_addr1,HI,LO,r_mult,r_y,r_y1,r_addr32;//ir太多.........................
+reg [31:0] a,b,a1,b1,wd,r_wd,cp0_data,inst_sram_rdata1,data_sram_addr1,HI,LO,r_mult,r_y,r_y1,r_addr32;//ir太多.........................
 reg [31:0] aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5;//目标写数据
 reg [31:0] pc,pc1,pc2,pc3,pc4,r_pc,r_pc_8;
 reg [31:0] r_a,r_b,r_a1,r_b1,r_a2,r_b2;//传递rs, rt
-reg [31:0] r_ar,r_ar_abs,r_br,r_br_abs,r_a1r,r_b1r,r_a2r,r_a2r_abs,r_b2r,r_b2r_abs;//rs, rt修正值
+reg [31:0] r_ar,r_ar_abs,r_br,r_br_abs,r_a1r,r_b1r,r_a2r,r_a2r_abs,r_b2r,r_b2r_abs,r_a3r,r_a4r,r_a5r;//rs, rt修正值
 reg [31:0] ir,ir1,ir2,ir3,ir4;//指令
 
 reg [15:0] r_imm,b2value;
 reg [7:0] bvalue;
-reg [5:0] inscode1,inscode2,inscode3,inscode4;//指令码
-reg [4:0] ra0,ra1,wa,aimaddr,aimaddr1,aimaddr2,aimaddr3,aimaddr4,aimaddr5,r_aimaddr,r_aimaddr1,r_aimaddr2,r_aimaddr3,r_aimaddr4,cp0_num;
-reg [3:0] m;
+reg [5:0] inscode1,inscode2,inscode3,inscode4,inscode5,inscode6,inscode7;//指令码
+reg [4:0] ra0,ra1,wa,cp0_num;
+reg [4:0] aimaddr,aimaddr1,aimaddr2,aimaddr3,aimaddr4,aimaddr5,r_aimaddr,r_aimaddr1,r_aimaddr2,r_aimaddr3,r_aimaddr4;//目标写地址
+reg [3:0] m,m1;
 reg [2:0] c_pc,sel;
 reg [1:0] jump;
 
-reg zero,pd,delay_block,delay_block1,pd1,we,zf1,cf1,of1,zf2,cf2,of2,c_inscode3,c_inscode4,c_ir3;
-reg pause,pause1,pause1_1,pause2,pause3,pause4,pause4_1,pause5,pause6,pause7;//暂停信号
+reg zero,pd,pd1,we,zf1,cf1,of1,zf2,cf2,of2,c_inscode3,c_inscode4,c_ir3;
+reg delay_block,delay_hl,delay_hl_1,delay_hl1,delay_hl1_1,delay_sendhl,delay_sendhl1;//延迟信号
+reg pause,pause1,pause1_1,pause2,pause2_1,pause3,pause3_1,pause4,pause4_1,pause5,pause5_1,pause6,pause6_1,pause7,pause7_1;//暂停信号
 reg va,r_va,va1,r_va1,va2,va3,va4,va5,va6,va7;//有效位
 reg reins1,reins2;//保留指令
 
 wire [31:0] cp0[31:0];
+wire [31:0] hi,lo;
 wire [31:0] y,pc_8,rd0,rd1,addr32,addr0,addr_0,shamt32,BadVAddr,Count,Status,Cause,EPC;
 wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。。。。。。。。
 wire [5:0] op,funct,op1,funct1,op2,funct2,op3,funct3,op4,funct4;//可以优化................................
@@ -77,6 +80,7 @@ register_file register_file(clk,ra0,rd0,ra1,rd1,wa,we,wd);
 CP0 CP0(pc,y,cp0_data,inscode2,inscode3,ext_int,cp0_num,sel,clk,~resetn,of,va2,va3,reins2,exc,back,BadVAddr,Count,Status,Cause,EPC,
         cp0[0],cp0[1],cp0[2],cp0[3],cp0[4],cp0[5],cp0[6],cp0[7],cp0[8],cp0[9],cp0[10],cp0[11],cp0[12],cp0[13],cp0[14],cp0[15],cp0[16],cp0[17],cp0[18],cp0[19],
         cp0[20],cp0[21],cp0[22],cp0[23],cp0[24],cp0[25],cp0[26],cp0[27],cp0[28],cp0[29],cp0[30],cp0[31]);//怎么简化写法
+dmu dmu(hi,lo,a1,b1,m1,clk);
 
 assign op=ir[31:26];
 assign rs=ir[25:21];
@@ -131,7 +135,7 @@ assign data_sram_en=1;
 assign debug_wb_pc=pc4;
 assign debug_wb_rf_wen=we*4'b1111;
 assign debug_wb_rf_wnum=aimaddr2;
-assign debug_wb_rf_wdata=aimdata2;
+assign debug_wb_rf_wdata=wd;
 assign data_sram_addr={{3{zero}},data_sram_addr1[28:0]};//前三位归零，为什么？
 
 initial zero=0;
@@ -143,14 +147,23 @@ initial pause2=0;
 initial pause3=0;
 initial pause4=0;
 initial delay_block=0;
-
+initial delay_hl=0;
+initial delay_hl1=1;
+initial delay_sendhl=0;
+initial delay_sendhl1=0;
 
 always@(posedge clk)//寄存器直接传递
 begin
     inst_sram_rdata1<=inst_sram_rdata;
     pause1_1<=pause1;
+    pause2_1<=pause2;
+    pause3_1<=pause3;
     pause4_1<=pause4;
-    delay_block1<=delay_block;
+    pause5_1<=pause5;
+    pause6_1<=pause6;
+    pause7_1<=pause7;
+    delay_hl_1<=delay_hl;
+    delay_hl1_1<=delay_hl1;
     if(pause1) pc1<=pc1;
     else pc1<=pc;
     if(pause1) r_va<=r_va;
@@ -209,7 +222,7 @@ begin
 end
 
 //存储器访问
-if(pause4)
+if(pause4||delay_hl||delay_hl1)
 begin
     r_y1<=r_y1;
     zf2<=zf2;
@@ -222,7 +235,6 @@ begin
     pd<=pd;
     pd1<=pd1;
     ir4<=ir4;
-    pc4<=pc4;
 end
 else
 begin    
@@ -237,7 +249,6 @@ begin
     if(r_y[0]==0) pd<=1; else pd<=0;
     if(r_y%4==0) pd1<=1; else pd1<=0;
     ir4<=ir3;
-    pc4<=pc3;
 end
 
 //寄存器写
@@ -250,11 +261,18 @@ else aimdata4<=aimdata3;
 if(pause7) aimdata5<=aimdata5;
 else aimdata5<=aimdata4;
 
+inscode5<=inscode4;
+inscode6<=inscode5;
+inscode7<=inscode6;
+r_a3r<=r_a2r;
+r_a4r<=r_a3r;
+r_a5r<=r_a4r;
 end
 
 always@(posedge clk,negedge resetn)
 begin
     if(~resetn) va5<=0;
+    else if(delay_hl||delay_hl1) va5<=0;
     else if(pause5) va5<=va5;
     else va5<=va4;
     
@@ -271,12 +289,13 @@ always@(posedge clk,negedge resetn,posedge exc)//有效位
 begin 
     if(~resetn) va3<=0;
     else if(delay_block) va3<=0;
+    else if(delay_sendhl) va3<=0;
     else if(pause3) va3<=va3;
     else if(exc) va3<=0;
     else va3<=va2;  
     
     if(~resetn) va4<=0;
-    else if(pause4) va4<=va4;
+    else if(pause4||delay_hl||delay_hl1) va4<=va4;
     else if(exc==2) va4<=0;
     else va4<=va3;  
 end
@@ -284,6 +303,8 @@ end
 always@(*)
 begin
     if((inscode4==47)||(inscode4==48)||(inscode4==49)||(inscode4==50)||(inscode4==51)) aimdata2=wd;
+    else if(inscode4==41) aimdata2=HI;
+    else if(inscode4==42) aimdata2=LO;
     else if(pause4_1) aimdata2=aimdata2;
     else aimdata2=r_aimdata1;
 end
@@ -305,37 +326,43 @@ begin
     r_aimaddr4<=aimaddr4;
 end
 
+always@(posedge clk)
+begin
+    if(pause4||delay_hl||delay_hl1) pc4<=pc4;
+    else pc4<=pc3;
+end
+
 always@(*)
 begin
-    if(pause3) aimaddr1<=aimaddr1;
+    if(pause3_1) aimaddr1<=aimaddr1;
     else if(~va3) aimaddr1<=0;
     else aimaddr1<=r_aimaddr;    
 end
 
 always@(*)
 begin
-    if(pause4) aimaddr2<=aimaddr2;
+    if(pause4_1||delay_hl_1||delay_hl1_1) aimaddr2<=aimaddr2;
     else if(~va4) aimaddr2<=0;
     else aimaddr2<=r_aimaddr1;    
 end
 
 always@(*)
 begin
-    if(pause5) aimaddr3<=aimaddr3;
+    if(pause5_1) aimaddr3<=aimaddr3;
     else if(~va5) aimaddr3<=0;
     else aimaddr3<=r_aimaddr2;    
 end
 
 always@(*)
 begin
-    if(pause6) aimaddr4<=aimaddr4;
+    if(pause6_1) aimaddr4<=aimaddr4;
     else if(~va6) aimaddr4<=0;
     else aimaddr4<=r_aimaddr3;    
 end
 
 always@(*)
 begin
-    if(pause7) aimaddr5<=aimaddr5;
+    if(pause7_1) aimaddr5<=aimaddr5;
     else if(~va7) aimaddr5<=0;
     else aimaddr5<=r_aimaddr4;    
 end
@@ -365,9 +392,9 @@ begin
      
 end
 
-always@(*)//取指             系统调用接口待定
+always@(*)//取指
 begin
-    if(delay_block) pause=1;
+    if(delay_block||delay_hl||delay_hl1||delay_sendhl) pause=1;
     else pause=0;
     if(~resetn)begin c_pc=7; va=0; end
     else 
@@ -385,10 +412,10 @@ end
 
 always@(*)//译码...之后化繁为简，需用到rs,rt,addr   rd,shamt
 begin    
-    if(delay_block) pause1=1;
+    if(delay_block||delay_hl||delay_hl1||delay_sendhl) pause1=1;
     else pause1=0;
      reins1=0; //保留指令 
-     if(pause1_1) ir1=inst_sram_rdata1; else ir1=inst_sram_rdata;
+     if(pause1_1) ir1=ir1; else ir1=inst_sram_rdata;
      if(~resetn) va1=0;
     else if(pause1) va1=va1;
     else if(jump) va1=0;
@@ -466,11 +493,12 @@ end
 
 always@(*)//执行...之后化繁为简，需用到inscode,shamt     rt,rd
 begin
+    m1=0;
     if(~resetn) va2=0;//这就是分支延迟槽
     else if(pause2) va2=va2;
     else if (exc) va2=0;
     else va2=r_va1;
-    if(delay_block) pause2=1;
+    if(delay_block||delay_hl||delay_hl1||delay_sendhl) pause2=1;
     else pause2=0;
     if(rs2==0) r_ar=0;
     else if(rs2==aimaddr1) r_ar=aimdata1;
@@ -493,10 +521,22 @@ begin
     else if(inscode2==8) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end
     else if(inscode2==9) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end
     else if(inscode2==10) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end
-    else if(inscode2==11) begin a=r_ar_abs; b=r_br_abs; m=7;aimaddr=0; end//除法待优化。。。。。。。。。。。。。。。。
-    else if(inscode2==12) begin a=r_ar; b=r_br; m=7;aimaddr=0; end//未区分，除法待优化。。。。。。。。。。。。。。。。
-    else if(inscode2==13) begin a=r_ar_abs; b=r_br_abs; m=5; aimaddr=0;end//乘法算法待优化
-    else if(inscode2==14) begin a=r_ar; b=r_br; m=6;aimaddr=0; end//乘法算法待优化
+    else if(inscode2==11) begin 
+                              a=r_ar_abs; b=r_br_abs; m=7;
+                              a1=r_ar;b1=r_br;aimaddr=0;m1=11;
+                          end//假设IP核是流水的
+    else if(inscode2==12) begin 
+                              a=r_ar; b=r_br; m=7;
+                              a1=r_ar;b1=r_br;aimaddr=0;m1=7;
+                          end
+    else if(inscode2==13) begin 
+                              a=r_ar_abs; b=r_br_abs; m=5; 
+                              a1=r_ar;b1=r_br;aimaddr=0;m1=5;
+                          end
+    else if(inscode2==14) begin 
+                              a=r_ar; b=r_br; m=6;
+                              a1=r_ar;b1=r_br;aimaddr=0;m1=6;
+                          end
     else if(inscode2==15) begin a=r_ar; b=r_br; m=2; aimaddr=rd02; end
     else if(inscode2==16) begin a=r_ar; b=addr0; m=2; aimaddr=rt2; end
     else if(inscode2==17) begin a=0; b=addr_0; m=0; aimaddr=rt2; end
@@ -527,6 +567,9 @@ end
 always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转。。。。。前三位归零，原因何在？？？？？
 begin
     delay_block=0;
+    delay_sendhl=0;
+    if(delay_hl||delay_hl1) pause3=1;
+    else pause3=0;
     if(pause3) begin c_inscode3=0; c_ir3=0; end 
     else begin c_inscode3=1; c_ir3=1; end
     if (rs3==0) r_a1r=0;
@@ -539,7 +582,8 @@ begin
     else if(rt3==aimaddr3) r_b1r=aimdata3;
     else if(rt3==aimaddr4) r_b1r=aimdata4;
     else r_b1r=r_b1;
-    if(va3==0) begin jump=0; data_sram_wen=0; end  
+    if(va3==0) begin jump=0; data_sram_wen=0; end
+    else if(pause3) begin jump=0; data_sram_wen=0; end  
     else if(inscode3==29) begin if(zf1==1) jump=1; else jump=0; data_sram_wen=0; end
     else if(inscode3==30) begin if(zf1==0) jump=1; else jump=0; data_sram_wen=0; end
     else if(inscode3==31) begin if(r_a1r[31]==0) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
@@ -588,8 +632,28 @@ begin
     else if(inscode3==8) begin jump=0; data_sram_wen=0; if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;end
     else if(inscode3==9) begin jump=0; data_sram_wen=0; if(cf1&~zf1) aimdata1=1;else aimdata1=0; end
     else if(inscode3==10) begin jump=0; data_sram_wen=0; if(cf1&~zf1) aimdata1=1;else aimdata1=0;end
-    else if(inscode3==41) begin jump=0; data_sram_wen=0; aimdata1=HI; end
-    else if(inscode3==42) begin jump=0; data_sram_wen=0; aimdata1=LO; end
+    else if(inscode3==41) begin 
+                              jump=0; data_sram_wen=0; aimdata1=HI;
+                              if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
+                              begin
+                                  if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
+                                  else if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) delay_sendhl=1;
+                                  else if(va6&&((inscode6==11)||(inscode6==12)||(inscode6==13)||(inscode6==14)||(inscode6==43)||(inscode6==44))) delay_sendhl=1;
+                                  else delay_sendhl=0;
+                              end
+                              else delay_sendhl=0;
+                          end
+    else if(inscode3==42) begin 
+                              jump=0; data_sram_wen=0; aimdata1=LO;
+                              if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
+                              begin
+                                  if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
+                                  else if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) delay_sendhl=1;
+                                  else if(va6&&((inscode6==11)||(inscode6==12)||(inscode6==13)||(inscode6==14)||(inscode6==43)||(inscode6==44))) delay_sendhl=1;
+                                  else delay_sendhl=0;
+                              end
+                              else delay_sendhl=0; 
+                          end
     else if(inscode3==56) begin jump=0; data_sram_wen=0; 
                             if(funct3[2:0]==0)
                             begin
@@ -626,7 +690,7 @@ begin
                                     29:aimdata1=cp0[29];
                                     30:aimdata1=cp0[30];
                                     31:aimdata1=cp0[31];
-                                default: aimdata1=0;//默认其他为0；暂未考虑地址错误例外...........
+                                default: aimdata1=0;//默认其他为0；
                                 endcase
                             end
                             else aimdata1=0;
@@ -643,6 +707,8 @@ end
 
 always@(*)//寄存器写回...之后化繁为简，需用到inscode,rt,rd
 begin
+    delay_hl=0;
+    delay_hl1=0;
     if(rs4==0) r_a2r=0;
     else if(rs4==aimaddr3) r_a2r=aimdata3;
     else if(rs4==aimaddr4) r_a2r=aimdata4;
@@ -653,8 +719,9 @@ begin
     else if(rt4==aimaddr4) r_b2r=aimdata4;
     else if(rt4==aimaddr5) r_b2r=aimdata5;
     else r_b2r=r_b2;
-    if(pause4) c_inscode4=0; else  c_inscode4=1;
+    if(pause4||delay_hl||delay_hl1) c_inscode4=0; else  c_inscode4=1;
     if(va4==0) begin we=0; end
+    else if(pause4) we=0;
     else if(inscode4==1) begin we=1; wa=rd04; wd=r_y1; end
     else if(inscode4==2) begin we=1; wa=rt4; wd=r_y1; end
     else if(inscode4==3) begin we=1; wa=rd04; wd=r_y1; end
@@ -665,30 +732,6 @@ begin
     else if(inscode4==8) begin we=1;if((~of2&r_y1[31]&~zf2)|(of2&~r_y1[31]&~zf2))wd=1;else wd=0; wa=rt4; end
     else if(inscode4==9) begin we=1;if(cf2&~zf2) wd=1;else wd=0; wa=rd04; end
     else if(inscode4==10) begin we=1;if(cf2&~zf2) wd=1;else wd=0; wa=rt4; end
-    else if(inscode4==11) begin 
-                              we=0;
-                              if(r_a2r[31]==r_b2r[31]) LO=r_y1; else LO=-r_y1;
-                              if(r_a2r[31]==0) HI=r_a2r_abs%r_b2r_abs; else HI=-(r_a2r_abs%r_b2r_abs);
-                          end//这个寄存器可以在前面写回，省去传递
-    else if(inscode4==12) begin we=0; LO=r_y1; HI=r_a2r%r_b2r; end//这个寄存器可以在前面写回，省去传递
-    else if(inscode4==13) begin //此为有符号乘法
-                              we=0; HI=r_y1; LO=r_a2r*r_b2r; 
-                              r_mult=r_a2r_abs*r_b2r_abs;
-                              if(r_a2r[31]==r_b2r[31])
-                              begin
-                                HI=r_y1;LO=r_mult;
-                              end
-                              else
-                              begin
-                                if((r_a2r==0)||(r_b2r==0)) begin HI=0; LO=0; end
-                                else begin
-                                          LO=-r_mult;
-                                          if(r_mult==0) HI=-r_y1;
-                                          else HI=~r_y1;
-                                     end
-                              end
-                          end//这个寄存器可以在前面写回，省去传递
-    else if(inscode4==14) begin we=0; HI=r_y1; LO=r_a2r*r_b2r; end//这个寄存器可以在前面写回，省去传递
     else if(inscode4==15) begin we=1; wa=rd04; wd=r_y1; end
     else if(inscode4==16) begin we=1; wa=rt4; wd=r_y1; end
     else if(inscode4==17) begin we=1; wa=rt4; wd=r_y1; end
@@ -707,10 +750,18 @@ begin
     else if(inscode4==36) begin we=1; wa=31; wd=r_pc_8; end
     else if(inscode4==38) begin we=1; wa=31; wd=r_pc_8; end
     else if(inscode4==40) begin we=1; wa=rd04; wd=r_pc_8; end
-    else if(inscode4==41) begin we=1; wa=rd04; wd=HI; end
-    else if(inscode4==42) begin we=1; wa=rd04; wd=LO; end
-    else if(inscode4==43) begin we=0; HI=r_a2r; end
-    else if(inscode4==44) begin we=0; LO=r_a2r; end
+    else if(inscode4==41) begin
+                              wa=rd04; wd=HI; 
+                              if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) begin delay_hl=1; c_inscode4=0; we=0; end
+                              else if(va6&&((inscode6==11)||(inscode6==12)||(inscode6==13)||(inscode6==14)||(inscode6==43)||(inscode6==44))) begin delay_hl1=1;c_inscode4=0; we=0; end
+                              else begin we=1; end
+                          end
+    else if(inscode4==42) begin 
+                              wa=rd04; wd=LO; 
+                              if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) begin delay_hl=1;c_inscode4=0; we=0; end
+                              else if(va6&&((inscode6==11)||(inscode6==12)||(inscode6==13)||(inscode6==14)||(inscode6==43)||(inscode6==44))) begin delay_hl1=1;c_inscode4=0; we=0; end
+                              else begin we=1;  end
+                          end
     else if((inscode4==47)||(inscode4==48)) 
         begin 
             we=1; wa=rt4; 
@@ -736,6 +787,14 @@ begin
     else if(inscode4==51) begin if (pd1) we=1; else we=0; wa=rt4; wd=data_sram_rdata; end
     else if(inscode4==56) begin we=1; wa=rt4; wd=aimdata2;end
     else we=0;
+end
+
+always @(*)//HI,LO在这里写回
+begin
+    if(va7==0) begin end
+    else if(inscode7==43) begin HI=r_a5r; end
+    else if(inscode7==44) begin LO=r_a5r; end
+    else if((inscode7==11)||(inscode7==12)||(inscode7==13)||(inscode7==14)) begin HI=hi; LO=lo; end
 end
 
 endmodule
