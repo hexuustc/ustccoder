@@ -29,26 +29,21 @@ module register_file
     output [WIDTH-1:0] rd1,
     input [4:0] wa,
     input we,
-    input [WIDTH-1:0] wd,
-    input rst
+    input [WIDTH-1:0] wd
     );
     
 reg [WIDTH-1:0] r[0:31];
 integer i;
 
 initial
-    for (i=0;i<=31;i=i+1)
-        r[i]=0;
+    for (i=0; i<=31; i=i+1)
+        r[i] = 0;
         
-always@(posedge clk, posedge rst)
+always@(posedge clk)
 begin
-    if(rst)
-        for (i=0;i<=31;i=i+1)
-            r[i]<=0;
-    else
-        if(we&&wa>0)
-            r[wa]<=wd;
+    if(we && (wa != 0))
+        r[wa] <= wd;
 end
-assign rd0=r[ra0];
-assign rd1=r[ra1];
+assign rd0 = r[ra0];
+assign rd1 = r[ra1];
 endmodule
