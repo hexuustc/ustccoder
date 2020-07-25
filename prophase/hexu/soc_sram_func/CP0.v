@@ -134,7 +134,7 @@ begin
                         Cause[30]<=0;//不知何时为1.。。。。。。。。。。。。
                         Cause[6:2]<=4;
                 end
-    else if(va2&&(((inscode2==49)||(inscode2==50)||(inscode2==53))&&(y[0]==1))||(((inscode2==51)||(inscode2==54))&&(y[1:0]!=0))&&~EXL) //地址错例外
+    else if(va2&&((((inscode2==49)||(inscode2==50)||(inscode2==53))&&(y[0]==1))||(((inscode2==51)||(inscode2==54))&&(y[1:0]!=0)))&&~EXL) //地址错例外
         begin
             if((inscode2==49)||(inscode2==50)||(inscode2==53))
                 begin
