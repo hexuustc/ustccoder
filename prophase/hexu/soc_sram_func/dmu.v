@@ -24,19 +24,52 @@ module dmu
    #(parameter WIDTH = 32) 	//数据宽度
    (output reg [WIDTH-1:0] hi, 		//运算结果
    output reg [WIDTH-1:0] lo,
+   output reg stall,
    input [WIDTH-1:0] a,b,		//两操作数
    input [3:0] m,				//操作类型
-   input clk
+   input clk,
+   input [1:0] div_begin
    );
 wire [63:0] mult,umult,div,udiv;
 reg [3:0] m1,m2,m3,m4,m5;
+reg [5:0] counter;
+
+initial counter=0;
+initial stall=0;
+
+always@(posedge clk)
+begin
+    if(div_begin==1) counter<=30;
+    else if(div_begin==2) counter<=28;
+    //else if(div_begin==3) counter<=24;
+    else if(counter!=0) counter<=counter-1;
+end
+
+always@(*)
+begin
+    if(div_begin) stall=1;
+    else if(counter) stall=1;
+    else stall=0;
+end
+
 always @ (posedge clk)
+begin
+if(stall)
+begin
+    m1<=m1;
+    m2<=m2;
+    m3<=m3;
+    m4<=m4;
+    m5<=m5;
+end
+else
 begin
 m1<=m;
 m2<=m1;
 m3<=m2;
 m4<=m3;
 m5<=m4;
+end
 end
 mult_gen_0 MM(.CLK(clk),
            .A(a),
