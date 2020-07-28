@@ -59,6 +59,7 @@ begin
         else if(InsConvert_funct==6'b010011) InsConvert_inscode=44;//MTLO
         else if(InsConvert_funct==6'b001101) InsConvert_inscode=45;//BREAK
         else if(InsConvert_funct==6'b001100) InsConvert_inscode=46;//SYSCALL
+        else InsConvert_inscode=0;
     end
     //立即数运算
     else if(InsConvert_op==6'b001000) InsConvert_inscode=2;//ADDI
@@ -98,5 +99,6 @@ begin
         else if(InsConvert_rs==5'b00100) InsConvert_inscode=57;//MTC
     end
     else if(InsConvert_va1) InsConvert_inscode=0;
+    else InsConvert_inscode=0;
 end
 endmodule
