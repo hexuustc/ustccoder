@@ -422,6 +422,114 @@ always@(*)
 begin
     if(r_ar[31]) r_ar_abs=-r_ar; else r_ar_abs=r_ar;
     if(r_br[31]) r_br_abs=-r_br; else r_br_abs=r_br;
+    if(r_a2r[31]) r_a2r_abs=-r_a2r; else r_a2r_abs=r_a2r;
+    if(r_b2r[31]) r_b2r_abs=-r_b2r; else r_b2r_abs=r_b2r;
+end
+
+always@(posedge clk)
+begin
+    r_aimaddr<=aimaddr;
+    r_aimaddr1<=aimaddr1;
+    r_aimaddr2<=aimaddr2;
+    r_aimaddr3<=aimaddr3;
+    r_aimaddr4<=aimaddr4;
+end
+
+always@(posedge clk)
+begin
+    if(pause4||delay_hl||delay_hl1) pc4<=pc4;
+    else pc4<=pc3;
+end
+
+always@(*)
+begin
+    if(pause3_1) aimaddr1=aimaddr1;
+    else if(~va3) aimaddr1=0;
+    else aimaddr1=r_aimaddr;    
+end
+
+always@(*)
+begin
+    if(pause4_1||delay_hl_1||delay_hl1_1) aimaddr2=aimaddr2;
+    else if(~va4) aimaddr2=0;
+    else aimaddr2=r_aimaddr1;    
+end
+
+always@(*)
+begin
+    if(pause5_1) aimaddr3=aimaddr3;
+    else if(~va5) aimaddr3=0;
+    else aimaddr3=r_aimaddr2;    
+end
+
+always@(*)
+begin
+    if(pause6_1) aimaddr4=aimaddr4;
+    else if(~va6) aimaddr4=0;
+    else aimaddr4=r_aimaddr3;    
+end
+
+always@(*)
+begin
+    if(pause7_1) aimaddr5=aimaddr5;
+    else if(~va7) aimaddr5=0;
+    else aimaddr5=r_aimaddr4;    
+end
+
+always@(posedge clk)//多项选择器
+begin
+     case(c_pc)//pc取指
+        0:pc<=pc;
+        1:pc<=pc+4;
+        2:pc<=pc-8+4*r_addr32;//跳转时pc加过了12
+        3:pc<={pc_8[31:28],ir3[25:0],{2{zero}}};
+        4:pc<=r_a1r;
+        5:pc<=32'hbfc00380;
+        6:pc<=EPC;
+        7:pc<=32'hbfc00000;
+     endcase
+     
+     case(c_inscode3)//指令码继承
+        0:inscode3<=inscode3;
+        1:inscode3<=inscode2;
+     endcase 
+     
+     case(c_inscode4)//指令码继承
+        0:inscode4<=inscode4;
+        1:inscode4<=inscode3;
+     endcase
+     
+end
+
+always@(*)//取指
+begin
+    if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
+    else pause=0;
+    if(~resetn)begin c_pc=7; va=0; end
+    else 
+        begin           
+            inst_sram_addr=pc;
+            if(pause) begin va=va; c_pc=0; end
+            else if(back) begin va=0; c_pc=6; end
+            else if(exc) begin va=0; c_pc=5; end
+            else if(jump==1) begin va=0; c_pc=2; end//若jump则无效
+            else if(jump==2) begin va=0; c_pc=3; end
+            else if(jump==3) begin va=0; c_pc=4; end
+            else begin va=1; c_pc=1; end            
+        end
+end
+
+always@(*)//译码...之后化繁为简，需用到rs,rt,addr   rd,shamt
+begin    
+    if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
+    else pause1=0;
+     reins1=0; //保留指令 
+     if(pause1_1) ir1=ir1; else ir1=inst_sram_rdata;
+     if(~resetn) va1=0;
+    else if(pause1) va1=va1;
+    else if(jump) va1=0;
+    else if (back||exc) va1=0;
+    else va1=r_va;   
     if (op1==6'b000000) //指令码生成，此处省略不必要的零值，增加新指令或伪指令会冲突
             //运算指令
                 begin//inscode1==0表示空指令
