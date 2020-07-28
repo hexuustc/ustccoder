@@ -71,7 +71,8 @@ wire [4:0] shamt,shamt1,shamt2,shamt3,shamt4;
 reg [15:0] r_imm,b2value;
 reg [7:0] bvalue;
 reg [5:0] inscode5,inscode6,inscode7;//指令码
-reg [5:0] inscode1,inscode2,inscode3,inscode4;
+wire [5:0] inscode1;
+reg [5:0] inscode2,inscode3,inscode4;
 reg [4:0] wa;
 reg [4:0] ra0,ra1,cp0_num;
 reg [4:0] aimaddr,aimaddr1,aimaddr2,aimaddr3,aimaddr4,aimaddr5;
@@ -519,91 +520,58 @@ begin
         end
 end
 
-always@(*)//译码...之后化繁为简，需用到rs,rt,addr   rd,shamt
+//////////////////////////////////////////////////
+////////////////////译码段组合逻辑/////////////////
+//////////////////////////////////////////////////
+
+////////PART ONE////////////
+//基由op、funct等字段值生成指令码
+wire [5:0]InsConvert_op;
+wire [5:0]InsConvert_funct;
+wire InsConvert_va1;
+wire [5:0] InsConvert_rs;
+wire [5:0] InsConvert_rt;
+wire [5:0]InsConvert_inscode;
+
+InsConvert InsConvert(.InsConvert_op(InsConvert_op),
+                      .InsConvert_funct(InsConvert_funct),
+                      .InsConvert_va1(InsConvert_va1),
+                      .InsConvert_rs(InsConvert_rs),
+                      .InsConvert_rt(InsConvert_rt),
+                      .InsConvert_inscode(InsConvert_inscode));
+
+assign InsConvert_op = op1;
+assign InsConvert_funct = funct1;
+assign InsConvert_va1 = va1;
+assign InsConvert_rs = rs1;
+assign InsConvert_rt = rt1;
+assign inscode1 = InsConvert_inscode;
+
+////////PART TWO////////////////
+//生成其它乱七八糟的控制码
+always@(*)//需用到rs,rt,addr   rd,shamt
 begin    
     if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
     else pause1=0;
-     reins1=0; //保留指令 
+     
      if(pause1_1) ir1=ir1; else ir1=inst_sram_rdata;
+     
      if(~resetn) va1=0;
     else if(pause1) va1=va1;
     else if(jump) va1=0;
     else if (back||exc) va1=0;
     else va1=r_va;   
-    if (op1==6'b000000) //指令码生成，此处省略不必要的零值，增加新指令或伪指令会冲突
-            //运算指令
-                begin//inscode1==0表示空指令
-                    if(funct1==6'b100000) inscode1=1;//ADD
-                    else if(funct1==6'b100001) inscode1=3;//ADDU
-                    else if(funct1==6'b100010) inscode1=5;//SUB
-                    else if(funct1==6'b100011) inscode1=6;//SUBU
-                    else if(funct1==6'b101010) inscode1=7;//SLT
-                    else if(funct1==6'b101011) inscode1=9;//SLTU
-                    else if(funct1==6'b011010) inscode1=11;//DIV
-                    else if(funct1==6'b011011) inscode1=12;//DIVU
-                    else if(funct1==6'b011000) inscode1=13;//MULT
-                    else if(funct1==6'b011001) inscode1=14;//MULTU
-                    else if(funct1==6'b100100) inscode1=15;//AND
-                    else if(funct1==6'b100111) inscode1=18;//NOR
-                    else if(funct1==6'b100101) inscode1=19;//OR
-                    else if(funct1==6'b100110) inscode1=21;//XOR
-                    else if(funct1==6'b000000) inscode1=23;//SLL
-                    else if(funct1==6'b000100) inscode1=24;//SLLV
-                    else if(funct1==6'b000011) inscode1=25;//SRA
-                    else if(funct1==6'b000111) inscode1=26;//SRAV
-                    else if(funct1==6'b000010) inscode1=27;//SRL
-                    else if(funct1==6'b000110) inscode1=28;//SRLV
-                    else if(funct1==6'b001000) inscode1=39;//JR
-                    else if(funct1==6'b001001) inscode1=40;//JALR
-                    else if(funct1==6'b010000) inscode1=41;//MFHI
-                    else if(funct1==6'b010010) inscode1=42;//MFLO
-                    else if(funct1==6'b010001) inscode1=43;//MTHI
-                    else if(funct1==6'b010011) inscode1=44;//MTLO
-                    else if(funct1==6'b001101) inscode1=45;//BREAK
-                    else if(funct1==6'b001100) inscode1=46;//SYSCALL
-                end
-            //立即数运算
-            else if(op1==6'b001000) inscode1=2;//ADDI
-            else if(op1==6'b001001) inscode1=4;//ADDIU等同于li
-            else if(op1==6'b001010) inscode1=8;//SLTI
-            else if(op1==6'b001011) inscode1=10;//SLTIU
-            else if(op1==6'b001100) inscode1=16;//ANDI
-            else if(op1==6'b001111) inscode1=17;//LUI
-            else if(op1==6'b001101) inscode1=20;//ORI
-            else if(op1==6'b001110) inscode1=22;//XORI
-            
-            else if(op1==6'b000100) inscode1=29;//BEQ
-            else if(op1==6'b000101) inscode1=30;//BNE
-            else if(op1==6'b000001)
-                begin
-                     if(rt1==5'b00001) inscode1=31;//BGEZ
-                     else if(rt1==5'b00000) inscode1=34;//BLTZ
-                     else if(rt1==5'b10001) inscode1=36;//BGEZAL
-                      else if(rt1==5'b10000) inscode1=35;//BLTZAL
-                end
-            else if(op1==6'b000111) inscode1=32;//BGTZ
-            else if(op1==6'b000110) inscode1=33;//BLEZ
-            else if(op1==6'b000010) inscode1=37;//J
-            else if(op1==6'b000011) inscode1=38;//JAL
-            else if(op1==6'b100000) inscode1=47;//LB
-            else if(op1==6'b100100) inscode1=48;//LBU
-            else if(op1==6'b100001) inscode1=49;//LH
-            else if(op1==6'b100101) inscode1=50;//LHU
-            else if(op1==6'b100011) inscode1=51;//LW
-            else if(op1==6'b101000) inscode1=52;//SB
-            else if(op1==6'b101001) inscode1=53;//SH
-            else if(op1==6'b101011) inscode1=54;//SW
-            else if(op1==6'b010000)
-                begin
-                    if((rs1==5'b10000)&&(funct1==6'b011000)) inscode1=55;//ERET
-                    else if(rs1==5'b00000) inscode1=56;//MFC
-                    else if(rs1==5'b00100) inscode1=57;//MTC
-                end
-            else if(va1) begin reins1=1; inscode1=0; end
+
+    //保留指令部分
+    if(va1 && InsConvert_inscode==0) reins1=1;
+    else reins1=0;
+    
     ra0=rs1;ra1=rt1;
 end
 
-always@(*)//执行...之后化繁为简，需用到inscode,shamt     rt,rd
+
+
+always@(*)//执行段，需用到inscode,shamt     rt,rd
 begin
     //if(~resetn) va2=0;//这就是分支延迟槽
     //else if(pause2) va2=va2;
