@@ -124,46 +124,17 @@ CP0 CP0(pc,y,cp0_data,inscode2,inscode3,ext_int,cp0_num,sel,clk,~resetn,of,va2,v
 dmu dmu(hi,lo,stall,a1,b1,m1,clk,div_begin);
 
 //将指令分割成各个部分以方便后续使用
-//IF级指令分割
-assign op=ir[31:26];
-assign rs=ir[25:21];
-assign rt=ir[20:16];
-assign rd=ir[15:11];
-assign shamt=ir[10:6];
-assign funct=ir[5:0];
-assign addr=ir[15:0];
-//ID级指令分割
-assign op1=ir1[31:26];//也许可以简化
-assign rs1=ir1[25:21];
-assign rt1=ir1[20:16];
-assign rd01=ir1[15:11];
-assign shamt1=ir1[10:6];
-assign funct1=ir1[5:0];
-assign addr1=ir1[15:0];
-//EX级指令分割
-assign op2=ir2[31:26];//也许可以简化
-assign rs2=ir2[25:21];
-assign rt2=ir2[20:16];
-assign rd02=ir2[15:11];
-assign shamt2=ir2[10:6];
-assign funct2=ir2[5:0];
-assign addr2=ir2[15:0];
-//MEM级指令分割
-assign op3=ir3[31:26];//也许可以简化
-assign rs3=ir3[25:21];
-assign rt3=ir3[20:16];
-assign rd03=ir3[15:11];
-assign shamt3=ir3[10:6];
-assign funct3=ir3[5:0];
-assign addr3=ir3[15:0];
-//WB级指令分割
-assign op4=ir4[31:26];//也许可以简化
-assign rs4=ir4[25:21];
-assign rt4=ir4[20:16];
-assign rd04=ir4[15:11];
-assign shamt4=ir4[10:6];
-assign funct4=ir4[5:0];
-assign addr4=ir4[15:0];
+assign {op ,rs ,rt ,rd ,shamt ,funct } = ir ;//IF级指令分割
+assign {op1,rs1,rt1,rd01,shamt1,funct1} = ir1;//ID级指令分割
+assign {op2,rs2,rt2,rd02,shamt2,funct2} = ir2;//EX级指令分割
+assign {op3,rs3,rt3,rd03,shamt3,funct3} = ir3;//MEM级指令分割
+assign {op4,rs4,rt4,rd04,shamt4,funct4} = ir4;//WB级指令分割
+
+assign addr  = ir[15:0];
+assign addr1 = ir1[15:0];
+assign addr2 = ir2[15:0];
+assign addr3 = ir3[15:0];
+assign addr4 = ir4[15:0];
 
 //位扩展之类的
 assign q1=r_imm[15];//取符号位
