@@ -1514,32 +1514,32 @@ begin
             else if(op1==6'b001101) inscode1=20;//ORI
             else if(op1==6'b001110) inscode1=22;//XORI
             
-            else if(op1==6'b000100) inscode1=29;
-            else if(op1==6'b000101) inscode1=30;
+            else if(op1==6'b000100) inscode1=29;//BEQ
+            else if(op1==6'b000101) inscode1=30;//BNE
             else if(op1==6'b000001)
                 begin
-                     if(rt1==5'b00001) inscode1=31;
-                     else if(rt1==5'b00000) inscode1=34;
-                     else if(rt1==5'b10001) inscode1=36;
-                      else if(rt1==5'b10000) inscode1=35;
+                     if(rt1==5'b00001) inscode1=31;//BGEZ
+                     else if(rt1==5'b00000) inscode1=34;//BLTZ
+                     else if(rt1==5'b10001) inscode1=36;//BGEZAL
+                      else if(rt1==5'b10000) inscode1=35;//BLTZAL
                 end
-            else if(op1==6'b000111) inscode1=32;
-            else if(op1==6'b000110) inscode1=33;
-            else if(op1==6'b000010) inscode1=37;
-            else if(op1==6'b000011) inscode1=38;
-            else if(op1==6'b100000) inscode1=47;
-            else if(op1==6'b100100) inscode1=48;
-            else if(op1==6'b100001) inscode1=49;
-            else if(op1==6'b100101) inscode1=50;
-            else if(op1==6'b100011) inscode1=51;
-            else if(op1==6'b101000) inscode1=52;
-            else if(op1==6'b101001) inscode1=53;
-            else if(op1==6'b101011) inscode1=54;
+            else if(op1==6'b000111) inscode1=32;//BGTZ
+            else if(op1==6'b000110) inscode1=33;//BLEZ
+            else if(op1==6'b000010) inscode1=37;//J
+            else if(op1==6'b000011) inscode1=38;//JAL
+            else if(op1==6'b100000) inscode1=47;//LB
+            else if(op1==6'b100100) inscode1=48;//LBU
+            else if(op1==6'b100001) inscode1=49;//LH
+            else if(op1==6'b100101) inscode1=50;//LHU
+            else if(op1==6'b100011) inscode1=51;//LW
+            else if(op1==6'b101000) inscode1=52;//SB
+            else if(op1==6'b101001) inscode1=53;//SH
+            else if(op1==6'b101011) inscode1=54;//SW
             else if(op1==6'b010000)
                 begin
-                    if((rs1==5'b10000)&&(funct1==6'b011000)) inscode1=55;
-                    else if(rs1==5'b00000) inscode1=56;
-                    else if(rs1==5'b00100) inscode1=57;
+                    if((rs1==5'b10000)&&(funct1==6'b011000)) inscode1=55;//ERET
+                    else if(rs1==5'b00000) inscode1=56;//MFC
+                    else if(rs1==5'b00100) inscode1=57;//MTC
                 end
             else if(va1) begin reins1=1; inscode1=0; end
     ra0=rs1;ra1=rt1;
