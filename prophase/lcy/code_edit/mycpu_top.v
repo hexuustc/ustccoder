@@ -508,6 +508,63 @@ begin
      
 end
 
+always@(*)
+begin
+    case(inscode3)
+        35: aimdata1=pc-4;
+        36: aimdata1=pc-4;
+        38: aimdata1=pc-4;
+        40: aimdata1=pc-4;
+        7:  if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;
+        8:  if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;
+        9:  if(cf1&~zf1) aimdata1=1;else aimdata1=0;
+        10: if(cf1&~zf1) aimdata1=1;else aimdata1=0;
+        41: aimdata1=HI;
+        42: aimdata1=LO;
+        56: if(funct3[2:0]==0)
+                            begin
+                                case(rd03)
+                                    0:aimdata1=cp0[0];
+                                    1:aimdata1=cp0[1];
+                                    2:aimdata1=cp0[2];
+                                    3:aimdata1=cp0[3];
+                                    4:aimdata1=cp0[4];
+                                    5:aimdata1=cp0[5];
+                                    6:aimdata1=cp0[6];
+                                    7:aimdata1=cp0[7];
+                                    8:aimdata1=BadVAddr;
+                                    9:aimdata1=Count;
+                                    10:aimdata1=cp0[10];
+                                    11:aimdata1=cp0[11];
+                                    12:aimdata1=Status;
+                                    13:aimdata1=Cause;
+                                    14:aimdata1=EPC;
+                                    15:aimdata1=cp0[15];
+                                    16:aimdata1=cp0[16];
+                                    17:aimdata1=cp0[17];
+                                    18:aimdata1=cp0[18];
+                                    19:aimdata1=cp0[19];
+                                    20:aimdata1=cp0[20];
+                                    21:aimdata1=cp0[21];
+                                    22:aimdata1=cp0[22];
+                                    23:aimdata1=cp0[23];
+                                    24:aimdata1=cp0[24];
+                                    25:aimdata1=cp0[25];
+                                    26:aimdata1=cp0[26];
+                                    27:aimdata1=cp0[27];
+                                    28:aimdata1=cp0[28];
+                                    29:aimdata1=cp0[29];
+                                    30:aimdata1=cp0[30];
+                                    31:aimdata1=cp0[31];
+                                default: aimdata1=0;//默认其他为0；
+                                endcase
+                            end
+                            else aimdata1=0;
+        18: aimdata1=~r_y;
+        default: aimdata1=r_y;
+    endcase
+end
+
 always@(*)//取指
 begin
     if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
@@ -685,7 +742,6 @@ always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd 
 begin
     delay_block=0;
     delay_sendhl=0;
-    //aimdata1=r_y;
     if(delay_hl||delay_hl1||stall) pause3=1;
     else pause3=0;
     if(pause3) begin c_inscode3=0; c_ir3=0; end 
@@ -708,12 +764,12 @@ begin
     else if(inscode3==32) begin if((r_a1r[31]==0)&&(r_a1r!=0)) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
     else if(inscode3==33) begin if((r_a1r[31]==1)||(r_a1r==0)) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
     else if(inscode3==34) begin if(r_a1r[31]==1) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==35) begin if(r_a1r[31]==1) jump=1; else jump=0; data_sram_wen=0; aimdata1=pc-4; end//默认rs为有符号数
-    else if(inscode3==36) begin if(r_a1r[31]==0) jump=1; else jump=0; data_sram_wen=0; aimdata1=pc-4; end//默认rs为有符号数
+    else if(inscode3==35) begin if(r_a1r[31]==1) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
+    else if(inscode3==36) begin if(r_a1r[31]==0) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
     else if(inscode3==37) begin jump=2; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==38) begin jump=2; data_sram_wen=0; aimdata1=pc-4; end//默认rs为有符号数
+    else if(inscode3==38) begin jump=2; data_sram_wen=0; end//默认rs为有符号数
     else if(inscode3==39) begin jump=3; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==40) begin jump=3; data_sram_wen=0; aimdata1=pc-4; end//默认rs为有符号数
+    else if(inscode3==40) begin jump=3; data_sram_wen=0; end//默认rs为有符号数
     else if((inscode3==47)||(inscode3==48)) 
         begin jump=0; data_sram_addr1=r_y; data_sram_wen=0;
             if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
@@ -726,7 +782,7 @@ begin
         end
     else if(inscode3==51) 
         begin 
-            jump=0; data_sram_wen=0; data_sram_addr1=r_y; aimdata1=0;
+            jump=0; data_sram_wen=0; data_sram_addr1=r_y;
             if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0]))) delay_block=1;
                 else delay_block=0; 
         end
@@ -747,12 +803,12 @@ begin
                                 endcase
                           end
     else if(inscode3==54) begin jump=0; data_sram_addr1=r_y; if(r_y[1:0]==0) data_sram_wen=4'b1111; else data_sram_wen=0; data_sram_wdata=r_b1r; end
-    else if(inscode3==7) begin jump=0; data_sram_wen=0; if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;  end
-    else if(inscode3==8) begin jump=0; data_sram_wen=0; if((~of1&r_y[31]&~zf1)|(of1&~r_y[31]&~zf1))aimdata1=1;else aimdata1=0;end
-    else if(inscode3==9) begin jump=0; data_sram_wen=0; if(cf1&~zf1) aimdata1=1;else aimdata1=0; end
-    else if(inscode3==10) begin jump=0; data_sram_wen=0; if(cf1&~zf1) aimdata1=1;else aimdata1=0;end
+    else if(inscode3==7) begin jump=0; data_sram_wen=0; end
+    else if(inscode3==8) begin jump=0; data_sram_wen=0; end
+    else if(inscode3==9) begin jump=0; data_sram_wen=0; end
+    else if(inscode3==10) begin jump=0; data_sram_wen=0; end
     else if(inscode3==41) begin 
-                              jump=0; data_sram_wen=0; aimdata1=HI;
+                              jump=0; data_sram_wen=0;
                               if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
@@ -763,7 +819,7 @@ begin
                               else delay_sendhl=0;
                           end
     else if(inscode3==42) begin 
-                              jump=0; data_sram_wen=0; aimdata1=LO;
+                              jump=0; data_sram_wen=0;
                               if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
@@ -773,54 +829,14 @@ begin
                               end
                               else delay_sendhl=0; 
                           end
-    else if(inscode3==56) begin jump=0; data_sram_wen=0; 
-                            if(funct3[2:0]==0)
-                            begin
-                                case(rd03)
-                                    0:aimdata1=cp0[0];
-                                    1:aimdata1=cp0[1];
-                                    2:aimdata1=cp0[2];
-                                    3:aimdata1=cp0[3];
-                                    4:aimdata1=cp0[4];
-                                    5:aimdata1=cp0[5];
-                                    6:aimdata1=cp0[6];
-                                    7:aimdata1=cp0[7];
-                                    8:aimdata1=BadVAddr;
-                                    9:aimdata1=Count;
-                                    10:aimdata1=cp0[10];
-                                    11:aimdata1=cp0[11];
-                                    12:aimdata1=Status;
-                                    13:aimdata1=Cause;
-                                    14:aimdata1=EPC;
-                                    15:aimdata1=cp0[15];
-                                    16:aimdata1=cp0[16];
-                                    17:aimdata1=cp0[17];
-                                    18:aimdata1=cp0[18];
-                                    19:aimdata1=cp0[19];
-                                    20:aimdata1=cp0[20];
-                                    21:aimdata1=cp0[21];
-                                    22:aimdata1=cp0[22];
-                                    23:aimdata1=cp0[23];
-                                    24:aimdata1=cp0[24];
-                                    25:aimdata1=cp0[25];
-                                    26:aimdata1=cp0[26];
-                                    27:aimdata1=cp0[27];
-                                    28:aimdata1=cp0[28];
-                                    29:aimdata1=cp0[29];
-                                    30:aimdata1=cp0[30];
-                                    31:aimdata1=cp0[31];
-                                default: aimdata1=0;//默认其他为0；
-                                endcase
-                            end
-                            else aimdata1=0;
-                          end
+    else if(inscode3==56) begin jump=0; data_sram_wen=0; end
     else if(inscode3==57) 
         begin
             jump=0; 
             data_sram_wen=0;
         end
-    else if(inscode3==18) begin jump=0; data_sram_wen=0; aimdata1=~r_y; end
-    else begin jump=0; data_sram_wen=0; aimdata1=r_y; end
+    else if(inscode3==18) begin jump=0; data_sram_wen=0; end
+    else begin jump=0; data_sram_wen=0; end
 
 end
 
