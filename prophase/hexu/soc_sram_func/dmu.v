@@ -31,6 +31,7 @@ module dmu
    input [1:0] div_begin
    );
 wire [63:0] mult,umult,div,udiv;
+reg [31:0] r_hi,r_lo;
 reg [3:0] m1,m2,m3,m4,m5;
 reg [5:0] counter;
 
@@ -41,7 +42,7 @@ always@(posedge clk)
 begin
     if(div_begin==1) counter<=30;
     else if(div_begin==2) counter<=28;
-    //else if(div_begin==3) counter<=24;
+    //else if(div_begin==3) counter<=1;
     else if(counter!=0) counter<=counter-1;
 end
 
@@ -105,6 +106,13 @@ case (m5)
    4'b0111:begin       //无符号除
        lo=udiv[63:32];hi=udiv[31:0];
        end
+    default: begin hi=r_hi; lo=r_lo; end
 endcase
+
+always@(posedge clk)
+begin
+    r_hi<=hi;
+    r_lo<=lo;
+end
 
 endmodule
