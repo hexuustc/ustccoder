@@ -96,7 +96,6 @@ reg va,r_va,va1,r_va1,va2,r_va2,va3,r_va3,va4,va5,va6,va7;//有效位
 reg reins1,reins2;//保留指令
 reg r_stall;
 
-wire [31:0] cp0[31:0];
 
 //和计算有关系的wire线,y,zf,cf,of是ALU输出端口
 wire [31:0] lo;
@@ -104,10 +103,16 @@ wire [31:0] hi;
 wire [31:0] y;
 wire zf,cf,of;
 
-wire [31:0] pc_8,rd0,rd1,BadVAddr,Count,Status,Cause,EPC;
+wire [31:0] pc_8,rd0,rd1;
 wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。。。。。。。。
 wire [1:0] exc;
 wire back,stall;
+//cp0的端口
+wire [31:0] reins;
+//cp0的32个寄存器读口
+reg [4:0] cp0_ra;
+wire [31:0] cp0_load;
+wire [31:0] BadVAddr,Count,Status,Cause,EPC;
 
 //位拓展专用
 //标记imm字段的15位，即符号位
@@ -118,9 +123,17 @@ wire [31:0] shamt32;
 
 alu alu1(y,zf,cf,of,a,b,m);
 register_file register_file(clk,ra0,rd0,ra1,rd1,wa,we,wd);
-CP0 CP0(pc,y,cp0_data,inscode2,inscode3,ext_int,cp0_num,sel,clk,~resetn,of,va2,va3,reins2,exc,back,BadVAddr,Count,Status,Cause,EPC,
-        cp0[0],cp0[1],cp0[2],cp0[3],cp0[4],cp0[5],cp0[6],cp0[7],cp0[8],cp0[9],cp0[10],cp0[11],cp0[12],cp0[13],cp0[14],cp0[15],cp0[16],cp0[17],cp0[18],cp0[19],
-        cp0[20],cp0[21],cp0[22],cp0[23],cp0[24],cp0[25],cp0[26],cp0[27],cp0[28],cp0[29],cp0[30],cp0[31]);//怎么简化写法
+CP0 CP0(pc,y,cp0_data,
+        inscode2,inscode3,ext_int,
+        cp0_num,
+        sel,
+        cp0_ra,
+        clk,~resetn,of,va2,va3,reins2,
+        exc,
+        back,
+        BadVAddr,Count,Status,Cause,EPC,
+        cp0_load);//怎么简化写法
+assign reins = reins2;
 dmu dmu(hi,lo,stall,a1,b1,m1,clk,div_begin);
 
 //将指令分割成各个部分以方便后续使用
@@ -493,44 +506,11 @@ begin
         41: aimdata1=HI;
         42: aimdata1=LO;
         56: if(funct3[2:0]==0)
-                            begin
-                                case(rd03)
-                                    0:aimdata1=cp0[0];
-                                    1:aimdata1=cp0[1];
-                                    2:aimdata1=cp0[2];
-                                    3:aimdata1=cp0[3];
-                                    4:aimdata1=cp0[4];
-                                    5:aimdata1=cp0[5];
-                                    6:aimdata1=cp0[6];
-                                    7:aimdata1=cp0[7];
-                                    8:aimdata1=BadVAddr;
-                                    9:aimdata1=Count;
-                                    10:aimdata1=cp0[10];
-                                    11:aimdata1=cp0[11];
-                                    12:aimdata1=Status;
-                                    13:aimdata1=Cause;
-                                    14:aimdata1=EPC;
-                                    15:aimdata1=cp0[15];
-                                    16:aimdata1=cp0[16];
-                                    17:aimdata1=cp0[17];
-                                    18:aimdata1=cp0[18];
-                                    19:aimdata1=cp0[19];
-                                    20:aimdata1=cp0[20];
-                                    21:aimdata1=cp0[21];
-                                    22:aimdata1=cp0[22];
-                                    23:aimdata1=cp0[23];
-                                    24:aimdata1=cp0[24];
-                                    25:aimdata1=cp0[25];
-                                    26:aimdata1=cp0[26];
-                                    27:aimdata1=cp0[27];
-                                    28:aimdata1=cp0[28];
-                                    29:aimdata1=cp0[29];
-                                    30:aimdata1=cp0[30];
-                                    31:aimdata1=cp0[31];
-                                default: aimdata1=0;//默认其他为0；
-                                endcase
-                            end
-                            else aimdata1=0;
+            begin
+                cp0_ra = rd03;
+                aimdata = cp0_load;
+            end
+            else aimdata1=0;
         18: aimdata1=~r_y;
         default: aimdata1=r_y;
     endcase
@@ -811,23 +791,30 @@ begin
 
 end
 
+
+//该部分用到的输入数据是
 always@(*)//寄存器写回...之后化繁为简，需用到inscode,rt,rd
 begin
     delay_hl=0;
     delay_hl1=0;
+
     if(stall) pause4=1;
     else pause4=0;
+    
     if(rs4==0) r_a2r=0;
     else if(rs4==aimaddr3) r_a2r=aimdata3;
     else if(rs4==aimaddr4) r_a2r=aimdata4;
     else if(rs4==aimaddr5) r_a2r=aimdata5;
     else r_a2r=r_a2; 
+    
     if(rt4==0) r_b2r=0;  
     else if(rt4==aimaddr3) r_b2r=aimdata3;
     else if(rt4==aimaddr4) r_b2r=aimdata4;
     else if(rt4==aimaddr5) r_b2r=aimdata5;
     else r_b2r=r_b2;
+    
     if(pause4||delay_hl||delay_hl1||stall) c_inscode4=0; else  c_inscode4=1;
+    
     if(va4==0) begin we=0; wa=wa; wd=wd; end
     else if(pause4) begin we=0; wa=wa; wd=wd; end
     else if(inscode4==1) begin we=1; wa=rd04; wd=r_y1; end
