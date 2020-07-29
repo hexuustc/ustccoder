@@ -508,7 +508,7 @@ begin
         56: if(funct3[2:0]==0)
             begin
                 cp0_ra = rd03;
-                aimdata = cp0_load;
+                aimdata1 = cp0_load;
             end
             else aimdata1=0;
         18: aimdata1=~r_y;
