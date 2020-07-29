@@ -77,7 +77,8 @@ wire [5:0] inscode1;
 reg [5:0] inscode2,inscode3,inscode4;
 reg [4:0] wa,r_wa;
 reg [4:0] ra0,ra1,cp0_num;
-reg [4:0] aimaddr,aimaddr1,aimaddr2,aimaddr3,aimaddr4,aimaddr5;
+reg [4:0] aimaddr;
+wire [4:0] aimaddr1,aimaddr2,aimaddr3,aimaddr4,aimaddr5;
 reg [4:0] r_aimaddr,r_aimaddr1,r_aimaddr2,r_aimaddr3,r_aimaddr4;//目标写地址
 reg [3:0] m;
 reg [3:0] m1,m1_1;
@@ -190,6 +191,13 @@ initial delay_hl1=1;
 initial delay_sendhl=0;
 initial r_stall=0;
 
+//////////////////////////////////////////////////////
+////////////////流水段之间寄存器传递部分////////////////
+//////////////////////////////////////////////////////
+
+///////////////////////////
+/////IF段前方取指部分//
+
 always@(posedge clk)//寄存器直接传递
 begin
     inst_sram_rdata1<=inst_sram_rdata;
@@ -213,8 +221,8 @@ begin
     r_wa<=wa;
     r_aimdata1<=aimdata1;
     
-
-//译码
+//////////////////////
+/////IF to ID:译码/////
 if(pause2)
 begin
     r_a<=r_a;
@@ -237,8 +245,9 @@ begin
     pc2<=pc1;
     r_va1<=va1;
 end
-    
-//执行
+
+//////////////////////
+/////ID to EX:执行/////    
 if(pause3)
 begin
     r_y<=r_y;
@@ -266,7 +275,8 @@ begin
     r_va2<=va2;
 end
 
-//存储器访问
+//////////////////////////////
+/////EX to MEM:存储器访问///// 
 if(pause4||delay_hl||delay_hl1)
 begin
     r_y1<=r_y1;
@@ -298,7 +308,8 @@ begin
     r_va3<=va3;
 end
 
-//寄存器写
+//////////////////////////////
+/////MEM to WB:寄存器写回///// 
 if(pause5) 
 begin 
     aimdata3<=aimdata3;
@@ -338,6 +349,8 @@ else
         r_a5r<=r_a4r;
     end
 end
+
+
 
 always@(*)
 begin
@@ -429,40 +442,84 @@ begin
     else pc4<=pc3;
 end
 
-always@(*)
-begin
-    if(pause3_1) aimaddr1=aimaddr1;
-    else if(~va3) aimaddr1=0;
-    else aimaddr1=r_aimaddr;    
-end
+/////////////////////////////////////
+///////////生成aimaddr///////////////
+/////////////////////////////////////
 
-always@(*)
+////////////////////////
+/////aimaddr1生成//
+reg [4:0]aimaddr1_curr,aimaddr1_next;
+always @(posedge clk)
 begin
-    if(pause4_1||delay_hl_1||delay_hl1_1) aimaddr2=aimaddr2;
-    else if(~va4) aimaddr2=0;
-    else aimaddr2=r_aimaddr1;    
+    aimaddr1_curr <= aimaddr1_next;
 end
+always @(*)
+begin
+    if(pause3_1) aimaddr1_next=aimaddr1_curr;
+    else if(~va3) aimaddr1_next=0;
+    else aimaddr1_next=r_aimaddr;  
+end
+assign aimaddr1 = aimaddr1_next;
 
+/////////////////////////
+/////aimaddr2生成//
+reg [4:0]aimaddr2_curr,aimaddr2_next;
+always @(posedge clk)
+begin
+    aimaddr2_curr <= aimaddr2_next;
+end
 always@(*)
 begin
-    if(pause5_1) aimaddr3=aimaddr3;
-    else if(~va5) aimaddr3=0;
-    else aimaddr3=r_aimaddr2;    
+    if(pause4_1||delay_hl_1||delay_hl1_1) aimaddr2_next=aimaddr2_curr;
+    else if(~va4) aimaddr2_next=0;
+    else aimaddr2_next=r_aimaddr1;    
 end
+assign aimaddr2 = aimaddr2_next;
 
+//////////////////////////
+/////aimaddr3生成//
+reg [4:0]aimaddr3_curr,aimaddr3_next;
+always @(posedge clk)
+begin
+    aimaddr3_curr <= aimaddr3_next;
+end
 always@(*)
 begin
-    if(pause6_1) aimaddr4=aimaddr4;
-    else if(~va6) aimaddr4=0;
-    else aimaddr4=r_aimaddr3;    
+    if(pause5_1) aimaddr3_next=aimaddr3_curr;
+    else if(~va5) aimaddr3_next=0;
+    else aimaddr3_next=r_aimaddr2;    
 end
+assign aimaddr3 = aimaddr3_next;
 
+////////////////////////////
+/////aimaddr4生成//
+reg [4:0]aimaddr4_curr,aimaddr4_next;
+always @(posedge clk)
+begin
+    aimaddr4_curr <= aimaddr4_next;
+end
 always@(*)
 begin
-    if(pause7_1) aimaddr5=aimaddr5;
-    else if(~va7) aimaddr5=0;
-    else aimaddr5=r_aimaddr4;    
+    if(pause6_1) aimaddr4_next=aimaddr4_curr;
+    else if(~va6) aimaddr4_next=0;
+    else aimaddr4_next=r_aimaddr3;    
 end
+assign aimaddr4 = aimaddr4_next;
+
+//////////////////////////////
+/////aimaddr5生成//
+reg [4:0]aimaddr5_curr,aimaddr5_next;
+always @(posedge clk)
+begin
+    aimaddr5_curr <= aimaddr5_next;
+end
+always@(*)
+begin
+    if(pause7_1) aimaddr5_next=aimaddr5_curr;
+    else if(~va7) aimaddr5_next=0;
+    else aimaddr5_next=r_aimaddr4;    
+end
+assign aimaddr5 = aimaddr5_next;
 
 always@(posedge clk)//多项选择器
 begin
