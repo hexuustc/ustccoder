@@ -43,20 +43,30 @@ module mycpu_top
     output [31:0] debug_wb_rf_wdata
     );
 
-reg [31:0] a,b,a_1,b_1,r_wd,cp0_data,inst_sram_rdata1,data_sram_addr1,r_mult,r_y,r_y1,r_addr32;//ir太多.........................
+reg [31:0] a,b;//alu的输入数据
+reg [31:0] a_1,b_1;//alu保存值
+
+reg [31:0] wd,r_wd;//寄存器写数据
+reg [31:0] cp0_data;//传cp0数据
+reg [31:0] data_sram_addr1;//前三位非0
+reg [31:0] r_y,r_y1;//alu输出y传值
+reg [31:0] r_addr32;
+//HI,LO
 reg [31:0] LO,r_LO;
 reg [31:0] HI,r_HI;
+//dmu输入数据
+reg [31:0] a1,b1;
 reg [31:0] a1_1,b1_1;
-reg [31:0] wd,a1,b1;
-reg [31:0] aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5;//目标写数据
+
+reg [31:0] aimdata,aimdata1,aimdata2,aimdata3,aimdata4,aimdata5;//目标写数据
+reg [31:0] r_aimdata1;//寄存
 
 //PC地址传递寄存器
 reg [31:0]pc,pc1,pc2,pc3,pc4;
-reg [31:0]r_pc,r_pc_8;
+reg [31:0]r_pc_8;//pc-8
 
-reg [31:0] r_a,r_b,r_a1,r_b1,r_a2,r_b2;//传递rs, rt
-reg [31:0] r_ar_abs,r_br_abs,r_a1r,r_b1r,r_a2r,r_a2r_abs,r_b2r,r_b2r_abs,r_a3r,r_a4r,r_a5r;//rs, rt修正值
-reg [31:0] r_ar,r_br;
+reg [31:0] r_a,r_b,r_a1,r_b1,r_a2,r_b2;//传递rs, rt中值
+reg [31:0] r_ar,r_br,r_a1r,r_b1r,r_a2r,r_b2r,r_a3r,r_a4r,r_a5r;//rs, rt相关修正值,
 
 //五个流水段使用到的指令相关
 //指令本体
@@ -69,32 +79,49 @@ wire [4:0] rt,rt1,rt2,rt3,rt4;
 wire [4:0] rd,rd01,rd02,rd03,rd04;
 wire [4:0] shamt,shamt1,shamt2,shamt3,shamt4;
 
-reg [15:0] r_imm,b2value;
+reg [15:0] r_imm;
+reg [15:0] b2value;
 reg [7:0] bvalue;
-reg [5:0] inscode5,inscode6,inscode7;//指令码
+//指令码
 wire [5:0] inscode1;
-reg [5:0] inscode2,inscode3,inscode4;
-reg [4:0] wa,r_wa;
-reg [4:0] ra0,ra1,cp0_num;
+reg [5:0] inscode2,inscode3,inscode4,inscode5,inscode6,inscode7;//指令码
+
+reg [4:0] wa,r_wa;//寄存器写地址
+reg [4:0] ra0,ra1;
+reg [4:0] cp0_num;
+//目标写地址
 reg [4:0] aimaddr;
 wire [4:0] aimaddr1,aimaddr2,aimaddr3,aimaddr4,aimaddr5;
-reg [4:0] r_aimaddr,r_aimaddr1,r_aimaddr2,r_aimaddr3,r_aimaddr4;//目标写地址
+reg [4:0] r_aimaddr,r_aimaddr1,r_aimaddr2,r_aimaddr3,r_aimaddr4;//目标写地址寄存
+//alu,dmu操作码
 reg [3:0] m;
 reg [3:0] m1,m1_1;
+
 reg [2:0] c_pc,sel;
-reg [1:0] jump,div_begin;
+reg [1:0] jump;//指令跳转信号
+reg div_begin;//除法开始信号
 
 reg zero;//没什么卵用的zero，当做0的宏定义来用
 
-reg pd,pd1,we,zf1,cf1,of1,zf2,cf2,of2,c_inscode3,c_inscode4,c_ir3;
-reg delay_block,delay_block_1,delay_hl,delay_hl_1,delay_hl1,delay_hl1_1,delay_sendhl,delay_sendhl_1;//延迟信号
-
+reg pd,pd1;//数据地址对否判断
+reg we;//寄存器写使能
+reg zf1,cf1,of1,zf2,cf2,of2;//alu三信号
+reg c_inscode3,c_inscode4,c_ir3;
+//延迟信号
+reg delay_block,delay_block_1;//取数据相关延迟
+reg delay_hl,delay_hl_1;//乘除法相关延迟
+reg delay_hl1,delay_hl1_1;
+reg delay_sendhl,delay_sendhl_1;//ED取hi,lo相关延迟
+//暂停信号
 reg pause,pause1,pause2,pause3,pause4,pause5,pause6,pause7;//暂停信号[寄存器]
 reg pause1_1,pause2_1,pause3_1,pause4_1,pause5_1,pause6_1,pause7_1;//暂停信号的缓冲[寄存器]
+//有效位
+reg va,va1,va2,va3,va4,va5,va6,va7;//有效位
+reg r_va,r_va1,r_va2,r_va3;
 
-reg va,r_va,va1,r_va1,va2,r_va2,va3,r_va3,va4,va5,va6,va7;//有效位
 reg reins1,reins2;//保留指令
-reg r_stall;
+
+reg r_stall;//stall缓冲
 
 
 //和计算有关系的wire线,y,zf,cf,of是ALU输出端口
@@ -105,7 +132,7 @@ wire zf,cf,of;
 
 wire [31:0] pc_8,rd0,rd1;
 wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。。。。。。。。
-wire [1:0] exc;
+wire [1:0] exc;//例外
 wire back,stall;
 //cp0的端口
 wire [31:0] reins;
@@ -132,7 +159,7 @@ CP0 CP0(pc,y,cp0_data,
         exc,
         back,
         BadVAddr,Count,Status,Cause,EPC,
-        cp0_load);//怎么简化写法
+        cp0_load);
 assign reins = reins2;
 dmu dmu(hi,lo,stall,a1,b1,m1,clk,div_begin);
 
@@ -157,7 +184,7 @@ assign addr_0={r_imm,{16{zero}}};//基于0的位扩展，地址低位0
 assign shamt32={{27{zero}},shamt2};//shamt字段进行位扩展，高位补0
 
 //意义不明，pc-8
-assign pc_8=pc-8;
+assign pc_8=pc-8;//保存当前-8值，防止后面pc变化
 
 //各个存储器端口的说明
 //指令存储器
@@ -199,7 +226,6 @@ initial r_stall=0;
 
 always@(posedge clk)//寄存器直接传递
 begin
-    inst_sram_rdata1<=inst_sram_rdata;
     pause1_1<=pause1;
     pause2_1<=pause2;
     pause3_1<=pause3;
@@ -284,7 +310,6 @@ begin
     cf2<=cf2;
     r_a2<=r_a2;
     r_b2<=r_b2;
-    r_pc<=r_pc;
     r_pc_8<=r_pc_8;
     pd<=pd;
     pd1<=pd1;
@@ -299,7 +324,6 @@ begin
     cf2<=cf1;
     r_a2<=r_a1;
     r_b2<=r_b1;
-    r_pc<=pc-8;
     r_pc_8<=pc-4;
     if(r_y[0]==0) pd<=1; else pd<=0;
     if(r_y%4==0) pd1<=1; else pd1<=0;
@@ -405,7 +429,6 @@ always@(*)
 begin
     if(~resetn) va4=0;
     else if(pause4_1||delay_hl_1||delay_hl1_1) va4=va4;
-    //else if(exc==2) va4=0;
     else va4=r_va3;  
 end
 
@@ -416,14 +439,6 @@ begin
     else if(inscode4==42) aimdata2=LO;
     else if(pause4_1) aimdata2=aimdata2;
     else aimdata2=r_aimdata1;
-end
-
-always@(*)
-begin
-    if(r_ar[31]) r_ar_abs=-r_ar; else r_ar_abs=r_ar;
-    if(r_br[31]) r_br_abs=-r_br; else r_br_abs=r_br;
-    if(r_a2r[31]) r_a2r_abs=-r_a2r; else r_a2r_abs=r_a2r;
-    if(r_b2r[31]) r_b2r_abs=-r_b2r; else r_b2r_abs=r_b2r;
 end
 
 always@(posedge clk)
@@ -643,10 +658,6 @@ end
 
 always@(*)//执行...之后化繁为简，需用到inscode,shamt     rt,rd
 begin
-    //if(~resetn) va2=0;//这就是分支延迟槽
-    //else if(pause2) va2=va2;
-    //else if (exc) va2=0;
-    //else va2=r_va1;
     div_begin=0;
     a1=a1_1;b1=b1_1;m1=m1_1;
     if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
@@ -674,7 +685,6 @@ begin
     else if(inscode2==9) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end
     else if(inscode2==10) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end
     else if(inscode2==11) begin 
-                              //a=r_ar_abs; b=r_br_abs; m=7;
                               a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=1;
                               if(r_stall)
                               begin
@@ -690,7 +700,6 @@ begin
                               m1=11;
                           end//假设IP核是流水的
     else if(inscode2==12) begin 
-                              //a=r_ar; b=r_br; m=7;
                               a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=1;
                               if(r_stall)
                               begin
@@ -705,14 +714,12 @@ begin
                               aimaddr=0;m1=7;
                           end
     else if(inscode2==13) begin 
-                              //a=r_ar_abs; b=r_br_abs; m=5;
                               a=0;b=0;m=0;
                                   a1=r_ar;
                                   b1=r_br;
                               aimaddr=0;m1=5;
                           end
     else if(inscode2==14) begin 
-                              //a=r_ar; b=r_br; m=6;
                               a=0;b=0;m=0;
                                   a1=r_ar;
                                   b1=r_br;
@@ -732,7 +739,7 @@ begin
     else if(inscode2==26) begin a={{26{zero}},r_ar[4:0]}; b=r_br; m=10; aimaddr=rd02; end
     else if(inscode2==27) begin a=shamt32; b=r_br; m=9; aimaddr=rd02; end
     else if(inscode2==28) begin a={{26{zero}},r_ar[4:0]}; b=r_br; m=9; aimaddr=rd02; end
-    else if(inscode2==29) begin a=r_ar; b=r_br; m=1; aimaddr=0; end//另一个alu暂未加上，可加。。。。。。。。。。。。
+    else if(inscode2==29) begin a=r_ar; b=r_br; m=1; aimaddr=0; end
     else if(inscode2==30) begin a=r_ar; b=r_br; m=1; aimaddr=0; end
     else if((inscode2==47)||(inscode2==48)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
     else if((inscode2==49)||(inscode2==50)) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
@@ -848,7 +855,7 @@ begin
 end
 
 
-//该部分用到的输入数据是
+//该部分用到的输入数据是r_y1,ir4,r_pc_8,HI,LO
 always@(*)//寄存器写回...之后化繁为简，需用到inscode,rt,rd
 begin
     delay_hl=0;
@@ -871,8 +878,8 @@ begin
     
     if(pause4||delay_hl||delay_hl1||stall) c_inscode4=0; else  c_inscode4=1;
     
-    if(va4==0) begin we=0; wa=wa; wd=wd; end
-    else if(pause4) begin we=0; wa=wa; wd=wd; end
+    if(va4==0) begin we=0; wa=r_wa; wd=r_wd; end
+    else if(pause4) begin we=0; wa=r_wa; wd=r_wd; end
     else if(inscode4==1) begin we=1; wa=rd04; wd=r_y1; end
     else if(inscode4==2) begin we=1; wa=rt4; wd=r_y1; end
     else if(inscode4==3) begin we=1; wa=rd04; wd=r_y1; end
@@ -939,7 +946,7 @@ begin
         end
     else if(inscode4==51) begin if (pd1) we=1; else we=0; wa=rt4; wd=data_sram_rdata; end
     else if(inscode4==56) begin we=1; wa=rt4; wd=aimdata2;end
-    else begin we=0;wa=wa; wd=wd;end
+    else begin we=0;wa=r_wa; wd=r_wd;end
 end
 
 always @(*)//HI,LO在这里写回
