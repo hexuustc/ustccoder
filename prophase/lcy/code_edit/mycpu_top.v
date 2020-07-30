@@ -46,7 +46,6 @@ module mycpu_top
 reg [31:0] a,b,a_1,b_1,r_wd,cp0_data,inst_sram_rdata1,data_sram_addr1,r_mult,r_y,r_y1,r_addr32;//ir太多.........................
 reg [31:0] LO,r_LO;
 reg [31:0] HI,r_HI;
-reg [31:0] r_hi;
 reg [31:0] a1_1,b1_1;
 reg [31:0] wd,a1,b1;
 reg [31:0] aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5;//目标写数据
@@ -946,16 +945,15 @@ end
 always @(*)//HI,LO在这里写回
 begin
     if(va7==0) begin HI=r_HI;LO=r_LO; end
-    else if(inscode7==43) begin HI=r_a5r; LO=r_LO; end
-    else if(inscode7==44) begin LO=r_a5r; HI=r_HI; end
-    else if((inscode7==11)||(inscode7==12)||(inscode7==13)||(inscode7==14)) begin HI=hi; LO=lo; end
+    else if(inscode7==43) begin HI=r_a5r; LO=r_LO; end   //MTHI
+    else if(inscode7==44) begin LO=r_a5r; HI=r_HI; end   //MTLO
+    else if((inscode7==11)||(inscode7==12)||(inscode7==13)||(inscode7==14)) begin HI=hi; LO=lo; end   //乘除法
     else begin HI=r_HI; LO=r_LO; end
 end
 
 always@(posedge clk)
 begin
     r_HI<=HI;
-    r_hi<=hi;
     r_LO<=LO;
     a1_1<=a1;
     b1_1<=b1;
