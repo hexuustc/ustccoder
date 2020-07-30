@@ -28,7 +28,7 @@ module dmu
    input [WIDTH-1:0] a,b,		//两操作数
    input [3:0] m,				//操作类型
    input clk,
-   input [1:0] div_begin
+   input div_begin
    );
 wire [63:0] umult,udiv;
 reg [63:0] mult,div;
@@ -44,7 +44,7 @@ initial stall=0;
 
 always@(posedge clk)
 begin
-    if(div_begin==1) counter<=28;
+    if(div_begin) counter<=28;
     else if(counter!=0) counter<=counter-1;
     else counter <= counter;
 end
