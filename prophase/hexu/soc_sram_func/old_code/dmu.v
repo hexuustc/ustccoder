@@ -44,7 +44,6 @@ begin
     else if(div_begin==2) counter<=28;
     //else if(div_begin==3) counter<=1;
     else if(counter!=0) counter<=counter-1;
-    else counter <= counter;
 end
 
 always@(*)
@@ -56,24 +55,23 @@ end
 
 always @ (posedge clk)
 begin
-    if(stall)
-    begin
-        m1<=m1;
-        m2<=m2;
-        m3<=m3;
-        m4<=m4;
-        m5<=m5;
-    end
-    else
-    begin
-        m1<=m;
-        m2<=m1;
-        m3<=m2;
-        m4<=m3;
-        m5<=m4;
-    end
+if(stall)
+begin
+    m1<=m1;
+    m2<=m2;
+    m3<=m3;
+    m4<=m4;
+    m5<=m5;
 end
-
+else
+begin
+m1<=m;
+m2<=m1;
+m3<=m2;
+m4<=m3;
+m5<=m4;
+end
+end
 mult_gen_0 MM(.CLK(clk),
            .A(a),
            .B(b),
@@ -94,7 +92,6 @@ div_gen_1 DV1(.s_axis_divisor_tdata(b),
              .s_axis_dividend_tvalid(1),
              .m_axis_dout_tdata(udiv),
              .aclk(clk));//dmu反掉了
-
 always @(*)
 case (m5)
    4'b0101:begin        //乘

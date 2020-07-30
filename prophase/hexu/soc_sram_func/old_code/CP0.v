@@ -25,15 +25,15 @@ module CP0//给定指令默认为分支延迟槽的形式，即分支后一条�
     input [5:0] inscode2,inscode3,ext_int,
     input [4:0] cp0_num,
     input [2:0] sel,
-    input [4:0] cp0_ra,
     input clk,rst,of,va2,va3,reins,
     output reg [1:0] exc,
     output reg back,
     output reg [31:0] BadVAddr,Count,Status,Cause,EPC,
-    output wire [31:0]cp0_load
+    output reg [31:0] cp0_0,cp0_1,cp0_2,cp0_3,cp0_4,cp0_5,cp0_6,cp0_7,cp0_8,cp0_9,
+                       cp0_10,cp0_11,cp0_12,cp0_13,cp0_14,cp0_15,cp0_16,cp0_17,cp0_18,cp0_19,
+                       cp0_20,cp0_21,cp0_22,cp0_23,cp0_24,cp0_25,cp0_26,cp0_27,cp0_28,cp0_29,
+                       cp0_30,cp0_31
     );
-
-reg [31:0] cp0[0:31];
 reg [31:0] pc1,pc2;
 reg clk2;
 reg reins_check;
@@ -85,36 +85,36 @@ begin
         begin
             if(sel==0)
                 begin
-                    if(cp0_num==0) cp0[0]<=cp0_data;
-                    else if(cp0_num==1) cp0[1]<=cp0_data;
-                    else if(cp0_num==2) cp0[2]<=cp0_data;
-                    else if(cp0_num==3) cp0[3]<=cp0_data;
-                    else if(cp0_num==4) cp0[4]<=cp0_data;
-                    else if(cp0_num==5) cp0[5]<=cp0_data;
-                    else if(cp0_num==6) cp0[6]<=cp0_data;
-                    else if(cp0_num==7) cp0[7]<=cp0_data;
-                    else if(cp0_num==10) cp0[10]<=cp0_data;
-                    else if(cp0_num==11) cp0[11]<=cp0_data;
+                    if(cp0_num==0) cp0_0<=cp0_data;
+                    else if(cp0_num==1) cp0_1<=cp0_data;
+                    else if(cp0_num==2) cp0_2<=cp0_data;
+                    else if(cp0_num==3) cp0_3<=cp0_data;
+                    else if(cp0_num==4) cp0_4<=cp0_data;
+                    else if(cp0_num==5) cp0_5<=cp0_data;
+                    else if(cp0_num==6) cp0_6<=cp0_data;
+                    else if(cp0_num==7) cp0_7<=cp0_data;
+                    else if(cp0_num==10) cp0_10<=cp0_data;
+                    else if(cp0_num==11) cp0_11<=cp0_data;
                     else if(cp0_num==12) begin Status[15:8]<=cp0_data[15:8];Status[1:0]<=cp0_data[1:0];end
                     else if(cp0_num==13)begin Cause[9:8]<=cp0_data[9:8];end
                     else if(cp0_num==14) EPC<=cp0_data;
-                    else if(cp0_num==15) cp0[15]<=cp0_data;
-                    else if(cp0_num==16) cp0[16]<=cp0_data;
-                    else if(cp0_num==17) cp0[17]<=cp0_data;
-                    else if(cp0_num==18) cp0[18]<=cp0_data;
-                    else if(cp0_num==19) cp0[19]<=cp0_data;
-                    else if(cp0_num==20) cp0[20]<=cp0_data;
-                    else if(cp0_num==21) cp0[21]<=cp0_data;
-                    else if(cp0_num==22) cp0[22]<=cp0_data;
-                    else if(cp0_num==23) cp0[23]<=cp0_data;
-                    else if(cp0_num==24) cp0[24]<=cp0_data;
-                    else if(cp0_num==25) cp0[25]<=cp0_data;
-                    else if(cp0_num==26) cp0[26]<=cp0_data;
-                    else if(cp0_num==27) cp0[27]<=cp0_data;
-                    else if(cp0_num==28) cp0[28]<=cp0_data;
-                    else if(cp0_num==29) cp0[29]<=cp0_data;
-                    else if(cp0_num==30) cp0[30]<=cp0_data;
-                    else if(cp0_num==31) cp0[31]<=cp0_data;
+                    else if(cp0_num==15) cp0_15<=cp0_data;
+                    else if(cp0_num==16) cp0_16<=cp0_data;
+                    else if(cp0_num==17) cp0_17<=cp0_data;
+                    else if(cp0_num==18) cp0_18<=cp0_data;
+                    else if(cp0_num==19) cp0_19<=cp0_data;
+                    else if(cp0_num==20) cp0_20<=cp0_data;
+                    else if(cp0_num==21) cp0_21<=cp0_data;
+                    else if(cp0_num==22) cp0_22<=cp0_data;
+                    else if(cp0_num==23) cp0_23<=cp0_data;
+                    else if(cp0_num==24) cp0_24<=cp0_data;
+                    else if(cp0_num==25) cp0_25<=cp0_data;
+                    else if(cp0_num==26) cp0_26<=cp0_data;
+                    else if(cp0_num==27) cp0_27<=cp0_data;
+                    else if(cp0_num==28) cp0_28<=cp0_data;
+                    else if(cp0_num==29) cp0_29<=cp0_data;
+                    else if(cp0_num==30) cp0_30<=cp0_data;
+                    else if(cp0_num==31) cp0_31<=cp0_data;
                 end
         end
     else if(~EXL&&Status[0]&&Cause[15:8])//中断
@@ -208,11 +208,11 @@ end
 
 always@(*)
 begin
-    cp0[8]=BadVAddr;
-    cp0[9]=Count;
-    cp0[12]=Status;
-    cp0[13]=Cause;
-    cp0[14]=EPC;
+    cp0_8=BadVAddr;
+    cp0_9=Count;
+    cp0_12=Status;
+    cp0_13=Cause;
+    cp0_14=EPC;
 end
 
 always@(*)//返回指令
@@ -237,8 +237,5 @@ always@(posedge clk2,posedge rst)
                 end
         end
     else Count<=Count+1;
-
-//读口，输出CP0中某个寄存器的值
-assign cp0_load = cp0[cp0_ra];
 
 endmodule
