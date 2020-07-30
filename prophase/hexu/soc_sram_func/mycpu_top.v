@@ -46,7 +46,6 @@ module mycpu_top
 reg [31:0] a,b,a_1,b_1,r_wd,cp0_data,inst_sram_rdata1,data_sram_addr1,r_mult,r_y,r_y1,r_addr32;//ir太多.........................
 reg [31:0] LO,r_LO;
 reg [31:0] HI,r_HI;
-reg [31:0] r_hi;
 reg [31:0] a1_1,b1_1;
 reg [31:0] wd,a1,b1;
 reg [31:0] aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5;//目标写数据
@@ -692,7 +691,7 @@ begin
                           end//假设IP核是流水的
     else if(inscode2==12) begin 
                               //a=r_ar; b=r_br; m=7;
-                              a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=2;
+                              a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=1;
                               if(r_stall)
                               begin
                                 a1=a1_1;
@@ -952,10 +951,9 @@ begin
     else begin HI=r_HI; LO=r_LO; end
 end
 
-always@(posedge clk)
+always@(posedge clk)//防锁存器电路
 begin
     r_HI<=HI;
-    r_hi<=hi;
     r_LO<=LO;
     a1_1<=a1;
     b1_1<=b1;
