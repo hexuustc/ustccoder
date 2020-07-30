@@ -714,7 +714,7 @@ begin
                           end//假设IP核是流水的
     else if(inscode2==12) begin 
                               //a=r_ar; b=r_br; m=7;
-                              a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=2;
+                              a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=1;
                               if(r_stall)
                               begin
                                 a1=a1_1;
