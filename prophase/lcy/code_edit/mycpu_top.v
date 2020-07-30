@@ -43,11 +43,28 @@ module mycpu_top
     output [31:0] debug_wb_rf_wdata
     );
 
-reg [31:0] a,b,a_1,b_1,r_wd,cp0_data,inst_sram_rdata1,data_sram_addr1,r_mult,r_y,r_y1,r_addr32;//ir太多.........................
+//此处定义的是alu和amu的两个输入操作数a、b相关的信号
+reg [31:0] a,b;//这两个信号本质是wire，根据一系列组合逻辑选择出信号作为操作数a、b，并连上alu
+reg [31:0] a1,b1;//同上，但连的是dmu
+reg [31:0] a_1,b_1,a1_1,b1_1;//具体作用就是在每个时钟上升沿的时候把对应的值存进寄存器里面去，具体表现为它记录了上个周期对应的值
+
+
+//此处定义的是乘除法一类指令相关的HI，LO寄存器的一类信号
+//此处只有r_HI、r_LO才是寄存器，HI，LO标记的是寄存器将在下个时钟上升沿转换的目标值，hi、lo标记的是dmu输出的值
 reg [31:0] LO,r_LO;
 reg [31:0] HI,r_HI;
-reg [31:0] a1_1,b1_1;
-reg [31:0] wd,a1,b1;
+wire [31:0] lo;
+wire [31:0] hi;
+
+
+reg [31:0] r_wd;
+reg [31:0] wd;
+
+
+reg [31:0] cp0_data;
+
+reg [31:0] inst_sram_rdata1,data_sram_addr1,r_y,r_y1,r_addr32;//ir太多.........................
+
 reg [31:0] aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5;//目标写数据
 
 //PC地址传递寄存器
@@ -98,8 +115,7 @@ reg r_stall;
 
 
 //和计算有关系的wire线,y,zf,cf,of是ALU输出端口
-wire [31:0] lo;
-wire [31:0] hi;
+
 wire [31:0] y;
 wire zf,cf,of;
 
