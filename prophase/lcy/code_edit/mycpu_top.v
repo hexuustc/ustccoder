@@ -63,7 +63,9 @@ reg [31:0] wd;
 
 reg [31:0] cp0_data;
 
-reg [31:0] inst_sram_rdata1,data_sram_addr1,r_y,r_y1,r_addr32;//ir太多.........................
+reg [31:0] data_sram_addr1;
+
+reg [31:0] r_y,r_y1,r_addr32;//ir太多.........................
 
 reg [31:0] aimdata,aimdata1,r_aimdata1,aimdata2,aimdata3,aimdata4,aimdata5;//目标写数据
 
@@ -215,7 +217,7 @@ initial r_stall=0;
 
 always@(posedge clk)//寄存器直接传递
 begin
-    inst_sram_rdata1<=inst_sram_rdata;
+    
     pause1_1<=pause1;
     pause2_1<=pause2;
     pause3_1<=pause3;
@@ -223,15 +225,20 @@ begin
     pause5_1<=pause5;
     pause6_1<=pause6;
     pause7_1<=pause7;
+    
     delay_hl_1<=delay_hl;
     delay_hl1_1<=delay_hl1;
     delay_block_1<=delay_block;
     delay_sendhl_1<=delay_sendhl;
+    
     r_stall<=stall;
+    
     if(pause1) pc1<=pc1;
     else pc1<=pc;
+    
     if(pause1) r_va<=r_va;
     else r_va<=va;
+    
     r_wd<=wd;
     r_wa<=wa;
     r_aimdata1<=aimdata1;
