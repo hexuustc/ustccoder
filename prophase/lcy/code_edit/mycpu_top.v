@@ -105,7 +105,7 @@ reg [1:0] jump,div_begin;
 
 reg zero;//没什么卵用的zero，当做0的宏定义来用
 
-reg pd,pd1,we,zf1,cf1,of1,zf2,cf2,of2,c_inscode3,c_inscode4,c_ir3;
+reg pd,pd1,we,zf1,cf1,of1,zf2,cf2,of2,c_inscode3,c_inscode4;
 reg delay_block,delay_block_1,delay_hl,delay_hl_1,delay_hl1,delay_hl1_1,delay_sendhl,delay_sendhl_1;//延迟信号
 
 reg pause,pause1,pause2,pause3,pause4,pause5,pause6,pause7;//暂停信号[寄存器]
@@ -125,7 +125,7 @@ wire zf,cf,of;
 wire [31:0] pc_8,rd0,rd1;
 wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。。。。。。。。
 wire [1:0] exc;
-wire back,stall;
+wire back,dmu_stall,stall;
 //cp0的端口
 wire [31:0] reins;
 //cp0的32个寄存器读口
@@ -153,8 +153,9 @@ CP0 CP0(pc,y,cp0_data,
         BadVAddr,Count,Status,Cause,EPC,
         cp0_load);//怎么简化写法
 assign reins = reins2;
-dmu dmu(hi,lo,stall,a1,b1,m1,clk,div_begin);
+dmu dmu(hi,lo,dmu_stall,a1,b1,m1,clk,div_begin);
 
+assign stall = dmu_stall;
 //将指令分割成各个部分以方便后续使用
 assign {op ,rs ,rt ,rd ,shamt ,funct } = ir ;//IF级指令分割
 assign {op1,rs1,rt1,rd01,shamt1,funct1} = ir1;//ID级指令分割
@@ -478,6 +479,12 @@ begin
 end
 assign aimaddr5 = aimaddr5_next;
 
+//////////////////////////////////////////////////////////////////////
+///////////////////生成pc/////////////////////////////////////////////
+///////////////////实际上这个pc是某些信号中转成c_pc后再转成需要的pc的////
+///////////////////然后pc是个寄存器///////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
 always@(posedge clk)//多项选择器
 begin
      case(c_pc)//pc取指
@@ -492,15 +499,15 @@ begin
      default:pc<=32'hbfc00000;
      endcase
      
-     case(c_inscode3)//指令码继承
-        0:inscode3<=inscode3;
-        1:inscode3<=inscode2;
+     case(pause3)//指令码继承
+        0:inscode3<=inscode2;
+        1:inscode3<=inscode3;
         default:inscode3<=inscode3;
      endcase 
      
-     case(c_inscode4)//指令码继承
-        0:inscode4<=inscode4;
-        1:inscode4<=inscode3;
+     case(pause4||delay_hl||delay_hl1||stall)//指令码继承
+        0:inscode4<=inscode3;
+        1:inscode4<=inscode4;
         default:inscode4<=inscode4;
      endcase
      
@@ -737,9 +744,6 @@ begin
     if(delay_hl||delay_hl1||stall) pause3=1;
     else pause3=0;
 
-    if(pause3) begin c_inscode3=0; c_ir3=0; end 
-    else begin c_inscode3=1; c_ir3=1; end
-
     if (rs3==0) r_a1r=0;
     else if(rs3==aimaddr2) r_a1r=aimdata2;
     else if(rs3==aimaddr3) r_a1r=aimdata3;
@@ -754,6 +758,9 @@ begin
     
 
     //生成数据存储器的写使能和写数据
+    //输入条件：va3,pause3,inscode3
+    //输入材料：r_b1r
+    //输出结果：data_sram_wen，data_sram_wdata
     if(va3 && ~pause3)
     begin
         case(inscode3)
@@ -780,6 +787,9 @@ begin
     end
     else {data_sram_wen,data_sram_wdata} = 0;
 
+    //地址，这里其实只是个中转变量，非分支
+    data_sram_addr1=r_y;
+
     //生成jump信号
     if(va3 && ~pause3)
     begin
@@ -801,21 +811,21 @@ begin
     end
     else jump = 2'b00;
     
-    data_sram_addr1=r_y;
+    
 
     //此处电路用于生成delay_block与delay_sendhl
     if (va3 && ~pause3)
     begin
-    if((inscode3==47)||(inscode3==48)) 
+    if((inscode3==47)||(inscode3==48)) //LB、LBU指令
             if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
             else delay_block=0;
-    else if((inscode3==49)||(inscode3==50)) 
+    else if((inscode3==49)||(inscode3==50)) //LH、LHU指令
             if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0]))) delay_block=1;
             else delay_block=0; 
-    else if(inscode3==51) 
+    else if(inscode3==51) //LW指令
             if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0]))) delay_block=1;
                 else delay_block=0; 
-    else if(inscode3==41) begin 
+    else if(inscode3==41) begin  //MFHI指令
                               if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
@@ -825,7 +835,7 @@ begin
                               end
                               else delay_sendhl=0;
                           end
-    else if(inscode3==42) begin 
+    else if(inscode3==42) begin   //MFLO指令
                               if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
