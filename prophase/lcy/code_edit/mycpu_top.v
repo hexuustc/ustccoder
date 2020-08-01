@@ -809,7 +809,7 @@ begin
     end
     else jump = 2'b00;
     
-    data_sram_addr1=0;
+    data_sram_addr1=r_y;
 
     if(va3==0)            begin                                             end
     else if(pause3)       begin                                            end  
