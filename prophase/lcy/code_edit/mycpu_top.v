@@ -803,35 +803,18 @@ begin
     
     data_sram_addr1=r_y;
 
+    //此处电路用于生成delay_block与delay_sendhl
     if (va3 && ~pause3)
     begin
     if((inscode3==47)||(inscode3==48)) 
-        begin data_sram_addr1=r_y;
             if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
             else delay_block=0;
-        end
     else if((inscode3==49)||(inscode3==50)) 
-        begin data_sram_addr1=r_y;
             if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0]))) delay_block=1;
             else delay_block=0; 
-        end
     else if(inscode3==51) 
-        begin 
-            data_sram_addr1=r_y;
             if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0]))) delay_block=1;
                 else delay_block=0; 
-        end
-    else if(inscode3==52) begin data_sram_addr1=r_y;//写字节与数据就是位置对应关系。。。。。。。。。。。
-                                
-                          end
-    else if(inscode3==53) begin data_sram_addr1=r_y;
-                                
-                          end
-    else if(inscode3==54) begin data_sram_addr1=r_y; end
-    else if(inscode3==7) begin end
-    else if(inscode3==8) begin end
-    else if(inscode3==9) begin end
-    else if(inscode3==10) begin end
     else if(inscode3==41) begin 
                               if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
