@@ -757,36 +757,28 @@ begin
     if(va3 && ~pause3)
     begin
         case(inscode3)
-            52:case(r_y[1:0])
-                    0:begin data_sram_wen=4'b0001;data_sram_wdata[7:0]=r_b1r[7:0]; end //已进行小尾端处理
-                    1:begin data_sram_wen=4'b0010;data_sram_wdata[15:8]=r_b1r[7:0]; end//已进行小尾端处理
-                    2:begin data_sram_wen=4'b0100;data_sram_wdata[23:16]=r_b1r[7:0]; end//已进行小尾端处理。
-                    3:begin data_sram_wen=4'b1000;data_sram_wdata[31:24]=r_b1r[7:0]; end//已进行小尾端处理
+            52:case(r_y[1:0])//SB指令
+                    0:begin data_sram_wen=4'b0001;data_sram_wdata = {24'h000000, r_b1r[7:0]            }; end //已进行小尾端处理
+                    1:begin data_sram_wen=4'b0010;data_sram_wdata = {16'h0000,   r_b1r[7:0],      8'h00}; end//已进行小尾端处理
+                    2:begin data_sram_wen=4'b0100;data_sram_wdata = {8'h00,      r_b1r[7:0],   16'h0000}; end//已进行小尾端处理。
+                    3:begin data_sram_wen=4'b1000;data_sram_wdata = {            r_b1r[7:0], 24'h000000}; end//已进行小尾端处理
                     default: begin data_sram_wen=0; data_sram_wdata=0; end
                 endcase
-            53:case(r_y[1:0])
-                    0:begin data_sram_wen=4'b0011;data_sram_wdata[15:0]=r_b1r[15:0]; end//已进行小尾端处理
-                    2:begin data_sram_wen=4'b1100;data_sram_wdata[31:16]=r_b1r[15:0]; end//已进行小尾端处理
-                    default: begin data_sram_wen=4'b0000;data_sram_wdata=0; end//已进行小尾端处理
+            53:case(r_y[1:0])//SH指令
+                    0:begin data_sram_wen=4'b0011;data_sram_wdata = {16'h0000    , r_b1r[15:0]}; end//已进行小尾端处理
+                    2:begin data_sram_wen=4'b1100;data_sram_wdata = {r_b1r[15:0] ,    16'h0000}; end//已进行小尾端处理
+                    default: begin data_sram_wen=4'b0000;data_sram_wdata= 0; end//已进行小尾端处理
                 endcase
-            54: 
+            54: //SW指令
             begin
                 if(r_y[1:0]==0) data_sram_wen=4'b1111; 
                 else data_sram_wen=0; 
                 data_sram_wdata=r_b1r; 
             end
-            default: 
-            begin
-                data_sram_wen=0;
-                data_sram_wdata=0;
-            end
+            default: {data_sram_wen,data_sram_wdata} = 0;
         endcase
     end
-    else
-    begin
-        data_sram_wen=0;
-        data_sram_wdata=0;
-    end
+    else {data_sram_wen,data_sram_wdata} = 0;
 
     //生成jump信号
     if(va3 && ~pause3)
