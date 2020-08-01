@@ -245,18 +245,7 @@ begin
     
 //////////////////////
 /////IF to ID:译码/////
-if(pause2)
-begin
-    r_a<=r_a;
-    r_b<=r_b;
-    r_imm<=r_imm;
-    inscode2<=inscode2;
-    ir2<=ir2;
-    reins2<=reins2;
-    pc2<=pc2;
-    r_va1<=r_va1;
-end
-else
+if(~pause2)
 begin
     r_a<=rd0;
     r_b<=rd1;
@@ -270,21 +259,8 @@ end
 
 //////////////////////
 /////ID to EX:执行/////    
-if(pause3)
+if(~pause3)
 begin
-    r_y<=r_y;
-    zf1<=zf1;
-    of1<=of1;
-    cf1<=cf1;
-    r_addr32<=r_addr32;    
-    r_a1<=r_a1;
-    r_b1<=r_b1;
-    ir3<=ir3;
-    pc3<=pc3;
-    r_va2<=r_va2;
-end
-else
-begin    
     r_y<=y;
     zf1<=zf;
     of1<=of;
@@ -299,23 +275,8 @@ end
 
 //////////////////////////////
 /////EX to MEM:存储器访问///// 
-if(pause4||delay_hl||delay_hl1)
+if(~(pause4||delay_hl||delay_hl1))
 begin
-    r_y1<=r_y1;
-    zf2<=zf2;
-    of2<=of2;
-    cf2<=cf2;
-    r_a2<=r_a2;
-    r_b2<=r_b2;
-    r_pc<=r_pc;
-    r_pc_8<=r_pc_8;
-    pd<=pd;
-    pd1<=pd1;
-    ir4<=ir4;
-    r_va3<=r_va3;
-end
-else
-begin    
     r_y1<=r_y;
     zf2<=zf1;
     of2<=of1;
@@ -332,44 +293,18 @@ end
 
 //////////////////////////////
 /////MEM to WB:寄存器写回///// 
-if(pause5) 
+if(~stall) 
 begin 
-    aimdata3<=aimdata3;
-    inscode5<=inscode5;
-    r_a3r<=r_a3r;
+    aimdata3<=aimdata2;
+    inscode5<=inscode4;
+    r_a3r<=r_a2r;
+    aimdata4<=aimdata3;
+    inscode6<=inscode5;
+    r_a4r<=r_a3r;
+    aimdata5<=aimdata4;
+    inscode7<=inscode6;
+    r_a5r<=r_a4r;
 end
-else 
-    begin 
-        aimdata3<=aimdata2;
-        inscode5<=inscode4;
-        r_a3r<=r_a2r;
-    end
-
-if(pause6) 
-begin 
-    aimdata4<=aimdata4;
-    inscode6<=inscode6;
-    r_a4r<=r_a4r;
-end
-else 
-    begin 
-        aimdata4<=aimdata3;
-        inscode6<=inscode5;
-        r_a4r<=r_a3r;
-    end
-
-if(pause7) 
-begin 
-    aimdata5<=aimdata5;
-    inscode7<=inscode7;
-    r_a5r<=r_a5r;
-end
-else 
-    begin 
-        aimdata5<=aimdata4;
-        inscode7<=inscode6;
-        r_a5r<=r_a4r;
-    end
 end
 
 
@@ -394,15 +329,15 @@ always@(posedge clk,negedge resetn)
 begin
     if(~resetn) va5<=0;
     else if(delay_hl||delay_hl1) va5<=0;
-    else if(pause5) va5<=va5;
+    else if(stall) va5<=va5;
     else va5<=va4;
     
     if(~resetn) va6<=0;
-    else if(pause6) va6<=va6;
+    else if(stall) va6<=va6;
     else va6<=va5;
     
     if(~resetn) va7<=0;
-    else if(pause7) va7<=va7;
+    else if(stall) va7<=va7;
     else va7<=va6;
 end
 
@@ -599,6 +534,7 @@ always@(*)//取指
 begin
     if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
     else pause=0;
+    
     if(~resetn)begin c_pc=7; va=0; end
     else 
         begin           
