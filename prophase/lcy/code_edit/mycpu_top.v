@@ -111,7 +111,8 @@ reg delay_block,delay_block_1,delay_hl,delay_hl_1,delay_hl1,delay_hl1_1,delay_se
 reg pause,pause1,pause2,pause3,pause4,pause5,pause6,pause7;//暂停信号[寄存器]
 reg pause1_1,pause2_1,pause3_1,pause4_1,pause5_1,pause6_1,pause7_1;//暂停信号的缓冲[寄存器]
 
-reg va,r_va,va1,r_va1,va2,r_va2,va3,r_va3,va4,va5,va6,va7;//有效位
+wire va;
+reg r_va,va1,r_va1,va2,r_va2,va3,r_va3,va4,va5,va6,va7;//有效位
 reg reins1,reins2;//保留指令
 reg r_stall;
 
@@ -194,7 +195,6 @@ assign debug_wb_rf_wdata=wd;
 //初始化操作
 
 initial zero=0;// 就是0的宏定义，没啥卵用
-initial va=1; //va是个寄存器，会变
 initial pc=32'hbfc00000;//初始地址为这个，算是一个常量
 initial pause=0;
 initial pause1=0;
@@ -536,20 +536,23 @@ begin
     else pause=0;
 end
 
+reg va_curr,va_next;
+always @(posedge clk)
+begin
+    va_curr <= va_next;
+end
 always @(*)
 begin
-    if(~resetn)begin va = 0; end
+    if(~resetn) va_next = 0;
     else
     begin
-        if(pause) va = va;
-        else if(back) va = 0;
-        else if(exc) va = 0;
-        else if(jump == 1) va = 0;
-        else if(jump == 2) va = 0;
-        else if(jump == 3) va = 0;
-        else va = 1;
+        if(pause) va_next = va_curr;
+        else if(~back && (exc == 0) && (jump == 0)) va_next = 1;
+        else va_next = 0;
     end
 end
+assign va = va_next;
+
 
 always@(*)//取指
 begin
@@ -828,6 +831,7 @@ end
 
 
 //该部分用到的输入数据是
+//这部分的目的是输出we,wa,wd数据
 always@(*)//寄存器写回...之后化繁为简，需用到inscode,rt,rd
 begin
     delay_hl=0;
