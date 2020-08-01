@@ -787,51 +787,72 @@ begin
         data_sram_wen=0;
         data_sram_wdata=0;
     end
+
+    //生成jump信号
+    if(va3 && ~pause3)
+    begin
+        case(inscode3)
+            29: if(zf1==1) jump=1; else jump=0;
+            30: if(zf1==0) jump=1; else jump=0;
+            31: if(r_a1r[31]==0) jump=1; else jump=0;
+            32: if((r_a1r[31]==0)&&(r_a1r!=0)) jump=1; else jump=0;
+            33: if((r_a1r[31]==1)||(r_a1r==0)) jump=1; else jump=0;
+            34: if(r_a1r[31]==1) jump=1; else jump=0;
+            35: if(r_a1r[31]==1) jump=1; else jump=0;
+            36: if(r_a1r[31]==0) jump=1; else jump=0;
+            37: jump = 2'b10;
+            38: jump = 2'b10;
+            39: jump = 2'b11;
+            40: jump = 2'b11;
+            default: jump = 2'b00;
+        endcase
+    end
+    else jump = 2'b00;
     
-    
-    if(va3==0)            begin jump=0;                                              end
-    else if(pause3)       begin jump=0;                                              end  
-    else if(inscode3==29) begin if(zf1==1) jump=1; else jump=0;                      end
-    else if(inscode3==30) begin if(zf1==0) jump=1; else jump=0;                      end
-    else if(inscode3==31) begin if(r_a1r[31]==0) jump=1; else jump=0;                end//默认rs为有符号数
-    else if(inscode3==32) begin if((r_a1r[31]==0)&&(r_a1r!=0)) jump=1; else jump=0;  end//默认rs为有符号数
-    else if(inscode3==33) begin if((r_a1r[31]==1)||(r_a1r==0)) jump=1; else jump=0;  end//默认rs为有符号数
-    else if(inscode3==34) begin if(r_a1r[31]==1) jump=1; else jump=0;                end//默认rs为有符号数
-    else if(inscode3==35) begin if(r_a1r[31]==1) jump=1; else jump=0;                end//默认rs为有符号数
-    else if(inscode3==36) begin if(r_a1r[31]==0) jump=1; else jump=0;                end//默认rs为有符号数
-    else if(inscode3==37) begin jump=2;                                              end//默认rs为有符号数
-    else if(inscode3==38) begin jump=2;                                              end//默认rs为有符号数
-    else if(inscode3==39) begin jump=3;                                              end//默认rs为有符号数
-    else if(inscode3==40) begin jump=3;                                              end//默认rs为有符号数
+    data_sram_addr1=0;
+
+    if(va3==0)            begin                                             end
+    else if(pause3)       begin                                            end  
+    else if(inscode3==29) begin                      end
+    else if(inscode3==30) begin                       end
+    else if(inscode3==31) begin                end//默认rs为有符号数
+    else if(inscode3==32) begin   end//默认rs为有符号数
+    else if(inscode3==33) begin   end//默认rs为有符号数
+    else if(inscode3==34) begin              end//默认rs为有符号数
+    else if(inscode3==35) begin                 end//默认rs为有符号数
+    else if(inscode3==36) begin                 end//默认rs为有符号数
+    else if(inscode3==37) begin                                               end//默认rs为有符号数
+    else if(inscode3==38) begin                                               end//默认rs为有符号数
+    else if(inscode3==39) begin                                               end//默认rs为有符号数
+    else if(inscode3==40) begin                                               end//默认rs为有符号数
     else if((inscode3==47)||(inscode3==48)) 
-        begin jump=0; data_sram_addr1=r_y;
+        begin data_sram_addr1=r_y;
             if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
             else delay_block=0;
         end
     else if((inscode3==49)||(inscode3==50)) 
-        begin jump=0;  data_sram_addr1=r_y;
+        begin data_sram_addr1=r_y;
             if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0]))) delay_block=1;
             else delay_block=0; 
         end
     else if(inscode3==51) 
         begin 
-            jump=0; data_sram_addr1=r_y;
+            data_sram_addr1=r_y;
             if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0]))) delay_block=1;
                 else delay_block=0; 
         end
-    else if(inscode3==52) begin jump=0; data_sram_addr1=r_y;//写字节与数据就是位置对应关系。。。。。。。。。。。
+    else if(inscode3==52) begin data_sram_addr1=r_y;//写字节与数据就是位置对应关系。。。。。。。。。。。
                                 
                           end
-    else if(inscode3==53) begin jump=0; data_sram_addr1=r_y;
+    else if(inscode3==53) begin data_sram_addr1=r_y;
                                 
                           end
-    else if(inscode3==54) begin jump=0; data_sram_addr1=r_y; end
-    else if(inscode3==7) begin jump=0; end
-    else if(inscode3==8) begin jump=0; end
-    else if(inscode3==9) begin jump=0; end
-    else if(inscode3==10) begin jump=0; end
+    else if(inscode3==54) begin data_sram_addr1=r_y; end
+    else if(inscode3==7) begin end
+    else if(inscode3==8) begin end
+    else if(inscode3==9) begin end
+    else if(inscode3==10) begin end
     else if(inscode3==41) begin 
-                              jump=0;
                               if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
@@ -842,7 +863,6 @@ begin
                               else delay_sendhl=0;
                           end
     else if(inscode3==42) begin 
-                              jump=0;
                               if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
@@ -852,14 +872,12 @@ begin
                               end
                               else delay_sendhl=0; 
                           end
-    else if(inscode3==56) begin jump=0; end
+    else if(inscode3==56) begin end
     else if(inscode3==57) 
         begin
-            jump=0; 
-            
         end
-    else if(inscode3==18) begin jump=0; end
-    else begin jump=0;end
+    else if(inscode3==18) begin end
+    else begin end
 
 
 end
