@@ -113,6 +113,7 @@ reg [31:0] a,b;//alu的输入数据
 reg [31:0] a_1,b_1;//alu保存值
 
 reg [31:0] inst_sram_rdata1;
+reg [31:0] data_sram_rdata1;
 
 reg [31:0] wd,r_wd;//寄存器写数据
 reg [31:0] cp0_data;//传cp0数据
@@ -176,7 +177,7 @@ reg we;//寄存器写使能
 reg zf1,cf1,of1,zf2,cf2,of2;//alu三信号
 reg c_inscode3,c_inscode4,c_ir3;
 //延迟信号
-reg delay_block,delay_block_1;//取数据相关延迟
+//reg delay_block,delay_block_1;//取数据相关延迟
 reg delay_hl,delay_hl_1;//乘除法相关延迟
 reg delay_hl1,delay_hl1_1;
 reg delay_sendhl,delay_sendhl_1;//ED取hi,lo相关延迟
@@ -280,7 +281,7 @@ initial pause2=0;
 initial pause3=0;
 initial pause4=0;
 
-initial delay_block=0;
+//initial delay_block=0;
 initial delay_hl=0;
 initial delay_hl1=1;
 initial delay_sendhl=0;
@@ -304,7 +305,7 @@ begin
     pause7_1<=pause7;
     delay_hl_1<=delay_hl;
     delay_hl1_1<=delay_hl1;
-    delay_block_1<=delay_block;
+    //delay_block_1<=delay_block;
     delay_sendhl_1<=delay_sendhl;
     r_stall<=stall_dv;
     if(~resetn) pc1<=0;
@@ -450,6 +451,13 @@ begin
     else inst_sram_rdata1<=inst_sram_rdata;
 end
 
+always@(posedge clk)
+begin
+    if(pause4)
+    data_sram_rdata1<=data_sram_rdata1;
+    else data_sram_rdata1<=data_sram_rdata;
+end
+
 always@(*)
 begin
     if(stall)
@@ -493,7 +501,7 @@ end
 always@(*)
 begin
     if(~resetn) va3=0;
-    else if(delay_block_1) va3=0;
+   // else if(delay_block_1) va3=0;
     else if(delay_sendhl_1) va3=0;
     else if(pause3_1) va3=va3;
     else if(exc) va3=0;
@@ -658,6 +666,11 @@ begin
             end
             else aimdata1=0;
         18: aimdata1=~r_y;
+        47:aimdata1=data_sram_rdata;
+        48:aimdata1=data_sram_rdata;
+        49:aimdata1=data_sram_rdata;
+        50:aimdata1=data_sram_rdata;
+        51:aimdata1=data_sram_rdata;
         default: aimdata1=r_y;
     endcase
 end
@@ -1229,7 +1242,8 @@ end
 
 always@(*)//取指
 begin
-    if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
+    //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
+    if(delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
     else pause=0;
     if(~resetn)begin c_pc=7; va=0; end
     else 
@@ -1276,7 +1290,8 @@ assign inscode1 = InsConvert_inscode;
 //生成其它乱七八糟的控制码
 always@(*)//需用到rs,rt,addr   rd,shamt
 begin    
-    if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
+    //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
+    if(delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
     else pause1=0;
      
      if(pause1_1) ir1=ir1; else ir1=inst_sram_rdata;
@@ -1300,7 +1315,8 @@ always@(*)//执行...之后化繁为简，需用到inscode,shamt     rt,rd
 begin
     div_begin=0;
     a1=a1_1;b1=b1_1;m1=m1_1;
-    if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
+    //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
+    if(delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
     else pause2=0;
     if(rs2==0) r_ar=0;
     else if(rs2==aimaddr1) r_ar=aimdata1;
@@ -1394,7 +1410,7 @@ end
 
 always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转。。。。。前三位归零，原因何在？？？？？
 begin
-    delay_block=0;
+    //delay_block=0;
     delay_sendhl=0;
     if(delay_hl||delay_hl1||stall) pause3=1;
     else pause3=0;
@@ -1425,19 +1441,19 @@ begin
     else if(inscode3==40) begin jump=3; data_sram_wen=0; end//默认rs为有符号数
     else if((inscode3==47)||(inscode3==48)) 
         begin jump=0; data_sram_addr1=r_y; data_sram_wen=0;
-            if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
-            else delay_block=0;
+            //if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
+            //else delay_block=0;
         end
     else if((inscode3==49)||(inscode3==50)) 
         begin jump=0; data_sram_wen=0; data_sram_addr1=r_y;
-            if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0]))) delay_block=1;
-            else delay_block=0; 
+           // if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0]))) delay_block=1;
+           // else delay_block=0; 
         end
     else if(inscode3==51) 
         begin 
             jump=0; data_sram_wen=0; data_sram_addr1=r_y;
-            if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0]))) delay_block=1;
-                else delay_block=0; 
+           // if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0]))) delay_block=1;
+               // else delay_block=0; 
         end
     else if(inscode3==52) begin jump=0; data_sram_addr1=r_y;//写字节与数据就是位置对应关系。。。。。。。。。。。
                                 case(r_y[1:0])
