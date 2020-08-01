@@ -27,7 +27,7 @@ module mycpu_top
     
     output inst_sram_en,
     output [3:0] inst_sram_wen,
-    output reg [31:0] inst_sram_addr,
+    output [31:0] inst_sram_addr,
     output [31:0] inst_sram_wdata,
     input [31:0] inst_sram_rdata,
     
@@ -530,24 +530,44 @@ begin
     endcase
 end
 
-always@(*)//取指
+always @(*)
 begin
     if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
     else pause=0;
-    
-    if(~resetn)begin c_pc=7; va=0; end
+end
+
+always @(*)
+begin
+    if(~resetn)begin va = 0; end
+    else
+    begin
+        if(pause) va = va;
+        else if(back) va = 0;
+        else if(exc) va = 0;
+        else if(jump == 1) va = 0;
+        else if(jump == 2) va = 0;
+        else if(jump == 3) va = 0;
+        else va = 1;
+    end
+end
+
+always@(*)//取指
+begin
+    if(~resetn) c_pc=7;
     else 
         begin           
-            inst_sram_addr=pc;
-            if(pause) begin va=va; c_pc=0; end
-            else if(back) begin va=0; c_pc=6; end
-            else if(exc) begin va=0; c_pc=5; end
-            else if(jump==1) begin va=0; c_pc=2; end//若jump则无效
-            else if(jump==2) begin va=0; c_pc=3; end
-            else if(jump==3) begin va=0; c_pc=4; end
-            else begin va=1; c_pc=1; end            
+            //inst_sram_addr=pc;
+            if(pause) c_pc=0;
+            else if(back) c_pc=6;
+            else if(exc) c_pc=5;
+            else if(jump==1) c_pc=2;//若jump则无效
+            else if(jump==2) c_pc=3;
+            else if(jump==3) c_pc=4;
+            else c_pc=1;          
         end
 end
+
+assign inst_sram_addr = pc;
 
 //////////////////////////////////////////////////
 ////////////////////译码段组合逻辑/////////////////
