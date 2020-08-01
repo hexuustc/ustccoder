@@ -730,48 +730,54 @@ end
 always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转。。。。。前三位归零，原因何在？？？？？
 begin
     delay_block=0;
+
     delay_sendhl=0;
+
     if(delay_hl||delay_hl1||stall) pause3=1;
     else pause3=0;
+
     if(pause3) begin c_inscode3=0; c_ir3=0; end 
     else begin c_inscode3=1; c_ir3=1; end
+
     if (rs3==0) r_a1r=0;
     else if(rs3==aimaddr2) r_a1r=aimdata2;
     else if(rs3==aimaddr3) r_a1r=aimdata3;
     else if(rs3==aimaddr4) r_a1r=aimdata4;
     else r_a1r=r_a1;   
+    
     if (rt3==0) r_b1r=0;
     else if(rt3==aimaddr2) r_b1r=aimdata2;
     else if(rt3==aimaddr3) r_b1r=aimdata3;
     else if(rt3==aimaddr4) r_b1r=aimdata4;
     else r_b1r=r_b1;
-    if(va3==0) begin jump=0; data_sram_wen=0; end
-    else if(pause3) begin jump=0; data_sram_wen=0; end  
-    else if(inscode3==29) begin if(zf1==1) jump=1; else jump=0; data_sram_wen=0; end
-    else if(inscode3==30) begin if(zf1==0) jump=1; else jump=0; data_sram_wen=0; end
-    else if(inscode3==31) begin if(r_a1r[31]==0) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
+    
+    if(va3==0)            begin jump=0;                                             data_sram_wen=0; end
+    else if(pause3)       begin jump=0;                                             data_sram_wen=0; end  
+    else if(inscode3==29) begin if(zf1==1) jump=1; else jump=0;                     data_sram_wen=0; end
+    else if(inscode3==30) begin if(zf1==0) jump=1; else jump=0;                     data_sram_wen=0; end
+    else if(inscode3==31) begin if(r_a1r[31]==0) jump=1; else jump=0;               data_sram_wen=0; end//默认rs为有符号数
     else if(inscode3==32) begin if((r_a1r[31]==0)&&(r_a1r!=0)) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
     else if(inscode3==33) begin if((r_a1r[31]==1)||(r_a1r==0)) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==34) begin if(r_a1r[31]==1) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==35) begin if(r_a1r[31]==1) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==36) begin if(r_a1r[31]==0) jump=1; else jump=0; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==37) begin jump=2; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==38) begin jump=2; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==39) begin jump=3; data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==40) begin jump=3; data_sram_wen=0; end//默认rs为有符号数
+    else if(inscode3==34) begin if(r_a1r[31]==1) jump=1; else jump=0;               data_sram_wen=0; end//默认rs为有符号数
+    else if(inscode3==35) begin if(r_a1r[31]==1) jump=1; else jump=0;               data_sram_wen=0; end//默认rs为有符号数
+    else if(inscode3==36) begin if(r_a1r[31]==0) jump=1; else jump=0;               data_sram_wen=0; end//默认rs为有符号数
+    else if(inscode3==37) begin jump=2;                                             data_sram_wen=0; end//默认rs为有符号数
+    else if(inscode3==38) begin jump=2;                                             data_sram_wen=0; end//默认rs为有符号数
+    else if(inscode3==39) begin jump=3;                                             data_sram_wen=0; end//默认rs为有符号数
+    else if(inscode3==40) begin jump=3;                                             data_sram_wen=0; end//默认rs为有符号数
     else if((inscode3==47)||(inscode3==48)) 
-        begin jump=0; data_sram_addr1=r_y; data_sram_wen=0;
+        begin jump=0; data_sram_addr1=r_y;                                          data_sram_wen=0;
             if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
             else delay_block=0;
         end
     else if((inscode3==49)||(inscode3==50)) 
-        begin jump=0; data_sram_wen=0; data_sram_addr1=r_y;
+        begin jump=0;  data_sram_addr1=r_y;                                         data_sram_wen=0;
             if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0]))) delay_block=1;
             else delay_block=0; 
         end
     else if(inscode3==51) 
         begin 
-            jump=0; data_sram_wen=0; data_sram_addr1=r_y;
+            jump=0; data_sram_addr1=r_y;                                            data_sram_wen=0;
             if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0]))) delay_block=1;
                 else delay_block=0; 
         end
