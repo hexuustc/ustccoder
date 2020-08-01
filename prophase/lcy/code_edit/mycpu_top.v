@@ -794,7 +794,7 @@ begin
         case(inscode3)
             29: if(zf1==1) jump=1; else jump=0;
             30: if(zf1==0) jump=1; else jump=0;
-            31: if(r_a1r[31]==0) jump=1; else jump=0;
+            31: if(r_a1r[31]==0) jump=1; else jump=0;//默认rs为有符号数，直到inscode3=40为止
             32: if((r_a1r[31]==0)&&(r_a1r!=0)) jump=1; else jump=0;
             33: if((r_a1r[31]==1)||(r_a1r==0)) jump=1; else jump=0;
             34: if(r_a1r[31]==1) jump=1; else jump=0;
@@ -811,21 +811,9 @@ begin
     
     data_sram_addr1=r_y;
 
-    if(va3==0)            begin                                             end
-    else if(pause3)       begin                                            end  
-    else if(inscode3==29) begin                      end
-    else if(inscode3==30) begin                       end
-    else if(inscode3==31) begin                end//默认rs为有符号数
-    else if(inscode3==32) begin   end//默认rs为有符号数
-    else if(inscode3==33) begin   end//默认rs为有符号数
-    else if(inscode3==34) begin              end//默认rs为有符号数
-    else if(inscode3==35) begin                 end//默认rs为有符号数
-    else if(inscode3==36) begin                 end//默认rs为有符号数
-    else if(inscode3==37) begin                                               end//默认rs为有符号数
-    else if(inscode3==38) begin                                               end//默认rs为有符号数
-    else if(inscode3==39) begin                                               end//默认rs为有符号数
-    else if(inscode3==40) begin                                               end//默认rs为有符号数
-    else if((inscode3==47)||(inscode3==48)) 
+    if (va3 && ~pause3)
+    begin
+    if((inscode3==47)||(inscode3==48)) 
         begin data_sram_addr1=r_y;
             if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
             else delay_block=0;
@@ -872,13 +860,8 @@ begin
                               end
                               else delay_sendhl=0; 
                           end
-    else if(inscode3==56) begin end
-    else if(inscode3==57) 
-        begin
-        end
-    else if(inscode3==18) begin end
     else begin end
-
+    end
 
 end
 
