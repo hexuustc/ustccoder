@@ -732,6 +732,7 @@ begin
     delay_block=0;
 
     delay_sendhl=0;
+    data_sram_wdata = 0;
 
     if(delay_hl||delay_hl1||stall) pause3=1;
     else pause3=0;
@@ -750,6 +751,30 @@ begin
     else if(rt3==aimaddr3) r_b1r=aimdata3;
     else if(rt3==aimaddr4) r_b1r=aimdata4;
     else r_b1r=r_b1;
+    /*
+    if(va3 && ~pause3)
+    begin
+        case(inscode3)
+            52:begin jump=0; data_sram_addr1=r_y;//写字节与数据就是位置对应关系。。。。。。。。。。。
+                                case(r_y[1:0])
+                                    0:begin data_sram_wen=4'b0001;data_sram_wdata[7:0]=r_b1r[7:0]; end //已进行小尾端处理
+                                    1:begin data_sram_wen=4'b0010;data_sram_wdata[15:8]=r_b1r[7:0]; end//已进行小尾端处理
+                                    2:begin data_sram_wen=4'b0100;data_sram_wdata[23:16]=r_b1r[7:0]; end//已进行小尾端处理。
+                                    3:begin data_sram_wen=4'b1000;data_sram_wdata[31:24]=r_b1r[7:0]; end//已进行小尾端处理
+                                    default: begin data_sram_wen=0; data_sram_wdata=0; end
+                                endcase
+                          end
+            53:begin jump=0; data_sram_addr1=r_y;
+                                case(r_y[1:0])
+                                    0:begin data_sram_wen=4'b0011;data_sram_wdata[15:0]=r_b1r[15:0]; end//已进行小尾端处理
+                                    2:begin data_sram_wen=4'b1100;data_sram_wdata[31:16]=r_b1r[15:0]; end//已进行小尾端处理
+                                default:data_sram_wen=4'b0000;//已进行小尾端处理
+                                endcase
+                          end
+            54:begin jump=0; data_sram_addr1=r_y; if(r_y[1:0]==0) data_sram_wen=4'b1111; else data_sram_wen=0; data_sram_wdata=r_b1r; end
+            default: 
+        endcase
+    end*/
     
     if(va3==0)            begin jump=0;                                             data_sram_wen=0; end
     else if(pause3)       begin jump=0;                                             data_sram_wen=0; end  
@@ -832,6 +857,7 @@ begin
         end
     else if(inscode3==18) begin jump=0; data_sram_wen=0; end
     else begin jump=0; data_sram_wen=0; end
+
 
 end
 
