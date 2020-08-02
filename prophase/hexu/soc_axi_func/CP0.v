@@ -26,7 +26,7 @@ module CP0//给定指令默认为分支延迟槽的形式，即分支后一条�
     input [4:0] cp0_num,
     input [2:0] sel,
     input [4:0] cp0_ra,
-    input clk,rst,of,va2,va3,reins,
+    input clk,rst,of,va2,va3,reins,pause2,
     output reg [1:0] exc,
     output reg back,
     output reg [31:0] BadVAddr,Count,Status,Cause,EPC,
@@ -62,7 +62,8 @@ begin
     pc1<=pc;
     pc2<=pc1;
     Cause[15:10]<=ext_int;
-    if(reins) reins_check<=1;
+    if(rst) reins_check<=0;
+    else if(reins) reins_check<=1;
     if(rst) begin
                 Status[1]<=0;
                 Status[0]<=0;//为什么复位值为0，屏蔽中断
@@ -75,9 +76,17 @@ begin
                 EPC<=0;
                 exc<=0;
             end
+    else if(pause2)
+    begin
+        Status[1]<=Status[1];
+        exc<=exc;
+        Cause[30]<=Cause[30];
+        Cause[6:2]<=Cause[6:2]; 
+    end
     else if(va2&&(inscode2==55))//返回指令
         begin
-            Status[1]<=0;
+            if(pause2) Status[1]<=Status[1];
+            else Status[1]<=0;
             Status[0]<=0;
             exc<=0;
         end
@@ -119,7 +128,8 @@ begin
         end
     else if(~EXL&&Status[0]&&Cause[15:8])//中断
         begin
-            Status[1]<=1;
+            if(pause2) Status[1]<=Status[1];
+            else Status[1]<=1;
             if(va3&&(inscode3>=29)&&(inscode3<=40)) begin Cause[31]<=1; EPC<=pc-12; exc<=2;end
                  else begin Cause[31]<=0;EPC<=pc-8; exc<=1; end//注意pc可改变了
             Cause[30]<=0;
@@ -128,7 +138,8 @@ begin
     else if(va2&&(pc2[1:0])&&~EXL)//取指错误
                 begin
                         BadVAddr<=pc2;
-                        Status[1]<=1;
+                        if(pause2) Status[1]<=Status[1];
+                        else Status[1]<=1;
                         if(va3&&(inscode3>=29)&&(inscode3<=40)) begin Cause[31]<=1; EPC<=pc-12;exc<=2; end
                         else begin Cause[31]<=0;EPC<=pc-8; exc<=1;end//注意pc可改变了；是否真有效，两个跳转？
                         Cause[30]<=0;//不知何时为1.。。。。。。。。。。。。
@@ -141,7 +152,8 @@ begin
                     if(~EXL&&(y[0]==1))
                         begin
                             BadVAddr<=y;
-                            Status[1]<=1;
+                            if(pause2) Status[1]<=Status[1];
+                            else Status[1]<=1;
                             if(va3&&(inscode3>=29)&&(inscode3<=40)) begin Cause[31]<=1; EPC<=pc-12;exc<=2; end
                             else begin Cause[31]<=0;EPC<=pc-8;exc<=1; end//注意pc可改变了；是否真有效，两个跳转？
                             Cause[30]<=0;
@@ -156,7 +168,8 @@ begin
                     if(~EXL&&(y[1:0]!=0))
                         begin
                             BadVAddr<=y;
-                            Status[1]<=1;
+                            if(pause2) Status[1]<=Status[1];
+                            else Status[1]<=1;
                             if(va3&&(inscode3>=29)&&(inscode3<=40)) begin Cause[31]<=1; EPC<=pc-12;exc<=2; end
                             else begin Cause[31]<=0;EPC<=pc-8;exc<=1; end//注意pc可改变了；是否真有效，两个跳转？
                             Cause[30]<=0;
@@ -169,7 +182,8 @@ begin
         end
     else if(va2&&(inscode2==46)&&~EXL)//系统调用例外
         begin
-            Status[1]<=1;
+            if(pause2) Status[1]<=Status[1];
+            else Status[1]<=1;
             if(va3&&(inscode3>=29)&&(inscode3<=40)) begin Cause[31]<=1; EPC<=pc-12;exc<=2; end
                  else begin Cause[31]<=0;EPC<=pc-8;exc<=1; end//注意pc可改变了；是否真有效，两个跳转？
             Cause[30]<=0;
@@ -177,7 +191,8 @@ begin
         end
     else if(va2&&(inscode2==45)&&~EXL)//断点例外
         begin
-            Status[1]<=1;
+            if(pause2) Status[1]<=Status[1];
+            else Status[1]<=1;
             if(va3&&(inscode3>=29)&&(inscode3<=40)) begin Cause[31]<=1; EPC<=pc-12;exc<=2; end
                 else begin Cause[31]<=0;EPC<=pc-8; exc<=1;end//注意pc可改变了；是否真有效，两个跳转？
             Cause[30]<=0;
@@ -185,16 +200,19 @@ begin
         end
     else if((reins||reins_check)&&~EXL)//保留指令例外
         begin
-            Status[1]<=1;
+            if(pause2) Status[1]<=Status[1];
+            else Status[1]<=1;
             if(va3&&(inscode3>=29)&&(inscode3<=40)) begin Cause[31]<=1; EPC<=pc-12;exc<=2; end
             else begin Cause[31]<=0;EPC<=pc-8;exc<=1; end//注意pc可改变了；是否真有效，两个跳转？
             Cause[30]<=0;//不知何时为1.。。。。。。。。。。。。
             Cause[6:2]<=10;
-            reins_check<=0;
+            if(pause2) reins_check<=reins_check;
+            else reins_check<=0;
         end
     else if(va2&&((inscode2==1)||(inscode2==2)||(inscode2==5))&&of&&~EXL) //整形溢出例外
          begin 
-             Status[1]<=1;
+             if(pause2) Status[1]<=Status[1];
+            else Status[1]<=1;
              if(va3&&(inscode3>=29)&&(inscode3<=40)) begin Cause[31]<=1; EPC<=pc-12; exc<=2;end
                  else begin Cause[31]<=0;EPC<=pc-8; exc<=1;end//注意pc可改变了
              Cause[30]<=0;
@@ -217,7 +235,8 @@ end
 
 always@(*)//返回指令
 begin
-    if(inscode2==55)
+    if(pause2) back=back;//锁存器
+    else if(inscode2==55)
         begin
             back=1;
         end
