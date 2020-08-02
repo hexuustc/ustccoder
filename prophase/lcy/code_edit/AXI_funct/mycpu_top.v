@@ -22,7 +22,7 @@
 
 module mycpu_top
     (input [5:0] ext_int,
-    input aclk,
+    input clk,
 	input aresetn,
 	
     //axi
@@ -86,12 +86,12 @@ wire data_sram_en;
 reg [3:0] data_sram_wen;
 wire [31:0] data_sram_addr;
 reg [31:0] data_sram_wdata;
-reg [31:0] data_sram_rdata;
+wire [31:0] data_sram_rdata;
      
    
 wire clk;
 wire resetn;//低电平同步复位
-assign clk=aclk;
+//assign clk=aclk;
 assign resetn=aresetn;
 assign arlen=0;
 assign arburst=1;//到底是几。。。。。。。。。。。。。。。。。。。。。。。。。
@@ -845,18 +845,19 @@ begin
     end
 end*/
 
-always@(*)
+
+reg [31:0] data_sram_rdata_curr,data_sram_rdata_next;
+always @(posedge clk)
+    data_sram_rdata_curr <= data_sram_rdata_next;
+always @(*)
 begin
-    if(va3_r&&rvalid&&rok)//已读指令，读数据已返回
-    begin
-        if(rid==1) data_sram_rdata=rdata; 
-        else data_sram_rdata=data_sram_rdata;
-    end
-    else 
-    begin
-        data_sram_rdata=data_sram_rdata;
-    end
+    if(va3_r && rvalid && rok && (rid == 1))
+        data_sram_rdata_next = rdata;
+    else
+        data_sram_rdata_next = data_sram_rdata_curr;
 end
+assign data_sram_rdata = data_sram_rdata_next;
+
 reg [31:0] inst_sram_rdata_curr,inst_sram_rdata_next;
 always @(posedge clk)
     inst_sram_rdata_curr <= inst_sram_rdata_next;
@@ -1487,6 +1488,7 @@ end
 
 always@(*)//取指
 begin
+    inst_sram_addr = pc;
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
     if(delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
     else pause=0;
@@ -1660,8 +1662,10 @@ begin
     else if((inscode2==35)||(inscode2==36)||(inscode2==38)) begin aimaddr=31; a=a_1;b=b_1;m=0; end
     else if((inscode2==40)||(inscode2==41)||(inscode2==42)) begin aimaddr=rd02;a=a_1;b=b_1;m=0; end
     else if(inscode2==56) begin aimaddr=rt2;a=a_1;b=b_1;m=0; end
-    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; cp0_num=rd02; cp0_data=y;end
+    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; cp0_num=rd02; end
     else begin aimaddr=0; a=a_1;b=b_1;m=0; end
+
+    cp0_data=y;
 end
 
 always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转。。。。。前三位归零，原因何在？？？？？
