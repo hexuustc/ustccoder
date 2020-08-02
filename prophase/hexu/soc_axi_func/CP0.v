@@ -59,10 +59,15 @@ begin
     Cause[30:16]<=0;//IP暂不知对应关系
     Cause[7]<=0;
     Cause[1:0]<=0;
-    pc1<=pc;
-    pc2<=pc1;
+    if(pause2) begin pc1<=pc1;pc2<=pc2; end
+    else
+    begin
+        pc1<=pc;
+        pc2<=pc1;
+    end
     Cause[15:10]<=ext_int;
     if(rst) reins_check<=0;
+    else if(exc||EXL) reins_check<=0;
     else if(reins) reins_check<=1;
     if(rst) begin
                 Status[1]<=0;
@@ -144,6 +149,8 @@ begin
                         else begin Cause[31]<=0;EPC<=pc-8; exc<=1;end//注意pc可改变了；是否真有效，两个跳转？
                         Cause[30]<=0;//不知何时为1.。。。。。。。。。。。。
                         Cause[6:2]<=4;
+                        if(pause2) reins_check<=reins_check;
+                        else reins_check<=0;
                 end
     else if(va2&&((((inscode2==49)||(inscode2==50)||(inscode2==53))&&(y[0]==1))||(((inscode2==51)||(inscode2==54))&&(y[1:0]!=0)))&&~EXL) //地址错例外
         begin
