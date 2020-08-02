@@ -700,14 +700,15 @@ begin
 end*/
 wire [31:0] inst_addr;
 reg busy_r,busy_w;
-reg rok,awok,wok;
-reg stallr,stallw;
+reg rok,awok,wok,bok,tok;
+reg stallr,stallw,stallrw;
 wire va3_r,va3_w;
+reg [3:0] rstate,wstate;
 
 
 always@(*)//所有信号集合
 begin
-    stall=stall_dv||stallr||stallw;
+    stall=stall_dv||stallrw;
 end
 
 assign inst_addr={{3{zero}},inst_sram_addr[28:0]};
@@ -716,34 +717,50 @@ assign va3_w=va3&&((inscode3==52)||(inscode3==53)||(inscode3==54));
 
 always@(*)
 begin
+    if(bok&&tok) stallrw=0;
+    else stallrw=1;
+end
+
+/*always@(*)
+begin
     stallr=1;
     if(~aresetn) 
     begin
         arid=0;
         araddr=inst_addr;
         arsize=4;
-        arvalid=0;
+    end
+    else if(tok&&~bok)
+    begin
+        arid=0;
+        araddr=inst_addr;
+        arsize=4;
+        stallr=0;
+    end
+    else if(tok&&bok)
+    begin
+        arid=0;
+        araddr=inst_addr;
+        arsize=4;
+        stallr=0;
     end
     else if(va&&arready&&~busy_r&&~rok)//已准备好，还没读指令
     begin
         arid=0;
         araddr=inst_addr;
         arsize=4;
-        arvalid=1;
     end
     else if(va&&busy_r&&~rok&&~rvalid)//已传指令地址，还没返回
     begin
         arid=0;
         araddr=inst_addr;
         arsize=4;
-        arvalid=0;
     end
     else if(va&&rvalid&&~rok)//读指令返回
     begin
         arid=0;
         araddr=inst_addr;
         arsize=4;
-        arvalid=0;
         if(rid==0) inst_sram_rdata=rdata; 
         else inst_sram_rdata=inst_sram_rdata; 
     end
@@ -788,7 +805,7 @@ begin
         else data_sram_rdata=data_sram_rdata;
         stallr=0; 
     end
-    else if(~va&&~va3_r&&~arready)//都不读，直接取消暂停
+    else if(~va&&~va3_r&&~arready)//都不读
     begin
         arid=1;
         araddr=data_sram_addr;
@@ -825,150 +842,135 @@ begin
         arvalid=0;
         stallr=0; 
     end
-end
-/*
-always@(posedge clk)
+end*/
+
+always@(*)
 begin
-    stallr=1;//初始假设暂停
-    if(~aresetn) 
+    
+    if(va&&rvalid&&~rok)//读指令返回
     begin
-        arid=0;
-        araddr=inst_addr;
-        arsize=4;
-        arvalid=0;
-        busy_r<=0;
-        rok<=0;
-        stallr=1;
-    end
-    else if(va&&arready&&~busy_r&&~rok)//已准备好，还没读指令
-    begin
-        arid=0;
-        araddr=inst_addr;
-        arsize=4;
-        arvalid=1;
-        busy_r<=1;
-        rok<=0;
-    end
-    else if(va&&busy_r&&~rok&&~rvalid)//已传指令地址，还没返回
-    begin
-        arid=0;
-        araddr=inst_addr;
-        arsize=4;
-        arvalid=0;
-        busy_r<=1;
-        rok<=0;
-    end
-    else if(va&&rvalid&&~rok)//读指令返回
-    begin
-        arid=0;
-        araddr=inst_addr;
-        arsize=4;
-        arvalid=0;
-        busy_r<=0;
-        rok<=1;
         if(rid==0) inst_sram_rdata=rdata; 
         else inst_sram_rdata=inst_sram_rdata; 
     end
-    else if(va3_r&&arready&&~busy_r&&rok)//已准备好，已读指令，还没读数据
+    else if(va3_r&&rvalid&&rok)//已读指令，读数据已返回
+    begin
+        if(rid==1) data_sram_rdata=rdata; 
+        else data_sram_rdata=data_sram_rdata;
+    end
+    else 
+    begin
+        inst_sram_rdata=inst_sram_rdata; 
+        data_sram_rdata=data_sram_rdata;
+    end
+end
+
+always@(*)
+begin
+    stallr=1;
+    if(rstate==0) 
+    begin
+        arid=0;
+        araddr=inst_addr;
+        arsize=4;
+    end
+    else if(rstate==1)
+    begin
+        arid=0;
+        araddr=inst_addr;
+        arsize=4;
+        stallr=0;
+    end
+    else if(rstate==2)
+    begin
+        arid=0;
+        araddr=inst_addr;
+        arsize=4;
+        stallr=0;
+    end
+    else if(rstate==3)//已准备好，还没读指令
+    begin
+        arid=0;
+        araddr=inst_addr;
+        arsize=4;
+    end
+    else if(rstate==4)//已传指令地址，还没返回
+    begin
+        arid=0;
+        araddr=inst_addr;
+        arsize=4;
+    end
+    else if(rstate==5)//读指令返回
+    begin
+        arid=0;
+        araddr=inst_addr;
+        arsize=4;
+    end
+    else if(rstate==6)//已准备好，已读指令，还没读数据
     begin
         arid=1;
         araddr=data_sram_addr;
         arsize=4;//是不是4呢
-        arvalid=1;
-        busy_r<=1;
-        rok<=1;
     end
-    else if(va3_r&&busy_r&&rok&&~rvalid)//已读指令，已传数据地址，还没返回
+    else if(rstate==7)//已读指令，已传数据地址，还没返回
     begin
         arid=1;
         araddr=data_sram_addr;
         arsize=4;
-        arvalid=0;
-        busy_r<=1;
-        rok<=1;
     end
-    else if(va3_r&&rvalid&&rok)//已读指令，读数据已返回
+    else if(rstate==8)//已读指令，读数据已返回
     begin
         arid=1;
         araddr=data_sram_addr;
         arsize=4;
-        arvalid=0;
-        busy_r<=0;
-        rok<=0;
-        if(rid==1) data_sram_rdata=rdata; 
-        else data_sram_rdata=data_sram_rdata;
         stallr=0; 
     end
-    else if(~va&&va3_r&&~rok)//不读指令，要读数据
+    else if(rstate==9)//不读指令，要读数据
     begin
         arid=0;
         araddr=inst_addr;
         arsize=4;
-        arvalid=0;
-        busy_r<=0;        
-        rok<=1;        
     end
-    else if(~va&&~va3_r&&arready)//都不读，直接取消暂停
+    else if(rstate==10)//都不读，直接取消暂停
     begin
         arid=1;
         araddr=data_sram_addr;
         arsize=4;
-        arvalid=0;
-        busy_r<=0;
-        rok<=0;
-        if(rid==1) data_sram_rdata=rdata; 
-        else data_sram_rdata=data_sram_rdata;
         stallr=0; 
     end
-    else if(~va&&~va3_r&&~arready)//都不读，直接取消暂停
+    else if(rstate==11)//都不读
     begin
         arid=1;
         araddr=data_sram_addr;
         arsize=4;
-        arvalid=0;
-        busy_r<=0;
-        rok<=0;
     end
-    else if(va&&~va3_r&&rok)//已读指令，不读数据，就取消暂停
+    else if(rstate==12)//已读指令，不读数据，就取消暂停
     begin
         arid=1;
         araddr=data_sram_addr;
         arsize=4;
-        arvalid=0;
-        busy_r<=0;
-        rok<=0;
         stallr=0; 
     end
-    else if(va&&~arready&&~busy_r&&~rok&&~rvalid)//初始没准备好
+    else if(rstate==13)//初始没准备好
     begin
         arid=0;
         araddr=inst_sram_addr;
         arsize=4;
-        arvalid=0;
-        busy_r<=0;
-        rok<=0;
     end
-    else if(va3_r&&~arready&&~busy_r&&rok&&~rvalid)
+    else if(rstate==14)
     begin
         arid=1;
         araddr=data_sram_addr;
         arsize=4;
-        arvalid=0;
-        busy_r<=0;
-        rok<=0;
     end
     else//其他不可预知情况
     begin
         arid=1;
         araddr=data_sram_addr;
         arsize=4;
-        arvalid=0;
-        busy_r<=0;
-        rok<=0;
         stallr=0; 
     end
 end
-*/
+
 
 always@(posedge clk)
 begin
@@ -976,84 +978,170 @@ begin
     begin
         busy_r<=0;
         rok<=0;
+        tok<=0;
+        arvalid<=0;
+        rstate<=0;
+    end
+   else if(tok&&~bok)
+    begin
+        busy_r<=0;
+        rok<=0;
+        tok<=1;
+        arvalid<=0;
+        rstate<=1;
+    end
+    else if(tok&&bok)
+    begin
+        busy_r<=0;
+        rok<=0;
+        tok<=0;
+        arvalid<=0;
+        rstate<=2;
     end
     else if(va&&arready&&~busy_r&&~rok)//已准备好，还没读指令
     begin
         busy_r<=1;
         rok<=0;
+        tok<=0;
+        arvalid<=1;
+        rstate<=3;
     end
     else if(va&&busy_r&&~rok&&~rvalid)//已传指令地址，还没返回
     begin
         busy_r<=1;
         rok<=0;
+        tok<=0;
+        arvalid<=0;
+        rstate<=4;
     end
     else if(va&&rvalid&&~rok)//读指令返回
     begin
         busy_r<=0;
         rok<=1;
+        tok<=0;
+        arvalid<=0;
+        rstate<=5;
     end
     else if(va3_r&&arready&&~busy_r&&rok)//已准备好，已读指令，还没读数据
     begin
         busy_r<=1;
         rok<=1;
+        tok<=0;
+        arvalid<=1;
+        rstate<=6;
     end
     else if(va3_r&&busy_r&&rok&&~rvalid)//已读指令，已传数据地址，还没返回
     begin
         busy_r<=1;
         rok<=1;
+        tok<=0;
+        arvalid<=0;
+        rstate<=7;
     end
     else if(va3_r&&rvalid&&rok)//已读指令，读数据已返回
     begin
         busy_r<=0;
         rok<=0;
+        tok<=1;
+        arvalid<=0;
+        rstate<=8;
     end
     else if(~va&&va3_r&&~rok)//不读指令，要读数据
     begin
         busy_r<=0;        
-        rok<=1;        
+        rok<=1; 
+        tok<=0;
+        arvalid<=0; 
+        rstate<=9;      
     end
     else if(~va&&~va3_r&&arready)//都不读，直接取消暂停
     begin
         busy_r<=0;
         rok<=0;
+        tok<=1;
+        arvalid<=0;
+        rstate<=10;
     end
     else if(~va&&~va3_r&&~arready)//都不读，直接取消暂停
     begin
         busy_r<=0;
         rok<=0;
+        tok<=0;
+        arvalid<=0;
+        rstate<=11;
     end
     else if(va&&~va3_r&&rok)//已读指令，不读数据，就取消暂停
     begin
         busy_r<=0;
         rok<=0;
+        tok<=1;
+        arvalid<=0;
+        rstate<=12;
     end
     else if(va&&~arready&&~busy_r&&~rok&&~rvalid)//初始没准备好
     begin
         busy_r<=0;
         rok<=0;
+        tok<=0;
+        arvalid<=0;
+        rstate<=13;
     end
     else if(va3_r&&~arready&&~busy_r&&rok&&~rvalid)
     begin
         busy_r<=0;
         rok<=0;
+        tok<=0;
+        arvalid<=0;
+        rstate<=14;
     end
     else//其他不可预知情况
     begin
         busy_r<=0;
         rok<=0;
+        tok<=1;
+        arvalid<=0;
+        rstate<=15;
     end
 end
-/*
-always@(posedge clk)
+
+/*always@(posedge clk)
 begin
     stallw=1;
-    if(va3_w&&awready&&~busy_w&&~wok)//已准备好，还没传地址
+    if(~resetn)
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+        awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+        wvalid=0;
+        stallw=1;
+    end
+   if(bok&&~tok)
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+        awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+        wvalid=0;
+        stallw=0;
+    end
+    else if(bok&&tok)
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+        awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+        wvalid=0;
+        stallw=0;
+    end
+    else if(va3_w&&awready&&~busy_w&&~wok)//已准备好，还没传地址
     begin
         awaddr=data_sram_addr;
         awsize=4;
         awvalid=1;
-        busy_w<=1;
-        wok<=0;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
         wvalid=0;
@@ -1063,8 +1151,6 @@ begin
         awaddr=data_sram_addr;
         awsize=4;
         awvalid=0;
-        busy_w<=1;
-        wok<=0;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
         wvalid=0;
@@ -1074,8 +1160,6 @@ begin
         awaddr=data_sram_addr;
         awsize=4;
         awvalid=0;
-        busy_w<=0;
-        wok<=1;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
         wvalid=1;
@@ -1085,8 +1169,6 @@ begin
         awaddr=data_sram_addr;
         awsize=4;
         awvalid=0;
-        busy_w<=0;
-        wok<=1;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
         wvalid=0;
@@ -1096,32 +1178,36 @@ begin
         awaddr=data_sram_addr;
         awsize=4;
         awvalid=0;
-        busy_w<=0;
-        wok<=0;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
         wvalid=0;
         stallw=0;
     end
-    else if(~va3_w)//不读也不写
+    else if(~va3_w&&awready)//不读也不写
     begin
         awaddr=data_sram_addr;
         awsize=4;
         awvalid=0;
-        busy_w<=0;
-        wok<=0;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
         wvalid=0;
         stallw=0;
+    end
+    else if(~va3_w&&~awready)
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+        awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+        wvalid=0;
+        stallw=1;
     end
     else
     begin
         awaddr=data_sram_addr;
         awsize=4;
         awvalid=0;
-        busy_w<=0;
-        wok<=0;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
         wvalid=0;
@@ -1129,113 +1215,217 @@ begin
     end
 end*/
 
-always@(*)
+always@(posedge clk)
 begin
     stallw=1;
-    if(va3_w&&awready&&~busy_w&&~wok)//已准备好，还没传地址
+    if(wstate==0)
     begin
         awaddr=data_sram_addr;
         awsize=4;
-        awvalid=1;
+        //awvalid=0;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
-        wvalid=0;
+        //wvalid=0;
+        stallw=1;
     end
-    else if(va3_w&&busy_w&&~wready&&~wok)//正在传地址
+   if(wstate==1)
     begin
         awaddr=data_sram_addr;
         awsize=4;
-        awvalid=0;
+        //awvalid=0;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
-        wvalid=0;
-    end
-    else if(va3_w&&wready&&~wok)//地址已传完，开始传数据
-    begin
-        awaddr=data_sram_addr;
-        awsize=4;
-        awvalid=0;
-        wdata=data_sram_wdata;
-        wstrb=data_sram_wen;
-        wvalid=1;
-    end
-    else if(va3_w&&wok&&~bvalid)//地址，数据已传完，还没响应
-    begin
-        awaddr=data_sram_addr;
-        awsize=4;
-        awvalid=0;
-        wdata=data_sram_wdata;
-        wstrb=data_sram_wen;
-        wvalid=0;
-    end
-    else if(va3_w&&wok&&bvalid)//地址传完，数据传完，已响应
-    begin
-        awaddr=data_sram_addr;
-        awsize=4;
-        awvalid=0;
-        wdata=data_sram_wdata;
-        wstrb=data_sram_wen;
-        wvalid=0;
+        //wvalid=0;
         stallw=0;
     end
-    else if(~va3_w)//不读也不写
+    else if(wstate==2)
     begin
         awaddr=data_sram_addr;
         awsize=4;
-        awvalid=0;
+        //awvalid=0;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
-        wvalid=0;
+        //wvalid=0;
         stallw=0;
+    end
+    else if(wstate==3)//已准备好，还没传地址
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+       // awvalid=1;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+       // wvalid=0;
+    end
+    else if(wstate==4)//正在传地址
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+        //awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+        //wvalid=0;
+    end
+    else if(wstate==5)//地址已传完，开始传数据
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+       // awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+       // wvalid=1;
+    end
+    else if(wstate==6)//地址，数据已传完，还没响应
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+       // awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+        //wvalid=0;
+    end
+    else if(wstate==7)//地址传完，数据传完，已响应
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+       // awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+       // wvalid=0;
+        stallw=0;
+    end
+    else if(wstate==8)//不读也不写
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+       // awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+       // wvalid=0;
+        stallw=0;
+    end
+    else if(wstate==9)
+    begin
+        awaddr=data_sram_addr;
+        awsize=4;
+       // awvalid=0;
+        wdata=data_sram_wdata;
+        wstrb=data_sram_wen;
+       // wvalid=0;
+        stallw=1;
     end
     else
     begin
         awaddr=data_sram_addr;
         awsize=4;
-        awvalid=0;
+       // awvalid=0;
         wdata=data_sram_wdata;
         wstrb=data_sram_wen;
-        wvalid=0;
+       // wvalid=0;
         stallw=0;
     end
 end
 
 always@(posedge clk)
 begin
-    if(va3_w&&awready&&~busy_w&&~wok)//已准备好，还没传地址
+    if(~resetn)
+    begin
+        busy_w<=0;
+        wok<=0;
+        bok<=0;
+        awvalid<=0;
+        wvalid<=0;
+        wstate<=0;
+    end
+   else if(bok&&~tok)
+    begin
+        busy_w<=0;
+        wok<=0;
+        bok<=1;
+        awvalid<=0;
+        wvalid<=0;
+        wstate<=1;
+    end
+    else if(bok&&tok)
+    begin
+        busy_w<=0;
+        wok<=0;
+        bok<=0;
+        awvalid<=0;
+        wvalid<=0;
+        wstate<=2;
+    end
+    else if (va3_w&&awready&&~busy_w&&~wok)//已准备好，还没传地址
     begin
         busy_w<=1;
         wok<=0;
+        bok<=0;
+        awvalid<=1;
+        wvalid<=0;
+        wstate<=3;
     end
     else if(va3_w&&busy_w&&~wready&&~wok)//正在传地址
     begin
         busy_w<=1;
         wok<=0;
+        bok<=0;
+        awvalid<=0;
+        wvalid<=0;
+        wstate<=4;
     end
     else if(va3_w&&wready&&~wok)//地址已传完，开始传数据
     begin
         busy_w<=0;
         wok<=1;
+        bok<=0;
+        awvalid<=0;
+        wvalid<=1;
+        wstate<=5;
     end
     else if(va3_w&&wok&&~bvalid)//地址，数据已传完，还没响应
     begin
         busy_w<=0;
         wok<=1;
+        bok<=0;
+        awvalid<=0;
+        wvalid<=0;
+        wstate<=6;
     end
     else if(va3_w&&wok&&bvalid)//地址传完，数据传完，已响应
     begin
         busy_w<=0;
         wok<=0;
+        bok<=1;
+        awvalid<=0;
+        wvalid<=0;
+        wstate<=7;
     end
-    else if(~va3_w)//不读也不写
+    else if(~va3_w&&awready)//不读也不写
     begin
         busy_w<=0;
         wok<=0;
+        bok<=1;
+        awvalid<=0;
+        wvalid<=0;
+        wstate<=8;
+    end
+    else if(~va3_w&&~awready)
+    begin
+        busy_w<=0;
+        wok<=0;
+        bok<=0;
+        awvalid<=0;
+        wvalid<=0;
+        wstate<=9;
     end
     else
     begin
         busy_w<=0;
         wok<=0;
+        bok<=1;
+        awvalid<=0;
+        wvalid<=0;
+        wstate<=10;
     end
 end
 
@@ -1245,17 +1435,28 @@ begin
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
     if(delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
     else pause=0;
-    if(~resetn)begin c_pc=7; va=0; end
+    if(~resetn)begin  va=0; end
+    else 
+        begin     
+            if(back) begin va=0;  end
+            else if(exc) begin va=0;end
+            else if(jump==1) begin va=0;end//若jump则无效
+            else if(jump==2) begin va=0;  end
+            else if(jump==3) begin va=0;  end
+            else begin va=1;end            
+        end
+    
+    if(~resetn)begin c_pc=7; end
     else 
         begin           
             inst_sram_addr=pc;
-            if(pause) begin va=va; c_pc=0; end
-            else if(back) begin va=0; c_pc=6; end
-            else if(exc) begin va=0; c_pc=5; end
-            else if(jump==1) begin va=0; c_pc=2; end//若jump则无效
-            else if(jump==2) begin va=0; c_pc=3; end
-            else if(jump==3) begin va=0; c_pc=4; end
-            else begin va=1; c_pc=1; end            
+            if(pause) begin c_pc=0; end
+            else if(back) begin  c_pc=6; end
+            else if(exc) begin c_pc=5; end
+            else if(jump==1) begin c_pc=2; end//若jump则无效
+            else if(jump==2) begin c_pc=3; end
+            else if(jump==3) begin c_pc=4; end
+            else begin c_pc=1; end            
         end
 end
 
@@ -1581,10 +1782,10 @@ begin
         begin 
             we=1; wa=rt4; 
             case(r_y1[1:0])//已进行小尾端处理
-                0:bvalue=data_sram_rdata[7:0];
-                1:bvalue=data_sram_rdata[15:8];
-                2:bvalue=data_sram_rdata[23:16];
-                3:bvalue=data_sram_rdata[31:24];
+                0:bvalue=data_sram_rdata1[7:0];
+                1:bvalue=data_sram_rdata1[15:8];
+                2:bvalue=data_sram_rdata1[23:16];
+                3:bvalue=data_sram_rdata1[31:24];
                 default:bvalue=0;
             endcase
             if(inscode4==47) wd={{24{bvalue[7]}},bvalue};
@@ -1594,14 +1795,14 @@ begin
         begin //CP0判断处理。。。。。。。。。。。。。。。。。。。。。。。。。
             if (pd) we=1; else we=0; wa=rt4; 
             case(r_y1[1:0])//已进行小尾端处理
-                0:b2value=data_sram_rdata[15:0];
-                2:b2value=data_sram_rdata[31:16];
+                0:b2value=data_sram_rdata1[15:0];
+                2:b2value=data_sram_rdata1[31:16];
                 default:b2value=0;
             endcase
             if (inscode4==49) wd={{16{b2value[15]}},b2value}; 
             else wd={{16{zero}},b2value};
         end
-    else if(inscode4==51) begin if (pd1) we=1; else we=0; wa=rt4; wd=data_sram_rdata; end
+    else if(inscode4==51) begin if (pd1) we=1; else we=0; wa=rt4; wd=data_sram_rdata1; end
     else if(inscode4==56) begin we=1; wa=rt4; wd=aimdata2;end
     else begin we=0;wa=r_wa; wd=r_wd;end
 end
