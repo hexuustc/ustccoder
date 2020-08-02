@@ -189,7 +189,7 @@ reg stall;
 reg va,va1,va2,va3,va4,va5,va6,va7;//有效位
 reg r_va,r_va1,r_va2,r_va3;
 
-reg reins1,reins2;//保留指令
+reg reins1,reins2b,reins2,r_reins2;//保留指令
 
 reg r_stall;//stall缓冲
 
@@ -202,7 +202,8 @@ wire zf,cf,of;
 
 wire [31:0] pc_8,rd0,rd1;
 wire [15:0] addr,addr1,addr2,addr3,addr4;//可以优化。。。。。。。。。。。。。。。
-wire [1:0] exc;//例外
+wire [1:0] exc_cp0;//例外
+reg [1:0] exc;
 wire back,stall_dv;
 //cp0的端口
 wire [31:0] reins;
@@ -225,8 +226,8 @@ CP0 CP0(pc,y,cp0_data,
         cp0_num,
         sel,
         cp0_ra,
-        clk,~resetn,of,va2,va3,reins2,
-        exc,
+        clk,~resetn,of,va2,va3,reins2,pause2,
+        exc_cp0,
         back,
         BadVAddr,Count,Status,Cause,EPC,
         cp0_load);
@@ -312,11 +313,13 @@ begin
     if(~resetn) pc1<=0;
     else if(pause1) pc1<=pc1;
     else pc1<=pc;
-    if(pause1) r_va<=r_va;
+    if(~resetn) r_va<=0;
+    else if(pause1) r_va<=r_va;
     else r_va<=va;
     r_wd<=wd;
     r_wa<=wa;
     r_aimdata1<=aimdata1;
+    r_reins2<=reins2;
     
 //////////////////////
 /////IF to ID:译码/////
@@ -327,9 +330,9 @@ begin
     r_imm<=r_imm;
     inscode2<=inscode2;
     ir2<=ir2;
-    reins2<=reins2;
+    //reins2b<=reins2b;
     pc2<=pc2;
-    r_va1<=r_va1;
+    //r_va1<=r_va1;
 end
 else
 begin
@@ -338,9 +341,9 @@ begin
     r_imm<=addr1;
     inscode2<=inscode1;
     ir2<=ir1;
-    reins2<=reins1;
+    //reins2b<=reins1;
     pc2<=pc1;
-    r_va1<=va1;
+    //r_va1<=va1;
 end
 
 //////////////////////
@@ -356,7 +359,7 @@ begin
     r_b1<=r_b1;
     ir3<=ir3;
     pc3<=pc3;
-    r_va2<=r_va2;
+    //r_va2<=r_va2;
 end
 else
 begin    
@@ -369,7 +372,7 @@ begin
     r_b1<=r_b;
     ir3<=ir2;
     pc3<=pc2;
-    r_va2<=va2;
+    //r_va2<=va2;
 end
 
 //////////////////////////////
@@ -386,7 +389,7 @@ begin
     pd<=pd;
     pd1<=pd1;
     ir4<=ir4;
-    r_va3<=r_va3;
+    //r_va3<=r_va3;
 end
 else
 begin    
@@ -400,7 +403,7 @@ begin
     if(r_y[0]==0) pd<=1; else pd<=0;
     if(r_y%4==0) pd1<=1; else pd1<=0;
     ir4<=ir3;
-    r_va3<=va3;
+    //r_va3<=va3;
 end
 
 //////////////////////////////
@@ -457,6 +460,47 @@ begin
     if(pause4)
     data_sram_rdata1<=data_sram_rdata1;
     else data_sram_rdata1<=data_sram_rdata;
+end
+
+always@(*)
+begin
+    exc=exc_cp0;
+end
+
+always @(posedge clk)
+begin
+    if(~resetn) reins2b<=0;
+    else if(pause2) reins2b<=reins2b;
+    else reins2b<=reins1;
+end
+
+always@(*)
+begin
+    if(~resetn) reins2=0;
+    else if(~va2) reins2=0;
+    else if(stall||pause2) reins2=r_reins2;
+    else reins2=reins2b;
+end
+
+always@(posedge clk)
+begin
+    if(~resetn) r_va1<=0;
+    else if(pause2) r_va1<=r_va1;
+    else r_va1<=va1;
+end
+
+always@(posedge clk)
+begin
+    if(~resetn) r_va2<=0;
+    else if(pause3) r_va2<=r_va2;
+    else r_va2<=va2;
+end
+
+always@(posedge clk)
+begin
+    if(~resetn) r_va3<=0;
+    else if(pause4||delay_hl||delay_hl1) r_va3<=r_va3;
+    else r_va3<=va3;
 end
 
 always@(*)
@@ -1556,7 +1600,8 @@ begin
     else va1=r_va;   
 
     //保留指令部分
-    if(va1 && InsConvert_inscode==0) reins1=1;
+    if(~resetn) reins1=0;
+    else if(va1 && InsConvert_inscode==0) reins1=1;
     else reins1=0;
     
     ra0=rs1;ra1=rt1;
