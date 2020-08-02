@@ -80,7 +80,7 @@ wire inst_sram_en;
 wire [3:0] inst_sram_wen;
 reg [31:0] inst_sram_addr;
 wire[31:0] inst_sram_wdata;
-reg [31:0] inst_sram_rdata;
+wire [31:0] inst_sram_rdata;
     
 wire data_sram_en;
 reg [3:0] data_sram_wen;
@@ -847,23 +847,26 @@ end*/
 
 always@(*)
 begin
-    
-    if(va&&rvalid&&~rok)//读指令返回
-    begin
-        if(rid==0) inst_sram_rdata=rdata; 
-        else inst_sram_rdata=inst_sram_rdata; 
-    end
-    else if(va3_r&&rvalid&&rok)//已读指令，读数据已返回
+    if(va3_r&&rvalid&&rok)//已读指令，读数据已返回
     begin
         if(rid==1) data_sram_rdata=rdata; 
         else data_sram_rdata=data_sram_rdata;
     end
     else 
     begin
-        inst_sram_rdata=inst_sram_rdata; 
         data_sram_rdata=data_sram_rdata;
     end
 end
+reg [31:0] inst_sram_rdata_curr,inst_sram_rdata_next;
+always @(posedge clk)
+    inst_sram_rdata_curr <= inst_sram_rdata_next;
+always @(*)
+begin
+    if(va && rvalid && ~rok && rid == 0)
+        inst_sram_rdata_next = rdata;
+    else inst_sram_rdata_next = inst_sram_rdata_curr; 
+end
+assign inst_sram_rdata = inst_sram_rdata_next;
 
 always@(*)
 begin
