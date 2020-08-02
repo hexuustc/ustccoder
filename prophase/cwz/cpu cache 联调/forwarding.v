@@ -21,24 +21,25 @@
 
 
 module forwarding(
-input [4:0] ID_EX_rs, ID_EX_rt,
-input EX_MEM_regwrite, MEM_WB_regwrite,
-input [4:0] EX_MEM_WA, MEM_WB_WA,
+input [4:0] IF_ID_rs, IF_ID_rt,
+input EX_MEM_memread,
+input EX_MEM_regwrite, ID_EX_regwrite,
+input [4:0] EX_MEM_WA, ID_EX_WA,
 output reg [1:0]forward_A, forward_B
     );
 always @(*)
 begin
-    if(EX_MEM_regwrite && ID_EX_rs == EX_MEM_WA && EX_MEM_WA != 0)
-        forward_A = 2'b01;
-    else if(MEM_WB_regwrite && ID_EX_rs == MEM_WB_WA && MEM_WB_WA != 0)
+    if(ID_EX_regwrite && IF_ID_rs == ID_EX_WA && ID_EX_WA != 0)
         forward_A = 2'b10;
+    else if(EX_MEM_regwrite && IF_ID_rs == EX_MEM_WA && EX_MEM_WA != 0)
+        forward_A = EX_MEM_memread ? 2'b11 : 2'b01;
     else
         forward_A = 2'b00;
-        
-    if(EX_MEM_regwrite && ID_EX_rt == EX_MEM_WA && EX_MEM_WA != 0)
-        forward_B = 2'b01;
-    else if(MEM_WB_regwrite && ID_EX_rt == MEM_WB_WA && MEM_WB_WA != 0)
-        forward_B = 2'b10;
+    
+    if(ID_EX_regwrite && IF_ID_rt == ID_EX_WA && ID_EX_WA != 0)
+        forward_B = 2'b10;  
+    else if(EX_MEM_regwrite && IF_ID_rt == EX_MEM_WA && EX_MEM_WA != 0)
+        forward_B = EX_MEM_memread ? 2'b11 : 2'b01;
     else
         forward_B = 2'b00;
 end

@@ -29,6 +29,7 @@ output reg alusrc, regwrite,
 output reg [2:0]aluop
     );
 
+
 always @(*)
 begin
     case (op)
