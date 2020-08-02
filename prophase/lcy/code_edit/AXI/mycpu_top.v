@@ -105,7 +105,7 @@ reg [1:0] jump,div_begin;
 
 reg zero;//没什么卵用的zero，当做0的宏定义来用
 
-reg pd,pd1,we,zf1,cf1,of1,zf2,cf2,of2,c_inscode3,c_inscode4;
+reg pd,pd1,we,zf1,cf1,of1,zf2,cf2,of2,c_inscode4;
 reg delay_block,delay_block_1,delay_hl,delay_hl_1,delay_hl1,delay_hl1_1,delay_sendhl,delay_sendhl_1;//延迟信号
 
 reg pause,pause1,pause2,pause3,pause4,pause5,pause6,pause7;//暂停信号[寄存器]
@@ -184,6 +184,7 @@ assign pc_8=pc-8;
 assign inst_sram_en=1;
 assign inst_sram_wen=0;
 assign inst_sram_wdata=0;
+assign inst_sram_addr = pc;
 //数据存储器
 assign data_sram_en=1;
 assign data_sram_addr={{3{zero}},data_sram_addr1[28:0]};//前三位归零，为什么？
@@ -560,13 +561,11 @@ begin
 end
 assign va = va_next;
 
-
 always@(*)//取指
 begin
     if(~resetn) c_pc=7;
     else 
         begin           
-            //inst_sram_addr=pc;
             if(pause) c_pc=0;
             else if(back) c_pc=6;
             else if(exc) c_pc=5;
@@ -576,8 +575,6 @@ begin
             else c_pc=1;          
         end
 end
-
-assign inst_sram_addr = pc;
 
 //////////////////////////////////////////////////
 ////////////////////译码段组合逻辑/////////////////
