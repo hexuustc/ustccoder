@@ -1680,6 +1680,36 @@ begin
     else if(rt3==aimaddr4) r_b1r=aimdata4;
     else r_b1r=r_b1;
 
+
+    //生成数据存储器的写使能和写数据
+    //输入条件：va3,pause3,inscode3
+    //输入材料：r_b1r
+    //输出结果：data_sram_wen，data_sram_wdata
+    if(va3 )
+    begin
+        case(inscode3)
+            52:case(r_y[1:0])//SB指令
+                    0:begin data_sram_wen=4'b0001;data_sram_wdata = {24'h000000, r_b1r[7:0]            }; end //已进行小尾端处理
+                    1:begin data_sram_wen=4'b0010;data_sram_wdata = {16'h0000,   r_b1r[7:0],      8'h00}; end//已进行小尾端处理
+                    2:begin data_sram_wen=4'b0100;data_sram_wdata = {8'h00,      r_b1r[7:0],   16'h0000}; end//已进行小尾端处理。
+                    3:begin data_sram_wen=4'b1000;data_sram_wdata = {            r_b1r[7:0], 24'h000000}; end//已进行小尾端处理
+                    default: begin data_sram_wen=0; data_sram_wdata=0; end
+                endcase
+            53:case(r_y[1:0])//SH指令
+                    0:begin data_sram_wen=4'b0011;data_sram_wdata = {16'h0000    , r_b1r[15:0]}; end//已进行小尾端处理
+                    2:begin data_sram_wen=4'b1100;data_sram_wdata = {r_b1r[15:0] ,    16'h0000}; end//已进行小尾端处理
+                    default: begin data_sram_wen=4'b0000;data_sram_wdata= 0; end//已进行小尾端处理
+                endcase
+            54: //SW指令
+            begin
+                if(r_y[1:0]==0) data_sram_wen=4'b1111; 
+                else data_sram_wen=0; 
+                data_sram_wdata=r_b1r; 
+            end
+            default: {data_sram_wen,data_sram_wdata} = 0;
+        endcase
+    end
+    else {data_sram_wen,data_sram_wdata} = 0;
     //地址，这里其实只是个中转变量，非分支
     data_sram_addr1=r_y;
     
@@ -1704,58 +1734,10 @@ begin
     end
     else jump = 2'b00;
     
-    if(va3==0) begin  data_sram_wen=0; end
-    else if(inscode3==29) begin  data_sram_wen=0; end
-    else if(inscode3==30) begin  data_sram_wen=0; end
-    else if(inscode3==31) begin data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==32) begin  data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==33) begin  data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==34) begin data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==35) begin data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==36) begin data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==37) begin data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==38) begin data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==39) begin data_sram_wen=0; end//默认rs为有符号数
-    else if(inscode3==40) begin data_sram_wen=0; end//默认rs为有符号数
-    else if((inscode3==47)||(inscode3==48)) 
-        begin data_sram_wen=0;
-            //if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1))) delay_block=1;
-            //else delay_block=0;
-        end
-    else if((inscode3==49)||(inscode3==50)) 
-        begin data_sram_wen=0; 
-           // if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[0]))) delay_block=1;
-           // else delay_block=0; 
-        end
-    else if(inscode3==51) 
-        begin 
-            data_sram_wen=0; 
-           // if(va2&&(((rs2==aimaddr1)||(rt2==aimaddr1))&&(~r_y[1:0]))) delay_block=1;
-               // else delay_block=0; 
-        end
-    else if(inscode3==52) begin  //写字节与数据就是位置对应关系。。。。。。。。。。。
-                                case(r_y[1:0])
-                                    0:begin data_sram_wen=4'b0001;data_sram_wdata[7:0]=r_b1r[7:0]; end //已进行小尾端处理
-                                    1:begin data_sram_wen=4'b0010;data_sram_wdata[15:8]=r_b1r[7:0]; end//已进行小尾端处理
-                                    2:begin data_sram_wen=4'b0100;data_sram_wdata[23:16]=r_b1r[7:0]; end//已进行小尾端处理。
-                                    3:begin data_sram_wen=4'b1000;data_sram_wdata[31:24]=r_b1r[7:0]; end//已进行小尾端处理
-                                    default: begin data_sram_wen=0; data_sram_wdata=0; end
-                                endcase
-                          end
-    else if(inscode3==53) begin 
-                                case(r_y[1:0])
-                                    0:begin data_sram_wen=4'b0011;data_sram_wdata[15:0]=r_b1r[15:0]; end//已进行小尾端处理
-                                    2:begin data_sram_wen=4'b1100;data_sram_wdata[31:16]=r_b1r[15:0]; end//已进行小尾端处理
-                                default:data_sram_wen=4'b0000;//已进行小尾端处理
-                                endcase
-                          end
-    else if(inscode3==54) begin if(r_y[1:0]==0) data_sram_wen=4'b1111; else data_sram_wen=0; data_sram_wdata=r_b1r; end
-    else if(inscode3==7) begin  data_sram_wen=0; end
-    else if(inscode3==8) begin  data_sram_wen=0; end
-    else if(inscode3==9) begin  data_sram_wen=0; end
-    else if(inscode3==10) begin  data_sram_wen=0; end
-    else if(inscode3==41) begin 
-                              data_sram_wen=0;
+    //此处电路用于生成delay_sendhl
+    if (va3 )
+    begin
+    if(inscode3==41) begin  //MFHI指令
                               if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
@@ -1765,8 +1747,7 @@ begin
                               end
                               else delay_sendhl=0;
                           end
-    else if(inscode3==42) begin 
-                               data_sram_wen=0;
+    else if(inscode3==42) begin   //MFLO指令
                               if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
@@ -1776,15 +1757,8 @@ begin
                               end
                               else delay_sendhl=0; 
                           end
-    else if(inscode3==56) begin  data_sram_wen=0; end
-    else if(inscode3==57) 
-        begin
-            
-            data_sram_wen=0;
-        end
-    else if(inscode3==18) begin  data_sram_wen=0; end
-    else begin  data_sram_wen=0; end
-
+    else begin end
+    end
 end
 
 
