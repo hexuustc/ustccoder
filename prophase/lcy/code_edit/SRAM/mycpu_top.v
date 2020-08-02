@@ -31,7 +31,7 @@ module mycpu_top
     output [31:0] inst_sram_wdata,
     input [31:0] inst_sram_rdata,
     
-    output data_sram_en,
+    output reg data_sram_en,
     output reg [3:0] data_sram_wen,
     output [31:0] data_sram_addr,
     output reg [31:0] data_sram_wdata,
@@ -186,7 +186,7 @@ assign inst_sram_wen=0;
 assign inst_sram_wdata=0;
 assign inst_sram_addr = pc;
 //数据存储器
-assign data_sram_en=1;
+//assign data_sram_en=1;
 assign data_sram_addr={{3{zero}},data_sram_addr1[28:0]};//前三位归零，为什么？
 //debug端口
 assign debug_wb_pc=pc4;
@@ -808,6 +808,21 @@ begin
     end
     else jump = 2'b00;
     
+    if (va3 && ~pause3)
+    begin
+        case(inscode3)
+            47:data_sram_en = 1;
+            48:data_sram_en = 1;
+            49:data_sram_en = 1;
+            50:data_sram_en = 1;
+            51:data_sram_en = 1;
+            52:data_sram_en = 1;
+            53:data_sram_en = 1;
+            54:data_sram_en = 1;
+            default: data_sram_en = 0;
+        endcase
+    end
+    else data_sram_en = 0;
     
 
     //此处电路用于生成delay_block与delay_sendhl

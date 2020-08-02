@@ -25,23 +25,150 @@ module mycpu_top
     input resetn,//低电平同步复位
     input [5:0] ext_int,//硬件中断信号
     
-    output inst_sram_en,
-    output [3:0] inst_sram_wen,
-    output [31:0] inst_sram_addr,
-    output [31:0] inst_sram_wdata,
-    input [31:0] inst_sram_rdata,
-    
-    output data_sram_en,
-    output reg [3:0] data_sram_wen,
-    output [31:0] data_sram_addr,
-    output reg [31:0] data_sram_wdata,
-    input [31:0] data_sram_rdata,
+   //axi
+    //ar
+    output reg [3 :0] arid         ,//再判断----------------------
+    output reg [31:0] araddr       ,//再判断----------------------
+    output [3 :0] arlen        ,
+    output reg [2 :0] arsize       ,//再判断----------------------
+    output [1 :0] arburst      ,//有点问题
+    output [1 :0] arlock        ,
+    output [3 :0] arcache      ,
+    output [2 :0] arprot       ,
+    output   reg     arvalid      ,//再判断---------------------
+    input         arready      ,//等着用+++++++++++++++++++++
+    //r           
+    input  [3 :0] rid          ,//等着用+++++++++++++++++++++
+    input  [31:0] rdata        ,//等着用+++++++++++++++++++++
+    input  [1 :0] rresp        ,//无用
+    input         rlast        ,//无用
+    input         rvalid       ,//等着用+++++++++++++++++++++
+    output        rready       ,
+    //aw          
+    output [3 :0] awid         ,//有点问题
+    output reg [31:0] awaddr       ,//再判断---------------------
+    output [3 :0] awlen        ,
+    output reg [2 :0] awsize       ,//再判断---------------------
+    output [1 :0] awburst      ,//有点问题
+    output [1 :0] awlock       ,
+    output [3 :0] awcache      ,
+    output [2 :0] awprot       ,
+    output   reg     awvalid      ,//再判断---------------------
+    input         awready      ,//等着用+++++++++++++++++++++
+    //w          
+    output [3 :0] wid          ,//有点问题
+    output reg [31:0] wdata        ,//再判断---------------------
+    output reg [3 :0] wstrb        ,//再判断---------------------
+    output        wlast        ,
+    output   reg     wvalid       ,//再判断---------------------
+    input         wready       ,//等着用+++++++++++++++++++++
+    //b           
+    input  [3 :0] bid          ,//无用
+    input  [1 :0] bresp        ,//无用
+    input         bvalid       ,//等着用+++++++++++++++++++++
+    output        bready       ,
     
     output [31:0] debug_wb_pc,
     output [3:0] debug_wb_rf_wen,
     output [4:0] debug_wb_rf_wnum,
     output [31:0] debug_wb_rf_wdata
     );
+
+//此处显示的是类SRAM接口，它们将被转接到类SRAM转AXI接口上
+//inst sram-like 
+wire         inst_req     ;
+wire         inst_wr      ;
+wire  [1 :0] inst_size    ;
+wire  [31:0] inst_addr    ;
+wire  [31:0] inst_wdata   ;
+wire  [31:0] inst_rdata   ;
+wire         inst_addr_ok ;
+wire         inst_data_ok ;
+    
+//data sram-like 
+wire         data_req     ;
+wire         data_wr      ;
+wire  [1 :0] data_size    ;
+wire  [31:0] data_addr    ;
+wire  [31:0] data_wdata   ;
+wire  [31:0] data_rdata   ;
+wire         data_addr_ok ;
+wire         data_data_ok ;
+
+cpu_axi_interface(.clk(clk),
+                  .resetn(resetn),
+
+                  .inst_req(inst_req),
+                  .inst_wr(inst_wr),
+                  .inst_size(inst_size),
+                  .inst_addr(inst_addr),
+                  .inst_wdata(inst_wdata),
+                  .inst_rdata(inst_rdata),
+                  .inst_addr_ok(inst_addr_ok),
+                  .inst_data_ok(inst_data_ok),
+
+                  .data_req(data_req),
+                  .data_wr(data_wr),
+                  .data_size(data_size),
+                  .data_addr(data_addr),
+                  .data_wdata(data_wdata),
+                  .data_rdata(data_rdata),
+                  .data_addr_ok(data_addr_ok),
+                  .data_data_ok(data_data_ok),
+                  
+                  .arid(arid),
+                  .araddr(araddr),
+                  .arlen(arlen),
+                  .arsize(arsize),
+                  .arburst(arburst),
+                  .arlock(arlock),
+                  .arcache(arcache),
+                  .arprot(arprot),
+                  .arvalid(arvalid),
+                  .arready(arready),
+                  
+                  .rid(rid),
+                  .rdata(rdata),
+                  .rresp(rresp),
+                  .rlast(rlast),
+                  .rvalid(rvalid),
+                  .rready(rready),
+                  
+                  .awid(awid),
+                  .awaddr(awaddr),
+                  .awlen(awlen),
+                  .awsize(awsize),
+                  .awburst(awburst),
+                  .awlock(awlock),
+                  .awcache(awcache),
+                  .awprot(awprot),
+                  .awvalid(awvalid),
+                  .awready(awready),
+                  
+                  .wid(wid),
+                  .wdata(wdata),
+                  .wstrb(wstrb),
+                  .wlast(wlast),
+                  .wvalid(wvalid),
+                  .wready(wready),
+                  
+                  .bid(bid),
+                  .bresp(bresp),
+                  .bvalid(bvalid),
+                  .bready(bready));
+
+//此处显示的是原来的SRAM接口，它们需要被转接到类SRAM接口上
+wire inst_sram_en;
+wire [3:0] inst_sram_wen;
+wire [31:0] inst_sram_addr;
+wire [31:0] inst_sram_wdata;
+wire [31:0] inst_sram_rdata;
+
+wire data_sram_en;
+reg [3:0] data_sram_wen;
+wire [31:0] data_sram_addr;
+reg [31:0] data_sram_wdata;
+wire [31:0] data_sram_rdata;
 
 //此处定义的是alu和amu的两个输入操作数a、b相关的信号
 reg [31:0] a,b;//这两个信号本质是wire，根据一系列组合逻辑选择出信号作为操作数a、b，并连上alu
@@ -90,14 +217,18 @@ wire [4:0] shamt,shamt1,shamt2,shamt3,shamt4;
 
 reg [15:0] r_imm,b2value;
 reg [7:0] bvalue;
+
 reg [5:0] inscode5,inscode6,inscode7;//指令码
 wire [5:0] inscode1;
 reg [5:0] inscode2,inscode3,inscode4;
+//寄存器写地址
 reg [4:0] wa,r_wa;
 reg [4:0] ra0,ra1,cp0_num;
+//目标写地址
 reg [4:0] aimaddr;
 wire [4:0] aimaddr1,aimaddr2,aimaddr3,aimaddr4,aimaddr5;
 reg [4:0] r_aimaddr,r_aimaddr1,r_aimaddr2,r_aimaddr3,r_aimaddr4;//目标写地址
+//ALU、DMU操作码
 reg [3:0] m;
 reg [3:0] m1,m1_1;
 reg [2:0] c_pc,sel;
@@ -105,12 +236,17 @@ reg [1:0] jump,div_begin;
 
 reg zero;//没什么卵用的zero，当做0的宏定义来用
 
-reg pd,pd1,we,zf1,cf1,of1,zf2,cf2,of2,c_inscode4;
+reg pd,pd1;//数据地址使能判断
+reg we;//寄存器写使能
+reg zf1,cf1,of1,zf2,cf2,of2;//ALU三信号
+reg c_inscode4;
+//延迟信号
+//reg delay_block,delay_block_1;//取数据相关延迟
 reg delay_block,delay_block_1,delay_hl,delay_hl_1,delay_hl1,delay_hl1_1,delay_sendhl,delay_sendhl_1;//延迟信号
-
+//暂停信号
 reg pause,pause1,pause2,pause3,pause4,pause5,pause6,pause7;//暂停信号[寄存器]
 reg pause1_1,pause2_1,pause3_1,pause4_1,pause5_1,pause6_1,pause7_1;//暂停信号的缓冲[寄存器]
-
+//有效位
 wire va;
 reg r_va,va1,r_va1,va2,r_va2,va3,r_va3,va4,va5,va6,va7;//有效位
 reg reins1,reins2;//保留指令
