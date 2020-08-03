@@ -28,7 +28,7 @@ module CP0//给定指令默认为分支延迟槽的形式，即分支后一条�
     input [4:0] cp0_ra,
     input clk,rst,of,va2,va3,reins,pause2,
     output reg [1:0] exc,
-    output reg back,
+    output back,
     output reg [31:0] BadVAddr,Count,Status,Cause,EPC,
     output wire [31:0]cp0_load
     );
@@ -44,7 +44,7 @@ assign EXL=Status[1];
 initial Count=0;
 initial clk2=1;
 initial exc=0;
-initial back=0;
+//initial back=0;
 initial pc1=0;
 initial pc2=0;
 initial reins_check=0;
@@ -240,15 +240,21 @@ begin
     cp0[14]=EPC;
 end
 
-always@(*)//返回指令
+
+//返回指令
+reg back_curr,back_next;
+always @(posedge clk)
+    back_curr <= back_next;
+always @(*)
 begin
-    if(pause2) back=back;//锁存器
+    if(pause2) back_next=back_curr;//锁存器
     else if(inscode2==55)
         begin
-            back=1;
+            back_next=1;
         end
-    else back=0;
+    else back_next=0;
 end
+assign back = back_next;
 
 always@(posedge clk)
     clk2<=~clk2;

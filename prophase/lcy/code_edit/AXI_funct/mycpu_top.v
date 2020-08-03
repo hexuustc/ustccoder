@@ -186,7 +186,8 @@ reg pause,pause1,pause2,pause3,pause4,pause5,pause6,pause7;//暂停信号[寄存
 reg pause1_1,pause2_1,pause3_1,pause4_1,pause5_1,pause6_1,pause7_1;//暂停信号的缓冲[寄存器]
 reg stall;
 //有效位
-reg va,va1,va2,va3,va4,va5,va6,va7;//有效位
+wire va1,va2,va3,va4;
+reg va,va5,va6,va7;//有效位
 reg r_va,r_va1,r_va2,r_va3;
 
 reg reins1,reins2b,reins2,r_reins2;//保留指令
@@ -537,30 +538,43 @@ begin
     else va7<=va6;
 end
 
-always@(*)
+reg va2_curr,va2_next;
+always @(posedge clk)
+    va2_curr <= va2_next;
+always @(*)
 begin
-    if(~resetn) va2=0;//这就是分支延迟槽
-    else if(pause2) va2=va2;
-    else if (exc) va2=0;
-    else va2=r_va1;
+    if(~resetn) va2_next=0;//这就是分支延迟槽
+    else if(pause2) va2_next=va2_curr;
+    else if (exc) va2_next=0;
+    else va2_next=r_va1;
 end
+assign va2 = va2_next;
 
-always@(*)
+reg va3_curr,va3_next;
+always @(posedge clk)
+    va3_curr <= va3_next;
+always @(*)
 begin
-    if(~resetn) va3=0;
+    if(~resetn) va3_next=0;
    // else if(delay_block_1) va3=0;
-    else if(delay_sendhl_1) va3=0;
-    else if(pause3_1) va3=va3;
-    else if(exc) va3=0;
-    else va3=r_va2;
+    else if(delay_sendhl_1) va3_next=0;
+    else if(pause3_1) va3_next=va3_curr;
+    else if(exc) va3_next=0;
+    else va3_next=r_va2;
 end
+assign va3 = va3_next;
 
-always@(*)
+reg va4_curr,va4_next;
+always @(posedge clk)
+    va4_curr <= va4_next;
+always @(*)
 begin
-    if(~resetn) va4=0;
-    else if(pause4_1||delay_hl_1||delay_hl1_1) va4=va4;
-    else va4=r_va3;  
+    if(~resetn) va4_next=0;
+    else if(pause4_1||delay_hl_1||delay_hl1_1) va4_next=va4_curr;
+    else va4_next=r_va3; 
 end
+assign va4 = va4_next;
+
 
 always@(*)
 begin
@@ -1588,6 +1602,20 @@ assign inscode1 = InsConvert_inscode;
 
 ////////PART TWO////////////////
 //生成其它乱七八糟的控制码
+reg va1_curr,va1_next;
+always @(posedge clk)
+    va1_curr <= va1_next;
+always @(*)
+begin
+    if(~resetn) va1_next=0;
+    else if(pause1) va1_next=va1_curr;
+    else if(jump) va1_next=0;
+    else if (back||exc) va1_next=0;
+    else va1_next=r_va; 
+end
+assign va1 = va1_next;
+
+
 always@(*)//需用到rs,rt,addr   rd,shamt
 begin    
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
@@ -1596,12 +1624,6 @@ begin
      
      if(pause1_1) ir1=ir1; else ir1=inst_sram_rdata;
      
-     if(~resetn) va1=0;
-    else if(pause1) va1=va1;
-    else if(jump) va1=0;
-    else if (back||exc) va1=0;
-    else va1=r_va;   
-
     //保留指令部分
     if(~resetn) reins1=0;
     else if(exc||Status[1]) reins1=0;
