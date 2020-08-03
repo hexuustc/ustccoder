@@ -559,6 +559,7 @@ begin
     else va2=r_va1;
 end
 
+/*
 reg va3_curr,va3_next;
 always @(posedge clk)
     va3_curr <= va3_next;
@@ -574,8 +575,8 @@ begin
     va3 = va3_next;
 end
 //assign va3 = va3_next;
-
-/*always@(*)
+*/
+always@(*)
 begin
     if(~resetn) va3=0;
    // else if(delay_block_1) va3=0;
@@ -584,8 +585,8 @@ begin
     else if(exc) va3=0;
     else va3=r_va2;
 end
-*/
-/*
+
+
 reg va4_curr,va4_next;
 always @(posedge clk)
     va4_curr <= va4_next;
@@ -594,16 +595,18 @@ begin
     if(~resetn) va4_next=0;
     else if(pause4_1||delay_hl_1||delay_hl1_1) va4_next=va4_curr;
     else va4_next=r_va3;
+    va4 = va4_next;
 end
 assign va4 = va4_next;
-*/
 
+/*
 always@(*)
 begin
     if(~resetn) va4=0;
     else if(pause4_1||delay_hl_1||delay_hl1_1) va4=va4;
     else va4=r_va3;  
 end
+*/
 /*
 reg [31:0] aimdata2_curr,aimdata2_next;
 always @(posedge clk)
@@ -1449,6 +1452,7 @@ begin
     else if(rt2==aimaddr2) r_br=aimdata2;
     else if(rt2==aimaddr3) r_br=aimdata3;
     else r_br=r_b;
+
     if(va2==0) begin  aimaddr=0; a=a_1; b=b_1; m=0; end
     else if(inscode2==1) begin a=r_ar; b=r_br; m=0; aimaddr=rd02;  end
     else if(inscode2==2) begin a=r_ar; b=addr32; m=0; aimaddr=rt2; end
@@ -1528,6 +1532,23 @@ begin
     else begin aimaddr=0; a=a_1;b=b_1;m=0; end
     cp0_data=y;
 end
+/*
+reg [4:0] cp0_num_curr,cp0_num_next;
+always @(posedge clk)
+begin
+    cp0_num_curr <= cp0_num_next;
+end
+always @(*)
+begin
+    if((va2 == 0) && (inscode2 == 57))
+        cp0_num_next = rd02;
+    else
+        cp0_num_next = cp0_num_curr;
+
+    cp0_num = cp0_num_next;
+end
+*/
+
 always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转。。。。。前三位归零，原因何在？？？？？
 begin
     //delay_block=0;
