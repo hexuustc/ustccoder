@@ -74,13 +74,18 @@ module mycpu_top
     output [4 :0] debug_wb_rf_wnum,
     output [31:0] debug_wb_rf_wdata
 );
+//cpu inst
+wire cpu_i_req;
+wire [31:0] cpu_i_addr;
+wire [31:0] cpu_i_read_data;
+wire cpu_i_miss;
+
 //icache
-wire i_en, i_wen;
-wire [31:0] i_read_data;
-wire [31:0] i_write_data;
-wire [31:0] i_addr;
-wire i_burst_ok, i_addr_ok, i_data_ok;
-wire [1:0] i_wsize, i_rsize;
+wire icache_en, icache_wen;
+wire [31:0] icache_read_data;
+wire [31:0] icache_write_data;
+wire [31:0] icache_addr;
+wire icache_burst_ok, icache_addr_ok, icache_data_ok;
 //ar
 wire [3 :0] i_arid;
 wire [31:0] i_araddr;
@@ -122,14 +127,21 @@ wire [3 :0] i_bid;
 wire [1 :0] i_bresp;
 wire        i_bvalid;
 wire        i_bready;
-
+//cpu data
+wire cpu_d_req, cpu_d_wreq;
+wire [31:0] cpu_d_write_data;
+wire [31:0] cpu_d_addr;
+wire [31:0] cpu_d_read_data;
+wire [3:0] cpu_d_wbyte;
+wire cpu_d_miss;
 //dcache
-wire d_en, d_wen;
-wire [31:0] d_read_data;
-wire [31:0] d_write_data;
-wire [31:0] d_addr;
-wire d_burst_ok, d_addr_ok, d_data_ok;
-wire [1:0] d_wsize, d_rsize;
+wire dcache_en, dcache_wen;
+wire [31:0] dcache_read_data;
+wire [31:0] dcache_write_data;
+wire [31:0] dcache_read_addr;
+wire [31:0] dcache_write_addr;
+wire dcache_rburst_ok, dcache_raddr_ok, dcache_rdata_ok;
+wire dcache_wburst_ok, dcache_waddr_ok, dcache_wdata_ok;
 //ar
 wire [3 :0] d_arid;
 wire [31:0] d_araddr;
@@ -171,41 +183,14 @@ wire [3 :0] d_bid;
 wire [1 :0] d_bresp;
 wire        d_bvalid;
 wire        d_bready;
-//cpu inst
-wire cpu_i_req, __i_wreq;
-wire [31:0] cpu_i_write_data, cpu_i_addr, cpu_i_read_data;
-wire [3:0] cpu_i_wbyte;
-wire cpu_i_miss;
 
-//icache
-wire icache_en, icache_wen;
-wire [31:0] icache_read_data;
-wire [31:0] icache_write_data;
-wire [31:0] icache_addr;
-wire icache_burst_ok, icache_addr_ok, icache_data_ok;
-
-//cpu data
-wire cpu_d_req, cpu_d_wreq;
-wire [31:0] cpu_d_write_data, cpu_d_addr, cpu_d_read_data;
-wire [3:0] cpu_d_wbyte;
-wire cpu_d_miss;
-//dcache
-wire dcache_en, dcache_wen;
-wire [31:0] dcache_read_data;
-wire [31:0] dcache_write_data;
-wire [31:0] dcache_addr;
-wire dcache_burst_ok, dcache_addr_ok, dcache_data_ok;
-
-hexu_cpu cpu_0(
-    .clk        (aclk  ),
+cpu_hexu cpu_0(
+    .clk        (cpu_clk  ),
     .rst        (~aresetn  ),
     
-    .i_write_data (cpu_i_write_data ),
     .i_addr       (cpu_i_addr       ),
     .i_read_data  (cpu_i_read_data  ),
     .i_req        (cpu_i_req        ),
-    .i_wreq       (cpu_i_wreq       ),
-    .i_wbyte      (cpu_i_wbyte      ),
     .i_ok         (cpu_i_ok         ),
     
     .d_write_data (cpu_d_write_data ),
@@ -214,42 +199,33 @@ hexu_cpu cpu_0(
     .d_req        (cpu_d_req        ),
     .d_wreq       (cpu_d_wreq       ),
     .d_wbyte      (cpu_d_wbyte      ),
-    .d_ok         (cpu_d_ok         ),
-    
-    .led          (led)
+    .d_ok         (cpu_d_ok         )
 );
 
 Icache icache(
-    .clk    (aclk  ),
+    .clk    (cpu_clk  ),
     .rst    (~aresetn ),
     
     .insaddr (cpu_i_addr        ),
-    .din     (cpu_i_write_data  ),
     .ins     (cpu_i_read_data   ),
     .req     (cpu_i_req         ),
-    .wreq    (cpu_i_wreq        ),
-    .wbyte   (cpu_i_wbyte       ),
     .miss    (cpu_i_miss        ),
     .ok      (cpu_i_ok          ),
     
-    .wen     (icache_wen        ),
     .sen     (icache_en         ),
     .addr_ok (icache_addr_ok    ),
     .data_ok (icache_data_ok    ),
     .burst   (icache_burst_ok   ),
-    .wdata   (icache_write_data ),
     .addr    (icache_addr       ),
     .sdata   (icache_read_data  )
 );
 
 icache_to_axi #(1'b1) icache_to_axi_0 (
-    .clk    (aclk   ),
+    .clk    (cpu_clk   ),
     .rstn   (aresetn),
     
     .en         (icache_en         ),
-    .wen        (icache_wen        ),
     .addr       (icache_addr       ),
-    .write_data (icache_write_data ),
     .read_data  (icache_read_data  ),
     .addr_ok    (icache_addr_ok    ),
     .data_ok    (icache_data_ok    ),
@@ -298,7 +274,7 @@ icache_to_axi #(1'b1) icache_to_axi_0 (
 );
 
 Dcache dcache(
-    .clk    (aclk  ),
+    .clk    (cpu_clk  ),
     .rst    (~aresetn ),
     
     .insaddr (cpu_d_addr        ),
@@ -310,28 +286,36 @@ Dcache dcache(
     .miss    (cpu_d_miss        ),
     .ok      (cpu_d_ok          ),
     
-    .wen     (dcache_wen        ),
-    .sen     (dcache_en         ),
-    .addr_ok (dcache_addr_ok    ),
-    .data_ok (dcache_data_ok    ),
-    .burst   (dcache_burst_ok   ),
-    .wdata   (dcache_write_data ),
-    .addr    (dcache_addr       ),
-    .sdata   (dcache_read_data  )
+    .wen      (dcache_wen         ),
+    .sen      (dcache_en          ),
+    .waddr_ok (dcache_waddr_ok    ),
+    .wdata_ok (dcache_wdata_ok    ),
+    .wburst   (dcache_wburst_ok   ),
+    .wdata    (dcache_write_data  ),
+    .waddr    (dcache_write_addr  ),
+    .raddr_ok (dcache_raddr_ok    ),
+    .rdata_ok (dcache_rdata_ok    ),
+    .rburst   (dcache_rburst_ok   ),
+    .raddr    (dcache_read_addr   ),
+    .sdata    (dcache_read_data   )
 );
 
 dcache_to_axi #(1'b0) dcache_to_axi_0 (
-    .clk    (aclk   ),
+    .clk    (cpu_clk   ),
     .rstn   (aresetn   ),
     
     .en         (dcache_en         ),
     .wen        (dcache_wen        ),
-    .addr       (dcache_addr       ),
+    .write_addr (dcache_write_addr ),
     .write_data (dcache_write_data ),
+    .read_addr  (dcache_read_addr  ),
     .read_data  (dcache_read_data  ),
-    .addr_ok    (dcache_addr_ok    ),
-    .data_ok    (dcache_data_ok    ),
-    .burst_ok   (dcache_burst_ok   ),
+    .waddr_ok   (dcache_waddr_ok   ),
+    .wdata_ok   (dcache_wdata_ok   ),
+    .wburst_ok  (dcache_wburst_ok  ),
+    .raddr_ok   (dcache_raddr_ok   ),
+    .rdata_ok   (dcache_rdata_ok   ),
+    .rburst_ok  (dcache_rburst_ok  ),
     
     .arid       (d_arid   ),
     .araddr     (d_araddr ),
@@ -376,8 +360,8 @@ dcache_to_axi #(1'b0) dcache_to_axi_0 (
 );
 
 axi_crossbar_2x1 u_axi_crossbar_2x1(
-    .aclk       (aclk   ),
-    .aresetn    (aresetn),
+    .aclk       (cpu_clk   ),
+    .aresetn    (aresetn   ),
     
     .s_axi_awid     ({i_awid,    d_awid    }),
     .s_axi_awaddr   ({i_awaddr,  d_awaddr  }),
@@ -387,7 +371,7 @@ axi_crossbar_2x1 u_axi_crossbar_2x1(
     .s_axi_awlock   ({i_awlock,  d_awlock  }),
     .s_axi_awcache  ({i_awcache, d_awcache }),
     .s_axi_awprot   ({i_awprot,  d_awprot  }),
-    .s_axi_awqos    (4'd0                   ),
+    .s_axi_awqos    (8'd0                   ),
     .s_axi_awvalid  ({i_awvalid, d_awvalid }),
     .s_axi_awready  ({i_awready, d_awready }),
     .s_axi_wid      ({i_wid,     d_wid     }),
@@ -408,7 +392,7 @@ axi_crossbar_2x1 u_axi_crossbar_2x1(
     .s_axi_arlock   ({i_arlock,  d_arlock  }),
     .s_axi_arcache  ({i_arcache, d_arcache }),
     .s_axi_arprot   ({i_arprot,  d_arprot  }),
-    .s_axi_arqos    (4'd0                   ),
+    .s_axi_arqos    (8'd0                   ),
     .s_axi_arvalid  ({i_arvalid, d_arvalid }),
     .s_axi_arready  ({i_arready, d_arready }),
     .s_axi_rid      ({i_rid,     d_rid     }),
