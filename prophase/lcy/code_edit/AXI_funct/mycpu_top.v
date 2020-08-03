@@ -186,7 +186,8 @@ reg pause,pause1,pause2,pause3,pause4,pause5,pause6,pause7;//暂停信号[寄存
 reg pause1_1,pause2_1,pause3_1,pause4_1,pause5_1,pause6_1,pause7_1;//暂停信号的缓冲[寄存器]
 reg stall;
 //有效位
-reg va,va1,va2,va3,va4,va5,va6,va7;//有效位
+wire va1;
+reg va,va2,va3,va4,va5,va6,va7;//有效位
 reg r_va,r_va1,r_va2,r_va3;
 
 reg reins1,reins2b,reins2,r_reins2;//保留指令
@@ -1588,6 +1589,19 @@ assign inscode1 = InsConvert_inscode;
 
 ////////PART TWO////////////////
 //生成其它乱七八糟的控制码
+reg va1_curr,va1_next;
+always @(posedge clk)
+    va1_curr <= va1_next;
+always @(*)
+begin
+    if(~resetn) va1_next=0;
+    else if(pause1) va1_next=va1_curr;
+    else if(jump) va1_next=0;
+    else if (back||exc) va1_next=0;
+    else va1_next=r_va; 
+end
+assign va1 = va1_next;
+
 always@(*)//需用到rs,rt,addr   rd,shamt
 begin    
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
@@ -1596,11 +1610,11 @@ begin
      
      if(pause1_1) ir1=ir1; else ir1=inst_sram_rdata;
      
-     if(~resetn) va1=0;
+    /* if(~resetn) va1=0;
     else if(pause1) va1=va1;
     else if(jump) va1=0;
     else if (back||exc) va1=0;
-    else va1=r_va;   
+    else va1=r_va;   */
 
     //保留指令部分
     if(~resetn) reins1=0;
