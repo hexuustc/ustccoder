@@ -26,7 +26,7 @@ module CP0//给定指令默认为分支延迟槽的形式，即分支后一条�
     input [4:0] cp0_num,
     input [2:0] sel,
     input [4:0] cp0_ra,
-    input clk,rst,of,va2,va3,reins,pause2;
+    input clk,rst,of,va2,va3,reins,pause2,
     output reg [1:0] exc,
     output reg back,
     output reg [31:0] BadVAddr,Count,Status,Cause,EPC,
@@ -59,13 +59,16 @@ begin
     Cause[30:16]<=0;//IP暂不知对应关系
     Cause[7]<=0;
     Cause[1:0]<=0;
-    pc1<=pc;
-    pc2<=pc1;
+    if(pause2) begin pc1<=pc1;pc2<=pc2; end
+    else
+    begin
+        pc1<=pc;
+        pc2<=pc1;
+    end
     Cause[15:10]<=ext_int;
-
     if(rst) reins_check<=0;
+    else if(exc||EXL) reins_check<=0;
     else if(reins) reins_check<=1;
-
     if(rst) begin
                 Status[1]<=0;
                 Status[0]<=0;//为什么复位值为0，屏蔽中断
@@ -84,7 +87,7 @@ begin
         exc<=exc;
         Cause[30]<=Cause[30];
         Cause[6:2]<=Cause[6:2]; 
-    end        
+    end
     else if(va2&&(inscode2==55))//返回指令
         begin
             if(pause2) Status[1]<=Status[1];
@@ -146,6 +149,8 @@ begin
                         else begin Cause[31]<=0;EPC<=pc-8; exc<=1;end//注意pc可改变了；是否真有效，两个跳转？
                         Cause[30]<=0;//不知何时为1.。。。。。。。。。。。。
                         Cause[6:2]<=4;
+                        if(pause2) reins_check<=reins_check;
+                        else reins_check<=0;
                 end
     else if(va2&&((((inscode2==49)||(inscode2==50)||(inscode2==53))&&(y[0]==1))||(((inscode2==51)||(inscode2==54))&&(y[1:0]!=0)))&&~EXL) //地址错例外
         begin
