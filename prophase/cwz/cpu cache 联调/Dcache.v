@@ -38,14 +38,18 @@ module Dcache
     output miss,                 //È±Ê§ï¿½Åºï¿½            //stallÎª1Ê±ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë®ï¿½ï¿½
     output reg ok,               //ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ok=1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    output reg wen,              //Ð´Ê¹ï¿½Ü£ï¿½Ð´ï¿½ï¿½Ê±ï¿½ï¿½Ò»Ö±Îª1
-    output reg sen,              //Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Ê±ï¿½ï¿½Îª1
-    input addr_ok,               
-    input data_ok,
-    input burst,
-    output reg [31:0] wdata,    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    output [31:0] addr,         //ï¿½ï¿½ï¿½ï¿½Ð´ï¿½Äµï¿½Ö·
-    input [31:0] sdata,          //ï¿½ï¿½ï¿½ï¿½ï¿½ß¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    output reg wen,              //Ð´Ê¹ÄÜ£¬Ð´Ê±Îª1
+    output reg sen,              //¶ÁÊ¹ÄÜ£¬¶ÁÊ±Îª1
+    input waddr_ok,               
+    input wdata_ok,
+    input wburst,
+    output reg [31:0] wdata,    //Ð´Êý¾Ý
+    output [31:0] waddr,         //Ð´µØÖ·  //Ð´Îª´Ó0¿ªÊ¼Ð´16¸ö
+    input raddr_ok,               
+    input rdata_ok,
+    input rburst,
+    output [31:0] raddr,         //¶ÁµØÖ·
+    input [31:0] sdata,          //¶ÁÊý¾Ý  //¶ÁÎª´Ó¶ÁµØÖ·¿ªÊ¼Ñ­»·¶Á16¸ö
     //debug
     output [31:0] adn,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,b0,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,
     output [2:0] s1,ns1,
@@ -83,7 +87,6 @@ wire [31:0] addr0,addr1;
 reg we;
 wire [3:0] mz;
 reg  [1:0] lux,mlux;
-reg  [3:0] count;
 reg  [2:0] s,ns;
 reg  [5:0] ms,nms;
 reg  firsth;
@@ -222,7 +225,8 @@ end
 
 assign addr0    = insaddr1;
 assign addr1    = {insaddr1[31:6],6'b0};
-assign addr     = wen?addr1:addr0;
+assign raddr    = addr0;
+assign waddr    = addr1;
 
 always @ *
 begin
@@ -246,9 +250,6 @@ case(s)
    3'b000:if(firsth)   ns=3'b01;
          else         ns=3'b00;
    3'b001:if(req&(suoyin!=suoyin1))  ns=3'b100; 
-         else if(miss&req&~j&deng&(ms!=0))    ns=3'b11;
-         else if(miss&req&~j&~deng&(ms==0))     ns=3'b00;
-         else if(miss&req&~j&~deng&(ms!=0))     ns=3'b101; 
          else         ns=3'b10;
    3'b011:if(j|~miss) ns=3'b10;
          else  ns=3'b11;
@@ -263,7 +264,7 @@ begin
   wel=4'b0;lruc=4'b0;
   wea[0]=0;wea[1]=0;wea[2]=0;wea[3]=0;wea[4]=0;wea[5]=0;wea[6]=0;wea[7]=0;
   wea[8]=0;wea[9]=0;wea[10]=0;wea[11]=0;wea[12]=0;wea[13]=0;wea[14]=0;wea[15]=0;
-  if(rst) begin ok=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;dw=0;we=0;wbyte1=0;mlux=0;ins=0; end
+  if(rst) begin ok=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;dw=0;we=0;wbyte1=0;mlux=0;ins=0;end
   else if(s==3'b10)
   begin
     if(req)
@@ -290,7 +291,8 @@ begin
           if(lru[3]<=lru[lux]) wel[3]=1;
           wel[lux]=1;lruc[lux]=1;
         end
-        else if(ms==0) begin ok=0;wbyte1=wbyte;insaddr1=insaddr;mlux=lux;dir[lux][suoyin]=0; end
+        else if(ms==0) begin ok=0;wbyte1=wbyte;insaddr1=insaddr;mlux=lux;
+                             end
         else begin ok=0;wbyte1=wbyte; end 
       end
       else if(~wreq&~miss&(suoyin==suoyin1)) 
@@ -314,7 +316,8 @@ begin
           if(lru[3]<=lru[lux]) wel[3]=1;
           wel[lux]=1;lruc[lux]=1;
         end
-        else if(ms==0) begin ok=0;insaddr1=insaddr;mlux=lux;dir[lux][suoyin]=0; end
+        else if(ms==0) begin ok=0;insaddr1=insaddr;mlux=lux;
+                             end
         else  ok=0;
       end
       else ok=0;
@@ -333,7 +336,7 @@ begin
     end
     else
     begin
-      ins=firstd;ok=1;
+      ins=firstd;ok=1;dir[lux][suoyin]=0;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -343,12 +346,14 @@ begin
   end
   else if(s==3'b100) begin suoyin=suoyin1;ok=0; end
   else if(s==3'b101) begin ok=0;
-    if(ms==0) begin insaddr1=insaddr;mlux=lux;dir[lux][suoyin]=0;end
+    if(ms==0) begin insaddr1=insaddr;mlux=lux;
+                    end
     end
   else ok=0;
 end
 
-//È±Ê§Ì¬
+//È±Ê§Ì¬ read
+reg [4:0] ws,nws;
 
 always @ (posedge clk or posedge rst)
 if(rst) ms<=0;
@@ -357,16 +362,18 @@ else    ms<=nms;
 always @ *
 begin
   if(ms==6'b000000)
-    if(dir[mlux][suoyin]==1&&ns==2'b00)      nms=6'b100000;
-    else if(dir[mlux][suoyin]==0&&ns==2'b00) nms=6'b110000;
-    else nms=6'b0;
+    if(ns==2'b00)      nms=6'b110000;
+    else               nms=6'b0;
   else if(ms==6'b110000)
-    if(data_ok) nms=6'b010000;
-    else        nms=6'b110000;
-  else if(ms[5:4]==2'b10||(ms[5:4]==2'b01&&ms!=6'b011111))
-    if(data_ok) nms=ms+1;
+    if(rdata_ok) nms=6'b010000;
+    else         nms=6'b110000;
+  else if(ms[5:4]==2'b01&&ms!=6'b011111)
+    if(rdata_ok) nms=ms+1;
     else        nms=ms;
   else if(ms==6'b011111) nms=6'b111111;
+  else if(ms==6'b111111) 
+    if(nws==5'b0)   nms=6'b0;
+    else            nms=6'b111111;
   else nms=6'b0;
 end
 
@@ -375,23 +382,19 @@ begin
   sen=0;firsth=0;wet=4'b0;
   if(rst)
   begin
-    firsth=0;firstd=0;count=4'b0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;zd=0;zd1=0;zd3=0;
+    firsth=0;firstd=0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;zd=0;zd1=0;zd3=0;
   end
   else if(ms==6'b000000)
   begin
-    firsth=0;firstd=0;zd=0;count=0;
-  end
-  else if(ms[5:4]==2'b10)
-  begin
-    sen=1;
+    firsth=0;firstd=0;zd=0;
   end
   else if(ms==6'b110000)
   begin
-    sen=1;count=4'b0;zd=linex2+ms[3:0];
+    sen=1;zd=linex2+ms[3:0];
   end
   else if(ms[5:4]==2'b01)
   begin
-    sen=1;count=ms[3:0];zd=linex2+ms[3:0];
+    sen=1;zd=linex2+ms[3:0];
     if(ms[3:0]==4'b1111) zd1=zd;
     else                 zd1=zd+1;
     zd3=zd-1;
@@ -407,21 +410,50 @@ always @ (posedge clk or posedge rst)
 begin
   if(rst)
   begin
-    dr[0]=0;dr[1]=0;dr[2]=0;dr[3]=0;dr[4]=0;dr[5]=0;dr[6]=0;dr[7]=0;wdata=0;wen=0;
+    dr[0]=0;dr[1]=0;dr[2]=0;dr[3]=0;dr[4]=0;dr[5]=0;dr[6]=0;dr[7]=0;
     dr[8]=0;dr[9]=0;dr[10]=0;dr[11]=0;dr[12]=0;dr[13]=0;dr[14]=0;dr[15]=0;
     web[0]=0;web[1]=0;web[2]=0;web[3]=0;web[4]=0;web[5]=0;web[6]=0;web[7]=0;
     web[8]=0;web[9]=0;web[10]=0;web[11]=0;web[12]=0;web[13]=0;web[14]=0;web[15]=0;
   end
-  else if(ms[5:4]==2'b10) begin wdata=dwb[mlux][ms[3:0]];wen=1; end
-  else if(ms==6'b110000)  begin dr[zd]=sdata;web[zd]=4'b1111;wen=0; end
-  else if(ms[5:4]==2'b01) begin dr[zd1]=sdata;web[zd1]=4'b1111;wen=0;web[zd]=0; end
+  else if(ms==6'b110000)  begin dr[zd]=sdata;web[zd]=4'b1111; end
+  else if(ms[5:4]==2'b01) begin dr[zd1]=sdata;web[zd1]=4'b1111;web[zd]=0; end
   else 
   begin 
-    dr[0]=0;dr[1]=0;dr[2]=0;dr[3]=0;dr[4]=0;dr[5]=0;dr[6]=0;dr[7]=0;wdata=0;wen=0;
+    dr[0]=0;dr[1]=0;dr[2]=0;dr[3]=0;dr[4]=0;dr[5]=0;dr[6]=0;dr[7]=0;
     dr[8]=0;dr[9]=0;dr[10]=0;dr[11]=0;dr[12]=0;dr[13]=0;dr[14]=0;dr[15]=0;
     web[0]=0;web[1]=0;web[2]=0;web[3]=0;web[4]=0;web[5]=0;web[6]=0;web[7]=0;
     web[8]=0;web[9]=0;web[10]=0;web[11]=0;web[12]=0;web[13]=0;web[14]=0;web[15]=0;
   end
+end
+
+//È±Ê§Ì¬ write
+always @ (posedge clk or posedge rst)
+if(rst) ws<=0;
+else    ws<=nws;
+
+always @ *
+begin
+  if(ws==0)
+    if(dir[mlux][suoyin]==1&&ns==2'b00) nws=5'b10000;
+    else                                nws=5'b00000;
+  else if(ws[4]==1)
+    if(wdata_ok)                        nws=ws+1;
+    else                                nws=ws;
+  else                                  nws=0;
+end
+
+always @ *
+begin
+  if(rst) 
+  begin
+    wdata=0;wen=0;
+  end
+  if(ws[4]==1)
+  begin
+    wdata=dwb [mlux] [ws[3:0]];
+    wen=1;
+  end
+  else wen=0;
 end
 
 tag0 T0 (.addra(suoyin2),
