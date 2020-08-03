@@ -46,15 +46,15 @@ module top
     output        led
 );
 
-wire cpu_clk, sys_clk;
+wire cpu_clk, ram_clk;
 
     //ar
 wire [3 :0] cpu_arid;
 wire [31:0] cpu_araddr;
-wire [7 :0] cpu_arlen;
+wire [3 :0] cpu_arlen;
 wire [2 :0] cpu_arsize;
 wire [1 :0] cpu_arburst;
-wire        cpu_arlock;
+wire [1 :0] cpu_arlock;
 wire [3 :0] cpu_arcache;
 wire [2 :0] cpu_arprot;
 wire        cpu_arvalid;
@@ -69,10 +69,10 @@ wire         cpu_rready;
     //aw
 wire [3 :0] cpu_awid;
 wire [31:0] cpu_awaddr;
-wire [7 :0] cpu_awlen;
+wire [3 :0] cpu_awlen;
 wire [2 :0] cpu_awsize;
 wire [1 :0] cpu_awburst;
-wire        cpu_awlock;
+wire [1 :0] cpu_awlock;
 wire [3 :0] cpu_awcache;
 wire [2 :0] cpu_awprot;
 wire        cpu_awvalid;
@@ -91,51 +91,51 @@ wire         cpu_bvalid;
 wire         cpu_bready;
 
     //ar
-wire [3 :0] sys_arid;
-wire [31:0] sys_araddr;
-wire [7 :0] sys_arlen;
-wire [2 :0] sys_arsize;
-wire [1 :0] sys_arburst;
-wire        sys_arlock;
-wire [3 :0] sys_arcache;
-wire [2 :0] sys_arprot;
-wire        sys_arvalid;
-wire        sys_arready;
+wire [3 :0] ram_arid;
+wire [31:0] ram_araddr;
+wire [3 :0] ram_arlen;
+wire [2 :0] ram_arsize;
+wire [1 :0] ram_arburst;
+wire [1 :0] ram_arlock;
+wire [3 :0] ram_arcache;
+wire [2 :0] ram_arprot;
+wire        ram_arvalid;
+wire        ram_arready;
     //r
-wire  [3 :0] sys_rid;
-wire  [31:0] sys_rdata;
-wire  [1 :0] sys_rresp;
-wire         sys_rlast;
-wire         sys_rvalid;
-wire         sys_rready;
+wire  [3 :0] ram_rid;
+wire  [31:0] ram_rdata;
+wire  [1 :0] ram_rresp;
+wire         ram_rlast;
+wire         ram_rvalid;
+wire         ram_rready;
     //aw
-wire [3 :0] sys_awid;
-wire [31:0] sys_awaddr;
-wire [7 :0] sys_awlen;
-wire [2 :0] sys_awsize;
-wire [1 :0] sys_awburst;
-wire        sys_awlock;
-wire [3 :0] sys_awcache;
-wire [2 :0] sys_awprot;
-wire        sys_awvalid;
-wire        sys_awready;
+wire [3 :0] ram_awid;
+wire [31:0] ram_awaddr;
+wire [3 :0] ram_awlen;
+wire [2 :0] ram_awsize;
+wire [1 :0] ram_awburst;
+wire [1 :0] ram_awlock;
+wire [3 :0] ram_awcache;
+wire [2 :0] ram_awprot;
+wire        ram_awvalid;
+wire        ram_awready;
     //w
-wire [3 :0] sys_wid;
-wire [31:0] sys_wdata;
-wire [3 :0] sys_wstrb;
-wire        sys_wlast;
-wire        sys_wvalid;
-wire        sys_wready;
+wire [3 :0] ram_wid;
+wire [31:0] ram_wdata;
+wire [3 :0] ram_wstrb;
+wire        ram_wlast;
+wire        ram_wvalid;
+wire        ram_wready;
     //b
-wire  [3 :0] sys_bid;
-wire  [1 :0] sys_bresp;
-wire         sys_bvalid;
-wire         sys_bready;
+wire  [3 :0] ram_bid;
+wire  [1 :0] ram_bresp;
+wire         ram_bvalid;
+wire         ram_bready;
 
 //cpu inst
-wire cpu_i_req, cpu_i_wreq;
-wire [31:0] cpu_i_write_data, cpu_i_addr, cpu_i_read_data;
-wire [3:0] cpu_i_wbyte;
+wire cpu_i_req;
+wire [31:0] cpu_i_addr;
+wire [31:0] cpu_i_read_data;
 wire cpu_i_miss;
 
 //icache
@@ -147,10 +147,10 @@ wire icache_burst_ok, icache_addr_ok, icache_data_ok;
 //ar
 wire [3 :0] i_arid;
 wire [31:0] i_araddr;
-wire [7 :0] i_arlen;
+wire [3 :0] i_arlen;
 wire [2 :0] i_arsize;
 wire [1 :0] i_arburst;
-wire        i_arlock;
+wire [1 :0] i_arlock;
 wire [3 :0] i_arcache;
 wire [2 :0] i_arprot;
 wire        i_arvalid;
@@ -165,10 +165,10 @@ wire        i_rready;
 //aw
 wire [3 :0] i_awid;
 wire [31:0] i_awaddr;
-wire [7 :0] i_awlen;
+wire [3 :0] i_awlen;
 wire [2 :0] i_awsize;
 wire [1 :0] i_awburst;
-wire        i_awlock;
+wire [1 :0] i_awlock;
 wire [3 :0] i_awcache;
 wire [2 :0] i_awprot;
 wire        i_awvalid;
@@ -187,22 +187,26 @@ wire        i_bvalid;
 wire        i_bready;
 //cpu data
 wire cpu_d_req, cpu_d_wreq;
-wire [31:0] cpu_d_write_data, cpu_d_addr, cpu_d_read_data;
+wire [31:0] cpu_d_write_data;
+wire [31:0] cpu_d_addr;
+wire [31:0] cpu_d_read_data;
 wire [3:0] cpu_d_wbyte;
 wire cpu_d_miss;
 //dcache
 wire dcache_en, dcache_wen;
 wire [31:0] dcache_read_data;
 wire [31:0] dcache_write_data;
-wire [31:0] dcache_addr;
-wire dcache_burst_ok, dcache_addr_ok, dcache_data_ok;
+wire [31:0] dcache_read_addr;
+wire [31:0] dcache_write_addr;
+wire dcache_rburst_ok, dcache_raddr_ok, dcache_rdata_ok;
+wire dcache_wburst_ok, dcache_waddr_ok, dcache_wdata_ok;
 //ar
 wire [3 :0] d_arid;
 wire [31:0] d_araddr;
-wire [7 :0] d_arlen;
+wire [3 :0] d_arlen;
 wire [2 :0] d_arsize;
 wire [1 :0] d_arburst;
-wire        d_arlock;
+wire [1 :0] d_arlock;
 wire [3 :0] d_arcache;
 wire [2 :0] d_arprot;
 wire        d_arvalid;
@@ -217,10 +221,10 @@ wire        d_rready;
 //aw
 wire [3 :0] d_awid;
 wire [31:0] d_awaddr;
-wire [7 :0] d_awlen;
+wire [3 :0] d_awlen;
 wire [2 :0] d_awsize;
 wire [1 :0] d_awburst;
-wire        d_awlock;
+wire [1 :0] d_awlock;
 wire [3 :0] d_awcache;
 wire [2 :0] d_awprot;
 wire        d_awvalid;
@@ -241,19 +245,16 @@ wire        d_bready;
 clk_wiz_0 clk_0(
     .clk_in1    (aclk     ),
     .cpu_clk    (cpu_clk  ),
-    .sys_clk    (sys_clk  )
+    .ram_clk    (ram_clk  )
 );
 
 cpu_pipeline cpu_0(
     .clk        (cpu_clk  ),
     .rst        (~aresetn  ),
     
-    .i_write_data (cpu_i_write_data ),
     .i_addr       (cpu_i_addr       ),
     .i_read_data  (cpu_i_read_data  ),
     .i_req        (cpu_i_req        ),
-    .i_wreq       (cpu_i_wreq       ),
-    .i_wbyte      (cpu_i_wbyte      ),
     .i_ok         (cpu_i_ok         ),
     
     .d_write_data (cpu_d_write_data ),
@@ -272,32 +273,25 @@ Icache icache(
     .rst    (~aresetn ),
     
     .insaddr (cpu_i_addr        ),
-    .din     (cpu_i_write_data  ),
     .ins     (cpu_i_read_data   ),
     .req     (cpu_i_req         ),
-    .wreq    (cpu_i_wreq        ),
-    .wbyte   (cpu_i_wbyte       ),
     .miss    (cpu_i_miss        ),
     .ok      (cpu_i_ok          ),
     
-    .wen     (icache_wen        ),
     .sen     (icache_en         ),
     .addr_ok (icache_addr_ok    ),
     .data_ok (icache_data_ok    ),
     .burst   (icache_burst_ok   ),
-    .wdata   (icache_write_data ),
     .addr    (icache_addr       ),
     .sdata   (icache_read_data  )
 );
 
-cache_to_axi #(1'b1) icache_to_axi (
+icache_to_axi #(1'b1) icache_to_axi_0 (
     .clk    (cpu_clk   ),
     .rstn   (aresetn),
     
     .en         (icache_en         ),
-    .wen        (icache_wen        ),
     .addr       (icache_addr       ),
-    .write_data (icache_write_data ),
     .read_data  (icache_read_data  ),
     .addr_ok    (icache_addr_ok    ),
     .data_ok    (icache_data_ok    ),
@@ -358,28 +352,36 @@ Dcache dcache(
     .miss    (cpu_d_miss        ),
     .ok      (cpu_d_ok          ),
     
-    .wen     (dcache_wen        ),
-    .sen     (dcache_en         ),
-    .addr_ok (dcache_addr_ok    ),
-    .data_ok (dcache_data_ok    ),
-    .burst   (dcache_burst_ok   ),
-    .wdata   (dcache_write_data ),
-    .addr    (dcache_addr       ),
-    .sdata   (dcache_read_data  )
+    .wen      (dcache_wen         ),
+    .sen      (dcache_en          ),
+    .waddr_ok (dcache_waddr_ok    ),
+    .wdata_ok (dcache_wdata_ok    ),
+    .wburst   (dcache_wburst_ok   ),
+    .wdata    (dcache_write_data  ),
+    .waddr    (dcache_write_addr  ),
+    .raddr_ok (dcache_raddr_ok    ),
+    .rdata_ok (dcache_rdata_ok    ),
+    .rburst   (dcache_rburst_ok   ),
+    .raddr    (dcache_read_addr   ),
+    .sdata    (dcache_read_data   )
 );
 
-cache_to_axi #(1'b0) dcache_to_axi (
+dcache_to_axi #(1'b0) dcache_to_axi_0 (
     .clk    (cpu_clk   ),
     .rstn   (aresetn   ),
     
     .en         (dcache_en         ),
     .wen        (dcache_wen        ),
-    .addr       (dcache_addr       ),
+    .write_addr (dcache_write_addr ),
     .write_data (dcache_write_data ),
+    .read_addr  (dcache_read_addr  ),
     .read_data  (dcache_read_data  ),
-    .addr_ok    (dcache_addr_ok    ),
-    .data_ok    (dcache_data_ok    ),
-    .burst_ok   (dcache_burst_ok   ),
+    .waddr_ok   (dcache_waddr_ok   ),
+    .wdata_ok   (dcache_wdata_ok   ),
+    .wburst_ok  (dcache_wburst_ok  ),
+    .raddr_ok   (dcache_raddr_ok   ),
+    .rdata_ok   (dcache_rdata_ok   ),
+    .rburst_ok  (dcache_rburst_ok  ),
     
     .arid       (d_arid   ),
     .araddr     (d_araddr ),
@@ -438,6 +440,7 @@ axi_crossbar_2x1 u_axi_crossbar_2x1(
     .s_axi_awqos    (8'd0                   ),
     .s_axi_awvalid  ({i_awvalid, d_awvalid }),
     .s_axi_awready  ({i_awready, d_awready }),
+    .s_axi_wid      ({i_wid,     d_wid     }),
     .s_axi_wdata    ({i_wdata,   d_wdata   }),
     .s_axi_wstrb    ({i_wstrb,   d_wstrb   }),
     .s_axi_wlast    ({i_wlast,   d_wlast   }),
@@ -476,6 +479,7 @@ axi_crossbar_2x1 u_axi_crossbar_2x1(
     .m_axi_awqos    (            ),
     .m_axi_awvalid  (cpu_awvalid ),
     .m_axi_awready  (cpu_awready ),
+    .m_axi_wid      (cpu_wid     ),
     .m_axi_wdata    (cpu_wdata   ),
     .m_axi_wstrb    (cpu_wstrb   ),
     .m_axi_wlast    (cpu_wlast   ),
@@ -517,9 +521,9 @@ axi_clock_converter_0 conv_0(
     .s_axi_awcache  (cpu_awcache ),
     .s_axi_awprot   (cpu_awprot  ),
     .s_axi_awqos    (4'b0        ),
-    .s_axi_awregion (4'b0        ),
     .s_axi_awvalid  (cpu_awvalid ),
     .s_axi_awready  (cpu_awready ),
+    .s_axi_wid      (cpu_wid     ),
     .s_axi_wdata    (cpu_wdata   ),
     .s_axi_wstrb    (cpu_wstrb   ),
     .s_axi_wlast    (cpu_wlast   ),
@@ -538,7 +542,6 @@ axi_clock_converter_0 conv_0(
     .s_axi_arcache  (cpu_arcache ),
     .s_axi_arprot   (cpu_arprot  ),
     .s_axi_arqos    (4'b0        ),
-    .s_axi_arregion (4'b0        ),
     .s_axi_arvalid  (cpu_arvalid ),
     .s_axi_arready  (cpu_arready ),
     .s_axi_rid      (cpu_rid     ),
@@ -548,81 +551,95 @@ axi_clock_converter_0 conv_0(
     .s_axi_rvalid   (cpu_rvalid  ),
     .s_axi_rready   (cpu_rready  ),
     
-    .m_axi_aclk     (sys_clk     ),
+    .m_axi_aclk     (ram_clk     ),
     .m_axi_aresetn  (aresetn     ),
     
-    .m_axi_awid     (sys_awid    ),
-    .m_axi_awaddr   (sys_awaddr  ),
-    .m_axi_awlen    (sys_awlen   ),
-    .m_axi_awsize   (sys_awsize  ),
-    .m_axi_awburst  (sys_awburst ),
-    .m_axi_awlock   (sys_awlock  ),
-    .m_axi_awcache  (sys_awcache ),
-    .m_axi_awprot   (sys_awprot  ),
+    .m_axi_awid     (ram_awid    ),
+    .m_axi_awaddr   (ram_awaddr  ),
+    .m_axi_awlen    (ram_awlen   ),
+    .m_axi_awsize   (ram_awsize  ),
+    .m_axi_awburst  (ram_awburst ),
+    .m_axi_awlock   (ram_awlock  ),
+    .m_axi_awcache  (ram_awcache ),
+    .m_axi_awprot   (ram_awprot  ),
     .m_axi_awqos    (            ),
-    .m_axi_awvalid  (sys_awvalid ),
-    .m_axi_awready  (sys_awready ),
-    .m_axi_wdata    (sys_wdata   ),
-    .m_axi_wstrb    (sys_wstrb   ),
-    .m_axi_wlast    (sys_wlast   ),
-    .m_axi_wvalid   (sys_wvalid  ),
-    .m_axi_wready   (sys_wready  ),
-    .m_axi_bid      (sys_bid     ),
-    .m_axi_bresp    (sys_bresp   ),
-    .m_axi_bvalid   (sys_bvalid  ),
-    .m_axi_bready   (sys_bready  ),
-    .m_axi_arid     (sys_arid    ),
-    .m_axi_araddr   (sys_araddr  ),
-    .m_axi_arlen    (sys_arlen   ),
-    .m_axi_arsize   (sys_arsize  ),
-    .m_axi_arburst  (sys_arburst ),
-    .m_axi_arlock   (sys_arlock  ),
-    .m_axi_arcache  (sys_arcache ),
-    .m_axi_arprot   (sys_arprot  ),
+    .m_axi_awvalid  (ram_awvalid ),
+    .m_axi_awready  (ram_awready ),
+    .m_axi_wid      (ram_wid     ),
+    .m_axi_wdata    (ram_wdata   ),
+    .m_axi_wstrb    (ram_wstrb   ),
+    .m_axi_wlast    (ram_wlast   ),
+    .m_axi_wvalid   (ram_wvalid  ),
+    .m_axi_wready   (ram_wready  ),
+    .m_axi_bid      (ram_bid     ),
+    .m_axi_bresp    (ram_bresp   ),
+    .m_axi_bvalid   (ram_bvalid  ),
+    .m_axi_bready   (ram_bready  ),
+    .m_axi_arid     (ram_arid    ),
+    .m_axi_araddr   (ram_araddr  ),
+    .m_axi_arlen    (ram_arlen   ),
+    .m_axi_arsize   (ram_arsize  ),
+    .m_axi_arburst  (ram_arburst ),
+    .m_axi_arlock   (ram_arlock  ),
+    .m_axi_arcache  (ram_arcache ),
+    .m_axi_arprot   (ram_arprot  ),
     .m_axi_arqos    (            ),
-    .m_axi_arvalid  (sys_arvalid ),
-    .m_axi_arready  (sys_arready ),
-    .m_axi_rid      (sys_rid     ),
-    .m_axi_rdata    (sys_rdata   ),
-    .m_axi_rresp    (sys_rresp   ),
-    .m_axi_rlast    (sys_rlast   ),
-    .m_axi_rvalid   (sys_rvalid  ),
-    .m_axi_rready   (sys_rready  )
+    .m_axi_arvalid  (ram_arvalid ),
+    .m_axi_arready  (ram_arready ),
+    .m_axi_rid      (ram_rid     ),
+    .m_axi_rdata    (ram_rdata   ),
+    .m_axi_rresp    (ram_rresp   ),
+    .m_axi_rlast    (ram_rlast   ),
+    .m_axi_rvalid   (ram_rvalid  ),
+    .m_axi_rready   (ram_rready  )
 );
 
-blk_mem_gen_0 blk_0(
-    .s_aclk    (sys_clk  ),
-    .s_aresetn (aresetn  ),
-    
-    .s_axi_araddr   (sys_araddr  ),
-    .s_axi_arburst  (sys_arburst ),
-    .s_axi_arid     (sys_arid    ),
-    .s_axi_arlen    (sys_arlen   ),
-    .s_axi_arready  (sys_arready ),
-    .s_axi_arsize   (sys_arsize  ),
-    .s_axi_arvalid  (sys_arvalid ),
-    .s_axi_awaddr   (sys_awaddr  ),
-    .s_axi_awburst  (sys_awburst ),
-    .s_axi_awid     (sys_awid    ),
-    .s_axi_awlen    (sys_awlen   ),
-    .s_axi_awready  (sys_awready ),
-    .s_axi_awsize   (sys_awsize  ),
-    .s_axi_awvalid  (sys_awvalid ),
-    .s_axi_bid      (sys_bid     ),
-    .s_axi_bready   (sys_bready  ),
-    .s_axi_bresp    (sys_bresp   ),
-    .s_axi_bvalid   (sys_bvalid  ),
-    .s_axi_rdata    (sys_rdata   ),
-    .s_axi_rid      (sys_rid     ),
-    .s_axi_rlast    (sys_rlast   ),
-    .s_axi_rready   (sys_rready  ),
-    .s_axi_rresp    (sys_rresp   ),
-    .s_axi_rvalid   (sys_rvalid  ),
-    .s_axi_wdata    (sys_wdata   ),
-    .s_axi_wlast    (sys_wlast   ),
-    .s_axi_wready   (sys_wready  ),
-    .s_axi_wstrb    (sys_wstrb   ),
-    .s_axi_wvalid   (sys_wvalid  )
+//axi ram
+axi_wrap_ram u_axi_ram
+(
+    .aclk          ( ram_clk          ),
+    .aresetn       ( aresetn       ),
+    //ar
+    .axi_arid      ( ram_arid         ),
+    .axi_araddr    ( ram_araddr       ),
+    .axi_arlen     ( {4'b0, ram_arlen}        ),
+    .axi_arsize    ( ram_arsize       ),
+    .axi_arburst   ( ram_arburst      ),
+    .axi_arlock    ( ram_arlock       ),
+    .axi_arcache   ( ram_arcache      ),
+    .axi_arprot    ( ram_arprot       ),
+    .axi_arvalid   ( ram_arvalid      ),
+    .axi_arready   ( ram_arready      ),
+    //r             
+    .axi_rid       ( ram_rid          ),
+    .axi_rdata     ( ram_rdata        ),
+    .axi_rresp     ( ram_rresp        ),
+    .axi_rlast     ( ram_rlast        ),
+    .axi_rvalid    ( ram_rvalid       ),
+    .axi_rready    ( ram_rready       ),
+    //aw           
+    .axi_awid      ( ram_awid         ),
+    .axi_awaddr    ( ram_awaddr       ),
+    .axi_awlen     ( {4'b0,ram_awlen}        ),
+    .axi_awsize    ( ram_awsize       ),
+    .axi_awburst   ( ram_awburst      ),
+    .axi_awlock    ( ram_awlock       ),
+    .axi_awcache   ( ram_awcache      ),
+    .axi_awprot    ( ram_awprot       ),
+    .axi_awvalid   ( ram_awvalid      ),
+    .axi_awready   ( ram_awready      ),
+    //w          
+    .axi_wid       ( ram_wid          ),
+    .axi_wdata     ( ram_wdata        ),
+    .axi_wstrb     ( ram_wstrb        ),
+    .axi_wlast     ( ram_wlast        ),
+    .axi_wvalid    ( ram_wvalid       ),
+    .axi_wready    ( ram_wready       ),
+    //b              ram
+    .axi_bid       ( ram_bid          ),
+    .axi_bresp     ( ram_bresp        ),
+    .axi_bvalid    ( ram_bvalid       ),
+    .axi_bready    ( ram_bready       )
 );
 
 endmodule

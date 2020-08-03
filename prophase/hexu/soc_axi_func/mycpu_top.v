@@ -470,6 +470,7 @@ end
 always @(posedge clk)
 begin
     if(~resetn) reins2b<=0;
+    else if(exc||Status[1]) reins2b<=0;
     else if(pause2) reins2b<=reins2b;
     else reins2b<=reins1;
 end
@@ -478,6 +479,7 @@ always@(*)
 begin
     if(~resetn) reins2=0;
     else if(~va2) reins2=0;
+    else if(exc||Status[1]) reins2<=0;
     else if(stall||pause2) reins2=r_reins2;
     else reins2=reins2b;
 end
@@ -1601,6 +1603,7 @@ begin
 
     //保留指令部分
     if(~resetn) reins1=0;
+    else if(exc||Status[1]) reins1=0;
     else if(va1 && InsConvert_inscode==0) reins1=1;
     else reins1=0;
     
