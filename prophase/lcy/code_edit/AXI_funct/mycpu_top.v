@@ -1426,13 +1426,27 @@ begin
 end
 assign va1 = va1_next;
 
+reg [31:0] ir1_curr,ir1_next;
+always @(posedge clk)
+begin
+    ir1_curr <= ir1_next;
+end
+always @(*)
+begin
+    if(pause1_1) ir1_next=ir1_curr; 
+    else ir1_next=inst_sram_rdata;
+
+    ir1 = ir1_next;
+end
+
+
 always@(*)//需用到rs,rt,addr   rd,shamt
 begin    
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
     if(delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
     else pause1=0;
      
-     if(pause1_1) ir1=ir1; else ir1=inst_sram_rdata;
+     //if(pause1_1) ir1=ir1; else ir1=inst_sram_rdata;
      
     /* if(~resetn) va1=0;
     else if(pause1) va1=va1;
