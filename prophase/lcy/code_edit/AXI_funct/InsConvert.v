@@ -79,6 +79,7 @@ begin
         else if(InsConvert_rt==5'b00000) InsConvert_inscode=34;//BLTZ
         else if(InsConvert_rt==5'b10001) InsConvert_inscode=36;//BGEZAL
         else if(InsConvert_rt==5'b10000) InsConvert_inscode=35;//BLTZAL
+        else InsConvert_inscode = 0;
     end
     else if(InsConvert_op==6'b000111) InsConvert_inscode=32;//BGTZ
     else if(InsConvert_op==6'b000110) InsConvert_inscode=33;//BLEZ
@@ -97,6 +98,7 @@ begin
         if((InsConvert_rs==5'b10000)&&(InsConvert_funct==6'b011000)) InsConvert_inscode=55;//ERET
         else if(InsConvert_rs==5'b00000) InsConvert_inscode=56;//MFC
         else if(InsConvert_rs==5'b00100) InsConvert_inscode=57;//MTC
+        else InsConvert_inscode = 0;
     end
     else if(InsConvert_va1) InsConvert_inscode=0;
     else InsConvert_inscode=0;
