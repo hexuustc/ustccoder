@@ -168,7 +168,7 @@ assign deng=(insaddr[31:2+line_len]==insaddr1[31:2+line_len])?1:0;
 always @ *
 begin
   if(rst) lux=2'b00;
-  else if(s==3'b100||s==3'b010)
+  else
   begin
   if(mz[0]) lux=2'b00;
   else if(mz[1]) lux=2'b01;
