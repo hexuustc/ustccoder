@@ -66,7 +66,7 @@ wire [suoyin_len - 1:0]    suoyin1,suoyin2;
 wire [tag_len - 1   :0]    tag   [3:0] ;
 wire [1:0]                 lru   [3:0] ;
 reg  [15:0]               v     [3:0] ;
-reg  [15:0]               dir     [3:0] ;
+reg  [15:0]               dir   [3:0] ;
 reg  [3:0]                 wea   [15:0];
 reg  [3:0]                 web   [15:0];
 reg  [3:0]                 wet         ;
@@ -389,7 +389,7 @@ begin
     else        nms=ms;
   else if(ms==6'b011111) nms=6'b111111;
   else if(ms==6'b111111) 
-    if(nws==5'b0)   nms=6'b0;
+    if(nws==5'b0)   nms=6'b001111;
     else            nms=6'b111111;
   else nms=6'b0;
 end
