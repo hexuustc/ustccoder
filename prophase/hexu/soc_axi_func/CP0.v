@@ -251,18 +251,15 @@ begin
 end
 
 always@(posedge clk)
-    if(clk) clk2<=~clk2;
+    clk2<=~clk2;
 
-always@(posedge clk2,posedge rst)
+always@(posedge clk,posedge rst)
     if(rst) Count<=0;
-    else if(va3&&(inscode3==57))
-        begin
-            if(sel==0)
-                begin
-                    if(cp0_num==9) Count<=cp0_data;
-                end
-        end
-    else Count<=Count+1;
+    else 
+    if(clk2)
+        if(va3 && (inscode3 == 57) && (sel == 0) && (cp0_num == 9))
+            Count<=cp0_data;
+        else Count<=Count+1;
 
 //读口，输出CP0中某个寄存器的值
 assign cp0_load = cp0[cp0_ra];
