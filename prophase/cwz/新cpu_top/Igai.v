@@ -245,7 +245,7 @@ begin
       begin
         if(j)
         begin
-          ins=(ms==0||ms==6'b001111)?cdat[lux][linex]:dr[linex];ok=1;
+          ins=(ms==0)?cdat[lux][linex]:dr[linex];ok=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
@@ -334,8 +334,14 @@ begin
     web[0]<=0;web[1]<=0;web[2]<=0;web[3]<=0;web[4]<=0;web[5]<=0;web[6]<=0;web[7]<=0;
     web[8]<=0;web[9]<=0;web[10]<=0;web[11]<=0;web[12]<=0;web[13]<=0;web[14]<=0;web[15]<=0;
   end
-  else if(ms==6'b110000)  begin dr[zd]<=sdata;web[zd]<=4'b1111; end
-  else if(ms[5:4]==2'b01) begin dr[zd1]<=sdata;web[zd1]<=4'b1111;web[zd]<=0; end
+  else if(ms==6'b110000)  
+  begin 
+    dr[zd]<=sdata;web[zd]<=4'b1111; 
+  end
+  else if(ms[5:4]==2'b01) 
+  begin 
+    dr[zd1]<=sdata;web[zd1]<=4'b1111;web[zd]<=0; 
+  end
   else if(ms==0)
   begin 
     dr[0]<=0;dr[1]<=0;dr[2]<=0;dr[3]<=0;dr[4]<=0;dr[5]<=0;dr[6]<=0;dr[7]<=0;
