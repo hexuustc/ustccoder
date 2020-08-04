@@ -559,7 +559,7 @@ begin
     else va2=r_va1;
 end
 
-/*
+
 reg va3_curr,va3_next;
 always @(posedge clk)
     va3_curr <= va3_next;
@@ -575,7 +575,8 @@ begin
     va3 = va3_next;
 end
 //assign va3 = va3_next;
-*/
+
+/*
 always@(*)
 begin
     if(~resetn) va3=0;
@@ -585,7 +586,7 @@ begin
     else if(exc) va3=0;
     else va3=r_va2;
 end
-
+*/
 
 reg va4_curr,va4_next;
 always @(posedge clk)
