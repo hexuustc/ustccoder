@@ -201,13 +201,12 @@ assign deng=(insaddr[31:2+line_len]==insaddr1[31:2+line_len])?1:0;
 always @ *
 begin
   if(rst) lux=2'b00;
-  else
+  else if(s==3'b100||s==3'b010)
   begin
   if(mz[0]) lux=2'b00;
   else if(mz[1]) lux=2'b01;
   else if(mz[2]) lux=2'b10;
   else if(mz[3]) lux=2'b11;
-  else if((ms[3:0]==4'b1111)&&deng) lux=mlux;
   else
   begin
     if(~v[0][suoyin]) lux=2'b00;
@@ -390,7 +389,7 @@ begin
     else        nms=ms;
   else if(ms==6'b011111) nms=6'b111111;
   else if(ms==6'b111111) 
-    if(nws==5'b0)   nms=6'b001111;
+    if(nws==5'b0)   nms=6'b0;
     else            nms=6'b111111;
   else nms=6'b0;
 end
