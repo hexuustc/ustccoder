@@ -391,6 +391,7 @@ begin
   else if(ms==6'b111111) 
     if(nws==5'b0)   nms=6'b001111;
     else            nms=6'b111111;
+  else if(ms==6'b001111) nms=6'b101111;
   else nms=6'b0;
 end
 
@@ -421,7 +422,7 @@ begin
   begin
     wet[mlux]=1;
   end
-  else if(ms==6'b001111) v[mlux][suoyin2]=1;
+  else if(ms==6'b101111) v[mlux][suoyin2]=1;
 end
 
 always @ (posedge clk or posedge rst)
