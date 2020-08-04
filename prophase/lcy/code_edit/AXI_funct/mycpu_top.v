@@ -1558,13 +1558,33 @@ begin
     else if((inscode2==35)||(inscode2==36)||(inscode2==38)) begin aimaddr=31; a=a_1;b=b_1;m=0; end
     else if((inscode2==40)||(inscode2==41)||(inscode2==42)) begin aimaddr=rd02;a=a_1;b=b_1;m=0; end
     else if(inscode2==56) begin aimaddr=rt2;a=a_1;b=b_1;m=0; end
-    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; cp0_num=rd02; end
-//    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; end
+//    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; cp0_num=rd02; end
+    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; end
     else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; end
     else begin aimaddr=0; a=a_1;b=b_1;m=0; end
     cp0_data=y;
 end
+
 /*
+reg [4:0] cp0_num_past;
+reg cp0_num_lock_past;
+wire cp0_num_lock;
+always @(posedge clk)
+begin
+    cp0_num_past <= cp0_num;
+    cp0_num_lock_past <= cp0_num_lock;
+end
+always @(*)
+begin
+    if(cp0_num_lock_past && cp0_num_lock)
+        cp0_num = cp0_num_past;
+    else
+        cp0_num = rd02; 
+
+end
+assign cp0_num_lock = ~((va2 == 1) && (inscode2 == 57));
+*/
+
 reg [4:0] cp0_num_curr,cp0_num_next;
 always @(posedge clk)
 begin
@@ -1572,14 +1592,14 @@ begin
 end
 always @(*)
 begin
-    if((va2 == 0) && (inscode2 == 57))
+    if((va2 == 1) && (inscode2 == 57))
         cp0_num_next = rd02;
     else
         cp0_num_next = cp0_num_curr;
 
     cp0_num = cp0_num_next;
 end
-*/
+
 
 /*
 reg [4:0] sel_curr,sel_next;
