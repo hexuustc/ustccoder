@@ -55,7 +55,7 @@ module Dcache
     output [2:0] s1,ns1,
     output [1:0] luxn,
     output [5:0] ms1,nms1,
-    output [3:0] zdn,zdn1,zdn3,dfn,wetn,
+    output [3:0] zdn,zdn1,dfn,wetn,
     output [suoyin_len - 1:0] sy,sy1,sy2,
     output [tag_len - 1   :0] tag0,tag1,tag2,tag3,
     output j1,deng1,vn0,vn1,vn2,vn3
@@ -66,7 +66,7 @@ wire [suoyin_len - 1:0]    suoyin1,suoyin2;
 wire [tag_len - 1   :0]    tag   [3:0] ;
 wire [1:0]                 lru   [3:0] ;
 reg  [15:0]               v     [3:0] ;
-reg  [15:0]               dir     [3:0] ;
+reg  [15:0]               dir   [3:0] ;
 reg  [3:0]                 wea   [15:0];
 reg  [3:0]                 web   [15:0];
 reg  [3:0]                 wet         ;
@@ -95,13 +95,12 @@ reg [31:0] insaddr1;
 reg [3:0] wbyte1;
 reg [31:0] firstd;
 wire  j,deng;
-reg [3:0] zd,zd1,zd3;
+reg [3:0] zd,zd1;
 wire [3:0] df;
 
 assign dfn=df;
 assign zdn=zd;
 assign zdn1=zd1;
-assign zdn3=zd3;
 assign luxn=lux;
 assign j1=j;
 assign deng1=deng;
@@ -396,10 +395,10 @@ end
 
 always @ *
 begin
-  sen=0;firsth=0;wet=4'b0;
+  sen=0;firsth=0;wet=4'b0;zd=0;zd1=0;
   if(rst)
   begin
-    firsth=0;firstd=0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;zd=0;zd1=0;zd3=0;
+    firsth=0;firstd=0;v[0]=0;v[1]=0;v[2]=0;v[3]=0;
   end
   else if(ms==6'b000000)
   begin
@@ -407,19 +406,18 @@ begin
   end
   else if(ms==6'b110000)
   begin
-    sen=1;zd=linex2+ms[3:0];
+    sen=1;zd=linex2+ms[3:0];wet[mlux]=1;
   end
   else if(ms[5:4]==2'b01)
   begin
     sen=1;zd=linex2+ms[3:0];
     if(ms[3:0]==4'b1111) zd1=zd;
     else                 zd1=zd+1;
-    zd3=zd-1;
     if(ms[3:0]==0) begin firsth=1;firstd=dr[linex2]; end
   end
   else if(ms==6'b111111)
   begin
-    v[mlux][suoyin2]=1;wet[mlux]=1;
+    v[mlux][suoyin2]=1;
   end
 end
 
