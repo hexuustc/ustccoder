@@ -246,7 +246,7 @@ begin
       begin
         if(j)
         begin
-          ins=(ms==0)?cdat[lux][linex]:dr[linex];ok=1;
+          ins=(ms==0||ms==6'b001111)?cdat[lux][linex]:dr[linex];ok=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
@@ -294,6 +294,7 @@ begin
     if(data_ok) nms=ms+1;
     else        nms=ms;
   else if(ms==6'b011111) nms=6'b111111;
+  else if(ms==6'b111111) nms=6'b001111;
   else nms=6'b0;
 end
 
@@ -310,7 +311,7 @@ begin
   end
   else if(ms==6'b110000)
   begin
-    sen=1;zd=linex2+ms[3:0];
+    sen=1;zd=linex2+ms[3:0];wet[mlux]=1;
   end
   else if(ms[5:4]==2'b01)
   begin
@@ -322,7 +323,7 @@ begin
   end
   else if(ms==6'b111111)
   begin
-    v[mlux][suoyin2]=1;wet[mlux]=1;
+    v[mlux][suoyin2]=1;
   end
 end
 
