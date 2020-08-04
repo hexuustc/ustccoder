@@ -226,7 +226,7 @@ endcase
 always @ *
 begin
   wel=4'b0;lruc=4'b0;ok=0;
-  if(rst) begin ok=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;mlux=0;ins=0; end
+  if(rst) begin suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;mlux=0;ins=0; end
   else if(s==3'b10)
   begin
     if(req)
@@ -252,12 +252,9 @@ begin
           if(lru[3]<=lru[lux]) wel[3]=1;
           wel[lux]=1;lruc[lux]=1;
         end
-        else if(ms==0) begin ok=0;insaddr1=insaddr;mlux=lux;end
-        else  ok=0;
+        else if(ms==0) begin insaddr1=insaddr;mlux=lux;end
       end
-      else ok=0;
     end
-    else ok=0;
   end
   else if(s==3'b01)
   begin
@@ -268,11 +265,10 @@ begin
       if(lru[3]<=lru[lux]) wel[3]=1;
       wel[lux]=1;lruc[lux]=1;
   end
-  else if(s==3'b100) begin suoyin=suoyin1;ok=0; end
-  else if(s==3'b101) begin ok=0;
+  else if(s==3'b100) begin suoyin=suoyin1; end
+  else if(s==3'b101) begin 
     if(ms==0) begin insaddr1=insaddr;mlux=lux;end
     end
-  else ok=0;
 end
 
 //???

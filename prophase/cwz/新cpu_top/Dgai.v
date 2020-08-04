@@ -264,7 +264,7 @@ begin
   wel=4'b0;lruc=4'b0;ok=0;
   wea[0]=0;wea[1]=0;wea[2]=0;wea[3]=0;wea[4]=0;wea[5]=0;wea[6]=0;wea[7]=0;
   wea[8]=0;wea[9]=0;wea[10]=0;wea[11]=0;wea[12]=0;wea[13]=0;wea[14]=0;wea[15]=0;
-  if(rst) begin ok=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;dw=0;we=0;wbyte1=0;mlux=0;ins=0;
+  if(rst) begin dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;dw=0;we=0;wbyte1=0;mlux=0;ins=0;
                 dwb1[0]=0;dwb1[1]=0;dwb1[2]=0;dwb1[3]=0;dwb1[4]=0;dwb1[5]=0;dwb1[6]=0;dwb1[7]=0;
                 dwb1[8]=0;dwb1[9]=0;dwb1[10]=0;dwb1[11]=0;dwb1[12]=0;dwb1[13]=0;dwb1[14]=0;dwb1[15]=0;
                 end
@@ -294,13 +294,13 @@ begin
           if(lru[3]<=lru[lux]) wel[3]=1;
           wel[lux]=1;lruc[lux]=1;
         end
-        else if(ms==0) begin ok=0;wbyte1=wbyte;insaddr1=insaddr;mlux=lux;
+        else if(ms==0) begin wbyte1=wbyte;insaddr1=insaddr;mlux=lux;
                              dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
                              dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
                              dwb1[8]=dwb[lux][8];dwb1[9]=dwb[lux][9];dwb1[10]=dwb[lux][10];dwb1[11]=dwb[lux][11];
                              dwb1[12]=dwb[lux][12];dwb1[13]=dwb[lux][13];dwb1[14]=dwb[lux][14];dwb1[15]=dwb[lux][15];
                              end
-        else begin ok=0;wbyte1=wbyte; end 
+        else begin wbyte1=wbyte; end 
       end
       else if(~wreq&~miss&(suoyin==suoyin1)) 
       begin
@@ -323,17 +323,14 @@ begin
           if(lru[3]<=lru[lux]) wel[3]=1;
           wel[lux]=1;lruc[lux]=1;
         end
-        else if(ms==0) begin ok=0;insaddr1=insaddr;mlux=lux;
+        else if(ms==0) begin insaddr1=insaddr;mlux=lux;
                              dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
                              dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
                              dwb1[8]=dwb[lux][8];dwb1[9]=dwb[lux][9];dwb1[10]=dwb[lux][10];dwb1[11]=dwb[lux][11];
                              dwb1[12]=dwb[lux][12];dwb1[13]=dwb[lux][13];dwb1[14]=dwb[lux][14];dwb1[15]=dwb[lux][15];
                              end
-        else  ok=0;
       end
-      else ok=0;
     end
-    else ok=0;
   end
   else if(s==3'b01)
   begin
@@ -356,8 +353,8 @@ begin
       wel[lux]=1;lruc[lux]=1;
     end
   end
-  else if(s==3'b100) begin suoyin=suoyin1;ok=0; end
-  else if(s==3'b101) begin ok=0;
+  else if(s==3'b100) begin suoyin=suoyin1; end
+  else if(s==3'b101) begin 
     if(ms==0) begin insaddr1=insaddr;mlux=lux;
                     dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
                     dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
@@ -365,7 +362,6 @@ begin
                     dwb1[12]=dwb[lux][12];dwb1[13]=dwb[lux][13];dwb1[14]=dwb[lux][14];dwb1[15]=dwb[lux][15];
                     end
     end
-  else ok=0;
 end
 
 //ȱʧ̬ read
