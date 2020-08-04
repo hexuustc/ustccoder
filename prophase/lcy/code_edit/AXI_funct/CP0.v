@@ -240,6 +240,7 @@ begin
     cp0[14]=EPC;
 end
 
+
 always@(*)//返回指令
 begin
     if(pause2) back=back;//锁存器
@@ -250,6 +251,24 @@ begin
     else back=0;
 end
 
+/*
+reg back_curr,back_next;
+always @(posedge clk)
+begin
+    back_curr <= back_next;
+end
+always @(*)
+begin
+    if(pause2) back_next=back_curr;//锁存器
+    else if(inscode2==55)
+        begin
+            back_next=1;
+        end
+    else back_next=0;
+
+    back = back_next;
+end
+*/
 always@(posedge clk)
     clk2<=~clk2;
 
