@@ -538,6 +538,7 @@ begin
     else if(pause7) va7<=va7;
     else va7<=va6;
 end
+
 /*
 reg va2_curr,va2_next;
 always @(posedge clk)
@@ -548,9 +549,33 @@ begin
     else if(pause2) va2_next=va2_curr;
     else if (exc) va2_next=0;
     else va2_next=r_va1;
-end
-assign va2 = va2_next;
+
+    va2 = va2_next;
+end 
 */
+
+reg va2_past;
+reg va2_lock_past;
+wire va2_lock;
+always @(posedge clk)
+begin
+    va2_past <= va2;
+    va2_lock_past <= va2_lock;
+end
+always @(*)
+begin
+    if(va2_lock && va2_lock_past)
+        va2 = va2_past;
+    else
+    begin
+        if(~resetn) va2=0;//这就是分支延迟槽
+        else if (exc) va2=0;
+        else va2=r_va1;
+    end    
+end
+assign va2_lock = (resetn == 1) && (pause2 == 1);
+
+/*
 always@(*)
 begin
     if(~resetn) va2=0;//这就是分支延迟槽
@@ -558,7 +583,7 @@ begin
     else if (exc) va2=0;
     else va2=r_va1;
 end
-
+*/
 
 reg va3_curr,va3_next;
 always @(posedge clk)
