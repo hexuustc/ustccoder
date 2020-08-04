@@ -389,8 +389,8 @@ begin
     else        nms=ms;
   else if(ms==6'b011111) nms=6'b111111;
   else if(ms==6'b111111) 
-    if(nws==5'b0)   nms=6'b0;
-    else            nms=6'b001111;
+    if(nws==5'b0)   nms=6'b001111;
+    else            nms=6'b111111;
   else nms=6'b0;
 end
 
