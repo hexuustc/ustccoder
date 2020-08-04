@@ -176,7 +176,7 @@ begin
   else if(mz[3]) lux=2'b11;
   else
   begin
-    if(~v[0][suoyin]) lux=2'b00;
+    if(`v[0][suoyin]) lux=2'b00;
     else if(~v[1][suoyin]) lux=2'b01;
     else if(~v[2][suoyin]) lux=2'b10;
     else if(~v[3][suoyin]) lux=2'b11;
@@ -310,7 +310,7 @@ begin
   end
   else if(ms==6'b110000)
   begin
-    sen=1;zd=linex2+ms[3:0];wet[mlux]=1;
+    sen=1;zd=linex2+ms[3:0];
   end
   else if(ms[5:4]==2'b01)
   begin
@@ -322,7 +322,7 @@ begin
   end
   else if(ms==6'b111111)
   begin
-    v[mlux][suoyin2]=1;
+    v[mlux][suoyin2]=1;wet[mlux]=1;
   end
 end
 
