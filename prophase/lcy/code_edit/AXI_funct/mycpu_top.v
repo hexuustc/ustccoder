@@ -607,7 +607,7 @@ begin
     else va4=r_va3;  
 end
 */
-/*
+
 reg [31:0] aimdata2_curr,aimdata2_next;
 always @(posedge clk)
     aimdata2_curr <= aimdata2_next;
@@ -618,10 +618,11 @@ begin
     else if(inscode4==42) aimdata2_next=LO;
     else if(pause4_1) aimdata2_next=aimdata2_curr;
     else aimdata2_next=r_aimdata1;
-end
-assign aimdata2 = aimdata2_next;
-*/
 
+    aimdata2 = aimdata2_next;
+end
+
+/*
 always@(*)
 begin
     if((inscode4==47)||(inscode4==48)||(inscode4==49)||(inscode4==50)||(inscode4==51)) aimdata2=wd;
@@ -630,6 +631,7 @@ begin
     else if(pause4_1) aimdata2=aimdata2;
     else aimdata2=r_aimdata1;
 end
+*/
 
 always@(posedge clk)
 begin
