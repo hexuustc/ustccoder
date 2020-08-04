@@ -294,6 +294,7 @@ begin
     if(data_ok) nms=ms+1;
     else        nms=ms;
   else if(ms==6'b011111) nms=6'b111111;
+  else if(ms==6'b111111) nms=6'b001111;
   else nms=6'b0;
 end
 
