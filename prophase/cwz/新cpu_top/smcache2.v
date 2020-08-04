@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module smcache2
+module Dcache
 #(parameter tag_len    = 22,
   parameter suoyin_len = 4,
   parameter line_c     = 16,
@@ -28,28 +28,28 @@ module smcache2
   (
     input clk,
     input rst,
-    //锟斤拷CPU
-    input [31:0] insaddr,         //CPU锟斤拷锟绞碉拷址
-    input [31:0] din,             //CPU要写锟斤拷锟斤拷锟斤拷锟?
-    output reg [31:0] ins,       //锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷
-    input req,                   //锟斤拷锟斤拷 锟斤拷锟桔讹拷锟斤拷写锟斤拷要为1锟斤拷1锟斤拷锟斤拷锟节ｏ拷
-    input wreq,                  //写锟斤拷锟斤拷1锟斤拷锟斤拷锟节ｏ拷
-    input [3:0] wbyte,           //写锟街斤拷使锟杰ｏ拷每一位锟斤拷应1锟斤拷锟街节ｏ拷锟斤拷锟斤拷1000锟斤拷要锟斤拷din锟侥革拷8位写锟斤拷insaddr锟斤拷址锟斤拷应锟斤拷锟捷的革拷8位锟斤拷
-    output miss,                 //缺失锟脚猴拷            //stall为1时锟斤拷应锟斤拷锟斤拷锟斤拷水锟斤拷
-    output reg ok,               //锟斤拷锟斤拷写锟斤拷锟绞憋拷锟給k=1锟斤拷锟斤拷锟斤拷一锟斤拷锟斤拷锟斤拷
-    //锟斤拷锟斤拷锟斤拷
-    output reg wen,              //写使能，写时为1
-    output reg sen,              //读使能，读时为1
+    //��CPU
+    input [31:0] insaddr,         //CPU���ʵ�ַ
+    input [31:0] din,             //CPUҪд�������?
+    output reg [31:0] ins,       //����������
+    input req,                   //���� ���۶���д��ҪΪ1��1�����ڣ�
+    input wreq,                  //д����1�����ڣ�
+    input [3:0] wbyte,           //д�ֽ�ʹ�ܣ�ÿһλ��Ӧ1���ֽڣ�����1000��Ҫ��din�ĸ�8λд��insaddr��ַ��Ӧ���ݵĸ�8λ��
+    output miss,                 //ȱʧ�ź�            //stallΪ1ʱ��Ӧ������ˮ��
+    output reg ok,               //����д���ʱ��ok=1������һ������
+    //������
+    output reg wen,              //дʹ�ܣ�дʱΪ1
+    output reg sen,              //��ʹ�ܣ���ʱΪ1
     input waddr_ok,               
     input wdata_ok,
     input wburst,
-    output reg [31:0] wdata,    //写数据
-    output [31:0] waddr,         //写地址  //写为从0开始写16个
+    output reg [31:0] wdata,    //д����
+    output [31:0] waddr,         //д��ַ  //дΪ��0��ʼд16��
     input raddr_ok,               
     input rdata_ok,
     input rburst,
-    output [31:0] raddr,         //读地址
-    input [31:0] sdata,          //读数据  //读为从读地址开始循环读16个
+    output [31:0] raddr,         //����ַ
+    input [31:0] sdata,          //������  //��Ϊ�Ӷ���ַ��ʼѭ����16��
     //debug
     output [31:0] adn,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,b0,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,
     output [2:0] s1,ns1,
@@ -66,7 +66,7 @@ wire [suoyin_len - 1:0]    suoyin1,suoyin2;
 wire [tag_len - 1   :0]    tag   [3:0] ;
 wire [1:0]                 lru   [3:0] ;
 reg  [15:0]               v     [3:0] ;
-reg  [15:0]               dir   [3:0] ;
+reg  [15:0]               dir     [3:0] ;
 reg  [3:0]                 wea   [15:0];
 reg  [3:0]                 web   [15:0];
 reg  [3:0]                 wet         ;
@@ -201,12 +201,13 @@ assign deng=(insaddr[31:2+line_len]==insaddr1[31:2+line_len])?1:0;
 always @ *
 begin
   if(rst) lux=2'b00;
-  else if(s==3'b100||s==3'b010)
+  else
   begin
   if(mz[0]) lux=2'b00;
   else if(mz[1]) lux=2'b01;
   else if(mz[2]) lux=2'b10;
   else if(mz[3]) lux=2'b11;
+  else if((ms[3:0]==4'b1111)&&deng) lux=mlux;
   else
   begin
     if(~v[0][suoyin]) lux=2'b00;
@@ -235,7 +236,7 @@ begin
   ena[lux]=1;enb[mlux]=1;
 end
 
-//正常态
+//����̬
 always @ (posedge clk or posedge rst)
 if(rst) s<=3'b10;
 else    s<=ns;
@@ -317,7 +318,7 @@ begin
         we=0;
         if(j)
         begin
-          ins=(ms==0)?cdat[lux][linex]:dr[linex];ok=1;
+          ins=(ms==6'b001111||ms==0)?cdat[lux][linex]:dr[linex];ok=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
@@ -369,7 +370,7 @@ begin
   else ok=0;
 end
 
-//缺失态 read
+//ȱʧ̬ read
 reg [4:0] ws,nws;
 
 always @ (posedge clk or posedge rst)
@@ -443,7 +444,7 @@ begin
   end
 end
 
-//缺失态 write
+//ȱʧ̬ write
 always @ (posedge clk or posedge rst)
 if(rst) ws<=0;
 else    ws<=nws;
@@ -472,6 +473,7 @@ begin
   end
   else wen=0;
 end
+
 
 tag0 T0 (.addra(suoyin2),
 .clka(clk),

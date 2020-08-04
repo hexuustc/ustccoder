@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module smicache2
+module Icache
 #(parameter tag_len    = 22,
   parameter suoyin_len = 4,
   parameter line_c     = 16,
@@ -168,12 +168,13 @@ assign deng=(insaddr[31:2+line_len]==insaddr1[31:2+line_len])?1:0;
 always @ *
 begin
   if(rst) lux=2'b00;
-  else if(s==3'b100||s==3'b010)
+  else
   begin
   if(mz[0]) lux=2'b00;
   else if(mz[1]) lux=2'b01;
   else if(mz[2]) lux=2'b10;
   else if(mz[3]) lux=2'b11;
+  else if((ms[3:0]==4'b1111)&&deng) lux=mlux;
   else
   begin
     if(~v[0][suoyin]) lux=2'b00;
@@ -246,7 +247,7 @@ begin
       begin
         if(j)
         begin
-          ins=(ms==0)?cdat[lux][linex]:dr[linex];ok=1;
+          ins=(ms==0||ms==6'b001111)?cdat[lux][linex]:dr[linex];ok=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
