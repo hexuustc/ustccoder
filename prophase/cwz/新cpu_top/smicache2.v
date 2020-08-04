@@ -174,7 +174,7 @@ begin
   else if(mz[1]) lux=2'b01;
   else if(mz[2]) lux=2'b10;
   else if(mz[3]) lux=2'b11;
-  else if((ms==6'b001111||ms==6'b111111)&&deng) lux=mlux;
+  else if((ms!=0)&&deng) lux=mlux;
   else
   begin
     if(~v[0][suoyin]) lux=2'b00;
