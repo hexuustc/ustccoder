@@ -597,7 +597,7 @@ begin
     else va4_next=r_va3;
     va4 = va4_next;
 end
-assign va4 = va4_next;
+//assign va4 = va4_next;
 
 /*
 always@(*)
@@ -768,7 +768,7 @@ begin
         42: aimdata1=LO;
         56: if(funct3[2:0]==0)
             begin
-                cp0_ra = rd03;
+                //cp0_ra = rd03;
                 aimdata1 = cp0_load;
             end
             else aimdata1=0;
@@ -782,7 +782,20 @@ begin
     endcase
 end
 
+reg [4:0] cp0_ra_curr,cp0_ra_next;
+always @(posedge clk)
+begin
+    cp0_ra_curr <= cp0_ra_next;
+end
+always @(*)
+begin
+    if(inscode3 == 56 && funct3[2:0] == 0)
+        cp0_ra_next = rd03;
+    else 
+        cp0_ra_next = cp0_ra_curr;
 
+    cp0_ra = cp0_ra_next;
+end
 
 wire [31:0] inst_addr;
 reg busy_r,busy_w;
@@ -1529,6 +1542,8 @@ begin
     else if((inscode2==40)||(inscode2==41)||(inscode2==42)) begin aimaddr=rd02;a=a_1;b=b_1;m=0; end
     else if(inscode2==56) begin aimaddr=rt2;a=a_1;b=b_1;m=0; end
     else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; cp0_num=rd02; end
+//    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; end
+    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; end
     else begin aimaddr=0; a=a_1;b=b_1;m=0; end
     cp0_data=y;
 end
@@ -1546,6 +1561,23 @@ begin
         cp0_num_next = cp0_num_curr;
 
     cp0_num = cp0_num_next;
+end
+*/
+
+/*
+reg [4:0] sel_curr,sel_next;
+always @(posedge clk)
+begin
+    sel_curr <= sel_next;
+end
+always @(*)
+begin
+    if((va2 == 0) && (inscode2 == 57))
+        sel_next = funct2[2:0];
+    else
+        sel_next = sel_curr;
+
+    sel = sel_next;
 end
 */
 
