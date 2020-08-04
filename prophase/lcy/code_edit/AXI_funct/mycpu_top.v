@@ -1559,7 +1559,8 @@ begin
     else if((inscode2==40)||(inscode2==41)||(inscode2==42)) begin aimaddr=rd02;a=a_1;b=b_1;m=0; end
     else if(inscode2==56) begin aimaddr=rt2;a=a_1;b=b_1;m=0; end
 //    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; cp0_num=rd02; end
-    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; end
+//    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; sel=funct2[2:0]; end
+    else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0;  end
     else if(inscode2==57) begin a=0; b=r_br; m=0; aimaddr=0; end
     else begin aimaddr=0; a=a_1;b=b_1;m=0; end
     cp0_data=y;
@@ -1601,7 +1602,7 @@ begin
 end
 
 
-/*
+
 reg [4:0] sel_curr,sel_next;
 always @(posedge clk)
 begin
@@ -1609,14 +1610,14 @@ begin
 end
 always @(*)
 begin
-    if((va2 == 0) && (inscode2 == 57))
+    if((va2 == 1) && (inscode2 == 57))
         sel_next = funct2[2:0];
     else
         sel_next = sel_curr;
 
     sel = sel_next;
 end
-*/
+
 
 always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd     此处实现跳转。。。。。前三位归零，原因何在？？？？？
 begin
