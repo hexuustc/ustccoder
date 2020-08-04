@@ -419,8 +419,9 @@ begin
   end
   else if(ms==6'b111111)
   begin
-    v[mlux][suoyin2]=1;wet[mlux]=1;
+    wet[mlux]=1;
   end
+  else if(ms==6'b001111) v[mlux][suoyin2]=1;
 end
 
 always @ (posedge clk or posedge rst)
