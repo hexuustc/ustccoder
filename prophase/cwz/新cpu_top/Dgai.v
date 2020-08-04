@@ -261,7 +261,7 @@ endcase
 
 always @ *
 begin
-  wel=4'b0;lruc=4'b0;
+  wel=4'b0;lruc=4'b0;ok=0;
   wea[0]=0;wea[1]=0;wea[2]=0;wea[3]=0;wea[4]=0;wea[5]=0;wea[6]=0;wea[7]=0;
   wea[8]=0;wea[9]=0;wea[10]=0;wea[11]=0;wea[12]=0;wea[13]=0;wea[14]=0;wea[15]=0;
   if(rst) begin ok=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;dw=0;we=0;wbyte1=0;mlux=0;ins=0;
