@@ -176,7 +176,7 @@ begin
   else if(mz[3]) lux=2'b11;
   else
   begin
-    if(`v[0][suoyin]) lux=2'b00;
+    if(~v[0][suoyin]) lux=2'b00;
     else if(~v[1][suoyin]) lux=2'b01;
     else if(~v[2][suoyin]) lux=2'b10;
     else if(~v[3][suoyin]) lux=2'b11;
