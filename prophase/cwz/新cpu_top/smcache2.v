@@ -66,7 +66,6 @@ wire [suoyin_len - 1:0]    suoyin1,suoyin2;
 wire [tag_len - 1   :0]    tag   [3:0] ;
 wire [1:0]                 lru   [3:0] ;
 reg  [15:0]               v     [3:0] ;
-reg  [15:0]               dir   [3:0] ;
 reg  [3:0]                 wea   [15:0];
 reg  [3:0]                 web   [15:0];
 reg  [3:0]                 wet         ;
@@ -97,6 +96,8 @@ reg [31:0] firstd;
 wire  j,deng;
 reg [3:0] zd,zd1,zd3;
 wire [3:0] df;
+wire [3:0] dir;
+reg  [3:0] dirin,wedir;
 
 assign dfn=df;
 assign zdn=zd;
@@ -262,10 +263,10 @@ endcase
 
 always @ *
 begin
-  wel=4'b0;lruc=4'b0;
+  wel=4'b0;lruc=4'b0;wedir=0;dirin=0;
   wea[0]=0;wea[1]=0;wea[2]=0;wea[3]=0;wea[4]=0;wea[5]=0;wea[6]=0;wea[7]=0;
   wea[8]=0;wea[9]=0;wea[10]=0;wea[11]=0;wea[12]=0;wea[13]=0;wea[14]=0;wea[15]=0;
-  if(rst) begin ok=0;dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;dw=0;we=0;wbyte1=0;mlux=0;ins=0;
+  if(rst) begin ok=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;dw=0;we=0;wbyte1=0;mlux=0;ins=0;
                 dwb1[0]=0;dwb1[1]=0;dwb1[2]=0;dwb1[3]=0;dwb1[4]=0;dwb1[5]=0;dwb1[6]=0;dwb1[7]=0;
                 dwb1[8]=0;dwb1[9]=0;dwb1[10]=0;dwb1[11]=0;dwb1[12]=0;dwb1[13]=0;dwb1[14]=0;dwb1[15]=0;
                 end
@@ -276,7 +277,7 @@ begin
       bj=bj1;linex=linex1;
       if(wreq&(~miss)&(suoyin==suoyin1)) 
       begin
-        we=1;wea[linex]=wbyte;dir[lux][suoyin]=1;dw=din;ins=dw;ok=1;
+        we=1;wea[linex]=wbyte;dirin[lux]=1;wedir[lux]=1;dw=din;ins=dw;ok=1;
         if(lru[0]<=lru[lux]) wel[0]=1;
         if(lru[1]<=lru[lux]) wel[1]=1;
         if(lru[2]<=lru[lux]) wel[2]=1;
@@ -288,7 +289,7 @@ begin
         we=1;dw=din;
         if(j)
         begin
-          wea[linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;
+          wea[linex]=wbyte;dirin[lux]=1;wedir[lux]=1;ins=dw;ok=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
@@ -340,7 +341,7 @@ begin
   begin
     if(we)
     begin
-      wea[linex]=wbyte1;dir[lux][suoyin]=1;ins=dw;ok=1;
+      wea[linex]=wbyte1;dirin[lux]=1;wedir[lux]=1;ins=dw;ok=1;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -349,7 +350,7 @@ begin
     end
     else
     begin
-      ins=firstd;ok=1;dir[lux][suoyin]=0;
+      ins=firstd;ok=1;dirin[lux]=0;wedir[lux]=1;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -453,7 +454,7 @@ else    ws<=nws;
 always @ *
 begin
   if(ws==0)
-    if(dir[mlux][suoyin]==1&&ns==2'b00) nws=5'b10000;
+    if(dir[mlux]==1&&ns==2'b00)         nws=5'b10000;
     else                                nws=5'b00000;
   else if(ws[4]==1)
     if(wdata_ok)                        nws=ws+1;
@@ -475,6 +476,42 @@ begin
   else wen=0;
 end
 
+dv dir0 (.addra(suoyin),
+.clka(clk),
+.dina(dirin[0]),
+.ena(1),
+.wea(wedir[0]),
+.doutb(dir[0]),
+.addrb(suoyin),
+.clkb(clk),
+.enb(1));
+dv dir1 (.addra(suoyin),
+.clka(clk),
+.dina(dirin[1]),
+.ena(1),
+.wea(wedir[1]),
+.doutb(dir[1]),
+.addrb(suoyin),
+.clkb(clk),
+.enb(1));
+dv dir2 (.addra(suoyin),
+.clka(clk),
+.dina(dirin[2]),
+.ena(1),
+.wea(wedir[2]),
+.doutb(dir[2]),
+.addrb(suoyin),
+.clkb(clk),
+.enb(1));
+dv dir3 (.addra(suoyin),
+.clka(clk),
+.dina(dirin[3]),
+.ena(1),
+.wea(wedir[3]),
+.doutb(dir[3]),
+.addrb(suoyin),
+.clkb(clk),
+.enb(1));
 tag0 T0 (.addra(suoyin2),
 .clka(clk),
 .dina(bj2),
