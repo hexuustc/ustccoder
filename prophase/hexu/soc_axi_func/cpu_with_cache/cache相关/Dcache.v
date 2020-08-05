@@ -67,7 +67,7 @@ wire [tag_len - 1   :0]    tag   [3:0] ;
 wire [1:0]                 lru   [3:0] ;
 reg  [15:0]               v     [3:0] ;
 reg  [15:0]               dir   [3:0] ;
-reg  [3:0]                 wea   [15:0];
+reg  [3:0]                 wea   [3:0][15:0];
 reg  [3:0]                 web   [15:0];
 reg  [3:0]                 wet         ;
 reg  [3:0]                 wel         ;
@@ -78,7 +78,7 @@ reg  [31            :0]    dwb1  [line_c-1      :0];
 wire [line_len-1    :0]    linex1,linex2;
 wire [tag_len - 1   :0]    bj1,bj2      ;
 reg [line_len-1    :0]    linex          ;
-reg [tag_len - 1   :0]    bj       ;
+reg [tag_len - 1   :0]    bj,bj3       ;
 reg [suoyin_len - 1:0]    suoyin;
 reg [31:0] dw;
 wire [1:0]                 lruin [3:0] ;
@@ -225,15 +225,17 @@ begin
 end
 
 assign addr0    = insaddr1;
-assign addr1    = {insaddr1[31:6],6'b0};
+assign addr1    = {bj3,suoyin2,6'b0};
 assign raddr    = addr0;
 assign waddr    = addr1;
 
 always @ *
 begin
-  ena=4'b0;enb=4'b0;
-  ena[lux]=1;enb[mlux]=1;
+  ena=4'b1111;enb=4'b0;
+  enb[mlux]=1;
 end
+
+reg counts;
 
 //正常态
 always @ (posedge clk or posedge rst)
@@ -250,11 +252,11 @@ case(s)
          else         ns=3'b10;
    3'b000:if(firsth)   ns=3'b01;
          else         ns=3'b00;
-   3'b001:if(req&(suoyin!=suoyin1))  ns=3'b100; 
-         else         ns=3'b10;
+   3'b001:ns=3'b10;
    3'b011:if(j|~miss) ns=3'b111;
          else  ns=3'b11;
-   3'b100:ns=3'b110;
+   3'b100:if(counts) ns=3'b110;
+          else       ns=3'b100;
    3'b111:ns=3'b10;
    3'b110:if(miss&~j&deng&(ms!=0))    ns=3'b11;
          else if(miss&~j&deng&(ms==0))    ns=3'b0;
@@ -266,11 +268,30 @@ case(s)
    default:ns=3'b10;
 endcase
 
+always @ (posedge clk or posedge rst)
+if(rst) counts<=0;
+else if(s==3'b100) counts<=1;
+else counts<=0;
+
 always @ *
 begin
   wel=4'b0;lruc=4'b0;ok=0;
-  wea[0]=0;wea[1]=0;wea[2]=0;wea[3]=0;wea[4]=0;wea[5]=0;wea[6]=0;wea[7]=0;
-  wea[8]=0;wea[9]=0;wea[10]=0;wea[11]=0;wea[12]=0;wea[13]=0;wea[14]=0;wea[15]=0;
+  wea[0][0]=0;wea[1][0]=0;wea[2][0]=0;wea[3][0]=0;
+  wea[0][1]=0;wea[1][1]=0;wea[2][1]=0;wea[3][1]=0;
+  wea[0][2]=0;wea[1][2]=0;wea[2][2]=0;wea[3][2]=0;
+  wea[0][3]=0;wea[1][3]=0;wea[2][3]=0;wea[3][3]=0;
+  wea[0][4]=0;wea[1][4]=0;wea[2][4]=0;wea[3][4]=0;
+  wea[0][5]=0;wea[1][5]=0;wea[2][5]=0;wea[3][5]=0;
+  wea[0][6]=0;wea[1][6]=0;wea[2][6]=0;wea[3][6]=0;
+  wea[0][7]=0;wea[1][7]=0;wea[2][7]=0;wea[3][7]=0;
+  wea[0][8]=0;wea[1][8]=0;wea[2][8]=0;wea[3][8]=0;
+  wea[0][9]=0;wea[1][9]=0;wea[2][9]=0;wea[3][9]=0;
+  wea[0][10]=0;wea[1][10]=0;wea[2][10]=0;wea[3][10]=0;
+  wea[0][11]=0;wea[1][11]=0;wea[2][11]=0;wea[3][11]=0;
+  wea[0][12]=0;wea[1][12]=0;wea[2][12]=0;wea[3][12]=0;
+  wea[0][13]=0;wea[1][13]=0;wea[2][13]=0;wea[3][13]=0;
+  wea[0][14]=0;wea[1][14]=0;wea[2][14]=0;wea[3][14]=0;
+  wea[0][15]=0;wea[1][15]=0;wea[2][15]=0;wea[3][15]=0;
   if(rst) begin dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;dw=0;we=0;wbyte1=0;mlux=0;ins=0;
                 dwb1[0]=0;dwb1[1]=0;dwb1[2]=0;dwb1[3]=0;dwb1[4]=0;dwb1[5]=0;dwb1[6]=0;dwb1[7]=0;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
                 dwb1[8]=0;dwb1[9]=0;dwb1[10]=0;dwb1[11]=0;dwb1[12]=0;dwb1[13]=0;dwb1[14]=0;dwb1[15]=0;
@@ -280,9 +301,11 @@ begin
     if(req)
     begin
       bj=bj1;linex=linex1;
-      if(wreq&(~miss)&(suoyin==suoyin1)) 
+      if((suoyin!=suoyin1)&wreq) we=1; 
+      else if((suoyin!=suoyin1)&~wreq) we=0;
+      else if(wreq&(~miss)&(suoyin==suoyin1)) 
       begin
-        we=1;wea[linex]=wbyte;dir[lux][suoyin]=1;dw=din;ins=dw;ok=1;
+        we=1;wea[lux][linex]=wbyte;dir[lux][suoyin]=1;dw=din;ins=dw;ok=1;
         if(lru[0]<=lru[lux]) wel[0]=1;
         if(lru[1]<=lru[lux]) wel[1]=1;
         if(lru[2]<=lru[lux]) wel[2]=1;
@@ -294,7 +317,7 @@ begin
         we=1;dw=din;
         if(j||(deng==1&&wbyte==4'b1111&&ms!=0))
         begin
-          wea[linex]=wbyte;ins=dw;ok=1;wecj[lux][linex]=1;dir[lux][suoyin]=1;
+          wea[lux][linex]=wbyte;ins=dw;ok=1;wecj[lux][linex]=1;dir[lux][suoyin]=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
@@ -343,7 +366,7 @@ begin
   begin
     if(we)
     begin
-      wea[linex]=wbyte1;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
+      wea[lux][linex]=wbyte1;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -363,21 +386,21 @@ begin
   else if(s==3'b110)
   begin
       bj=bj1;linex=linex1;
-      if(wreq&(~miss)&(suoyin==suoyin1)) 
+      if(we&(~miss)&(suoyin==suoyin1)) 
       begin
-        we=1;wea[linex]=wbyte;dir[lux][suoyin]=1;dw=din;ins=dw;ok=1;
+        we=1;wea[lux][linex]=wbyte;dir[lux][suoyin]=1;dw=din;ins=dw;ok=1;
         if(lru[0]<=lru[lux]) wel[0]=1;
         if(lru[1]<=lru[lux]) wel[1]=1;
         if(lru[2]<=lru[lux]) wel[2]=1;
         if(lru[3]<=lru[lux]) wel[3]=1;
         wel[lux]=1;lruc[lux]=1;
       end
-      else if(wreq&miss&(suoyin==suoyin1)) 
+      else if(we&miss&(suoyin==suoyin1)) 
       begin 
         we=1;dw=din;
         if(j)
         begin
-          wea[linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
+          wea[lux][linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
@@ -392,7 +415,7 @@ begin
                              end
         else begin wbyte1=wbyte; end 
       end
-      else if(~wreq&~miss&(suoyin==suoyin1)) 
+      else if(~we&~miss&(suoyin==suoyin1)) 
       begin
         ok=1;ins=cdat[lux][linex];we=0;
         if(lru[0]<=lru[lux]) wel[0]=1;
@@ -401,7 +424,7 @@ begin
         if(lru[3]<=lru[lux]) wel[3]=1;
         wel[lux]=1;lruc[lux]=1;
       end
-      else if(~wreq&miss&(suoyin==suoyin1))
+      else if(~we&miss&(suoyin==suoyin1))
       begin
         we=0;
         if(j)
@@ -425,7 +448,7 @@ begin
   begin
     if(we)
     begin
-      wea[linex]=wbyte1;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
+      wea[lux][linex]=wbyte1;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -434,7 +457,7 @@ begin
     end
     else
     begin
-      ins=firstd;ok=1;dir[lux][suoyin]=0;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
+      ins=firstd;ok=1;dir[lux][suoyin]=0;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -473,7 +496,7 @@ begin
     else        nms=ms;
   else if(ms==6'b011111) nms=6'b111111;
   else if(ms==6'b111111) 
-    if(nws==5'b0)   nms=6'b001111;
+    if(nws==5'b0)   nms=6'b0;
     else            nms=6'b111111;
   else nms=6'b0;
 end
@@ -491,7 +514,7 @@ begin
   end
   else if(ms==6'b110000)
   begin
-    sen=1;zd=linex2+ms[3:0];
+    sen=1;zd=linex2+ms[3:0];wet[mlux]=1;v[mlux][suoyin2]=0;
   end
   else if(ms[5:4]==2'b01)
   begin
@@ -502,7 +525,7 @@ begin
   end
   else if(ms==6'b111111)
   begin
-    v[mlux][suoyin2]=1;wet[mlux]=1;
+    v[mlux][suoyin2]=1;
   end
 end
 
@@ -534,7 +557,7 @@ else    ws<=nws;
 always @ *
 begin
   if(ws==0)
-    if(dir[mlux][suoyin]==1&&ns==2'b00&&s!=0) nws=5'b10000;
+    if(dir[mlux][suoyin]==1&&nms==6'b110000) begin nws=5'b10000;bj3=tag[mlux]; end
     else                                nws=5'b00000;
   else if(ws[4]==1)
     if(wdata_ok)                        nws=ws+1;
@@ -571,7 +594,7 @@ data2 D00 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][0]),
 .ena(ena[0]),
-.wea(wea[0]),
+.wea(wea[0][0]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[0]),
@@ -583,7 +606,7 @@ data2 D01 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][1]),
 .ena(ena[0]),
-.wea(wea[1]),
+.wea(wea[0][1]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[1]),
@@ -595,7 +618,7 @@ data2 D02 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][2]),
 .ena(ena[0]),
-.wea(wea[2]),
+.wea(wea[0][2]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[2]),
@@ -607,7 +630,7 @@ data2 D03 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][3]),
 .ena(ena[0]),
-.wea(wea[3]),
+.wea(wea[0][3]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[3]),
@@ -619,7 +642,7 @@ data2 D04 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][4]),
 .ena(ena[0]),
-.wea(wea[4]),
+.wea(wea[0][4]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[4]),
@@ -631,7 +654,7 @@ data2 D05 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][5]),
 .ena(ena[0]),
-.wea(wea[5]),
+.wea(wea[0][5]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[5]),
@@ -643,7 +666,7 @@ data2 D06 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][6]),
 .ena(ena[0]),
-.wea(wea[6]),
+.wea(wea[0][6]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[6]),
@@ -655,7 +678,7 @@ data2 D07 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][7]),
 .ena(ena[0]),
-.wea(wea[7]),
+.wea(wea[0][7]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[7]),
@@ -667,7 +690,7 @@ data2 D08 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][8]),
 .ena(ena[0]),
-.wea(wea[8]),
+.wea(wea[0][8]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[8]),
@@ -679,7 +702,7 @@ data2 D09 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][9]),
 .ena(ena[0]),
-.wea(wea[9]),
+.wea(wea[0][9]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[9]),
@@ -691,7 +714,7 @@ data2 D010 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][10]),
 .ena(ena[0]),
-.wea(wea[10]),
+.wea(wea[0][10]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[10]),
@@ -703,7 +726,7 @@ data2 D011 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][11]),
 .ena(ena[0]),
-.wea(wea[11]),
+.wea(wea[0][11]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[11]),
@@ -715,7 +738,7 @@ data2 D012 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][12]),
 .ena(ena[0]),
-.wea(wea[12]),
+.wea(wea[0][12]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[12]),
@@ -727,7 +750,7 @@ data2 D013 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][13]),
 .ena(ena[0]),
-.wea(wea[13]),
+.wea(wea[0][13]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[13]),
@@ -739,7 +762,7 @@ data2 D014 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][14]),
 .ena(ena[0]),
-.wea(wea[14]),
+.wea(wea[0][14]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[14]),
@@ -751,7 +774,7 @@ data2 D015 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[0][15]),
 .ena(ena[0]),
-.wea(wea[15]),
+.wea(wea[0][15]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[15]),
@@ -779,7 +802,7 @@ data2 D10 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][0]),
 .ena(ena[1]),
-.wea(wea[0]),
+.wea(wea[1][0]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[0]),
@@ -791,7 +814,7 @@ data2 D11 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][1]),
 .ena(ena[1]),
-.wea(wea[1]),
+.wea(wea[1][1]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[1]),
@@ -803,7 +826,7 @@ data2 D12 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][2]),
 .ena(ena[1]),
-.wea(wea[2]),
+.wea(wea[1][2]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[2]),
@@ -815,7 +838,7 @@ data2 D13 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][3]),
 .ena(ena[1]),
-.wea(wea[3]),
+.wea(wea[1][3]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[3]),
@@ -827,7 +850,7 @@ data2 D14 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][4]),
 .ena(ena[1]),
-.wea(wea[4]),
+.wea(wea[1][4]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[4]),
@@ -839,7 +862,7 @@ data2 D15 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][5]),
 .ena(ena[1]),
-.wea(wea[5]),
+.wea(wea[1][5]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[5]),
@@ -851,7 +874,7 @@ data2 D16 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][6]),
 .ena(ena[1]),
-.wea(wea[6]),
+.wea(wea[1][6]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[6]),
@@ -863,7 +886,7 @@ data2 D17 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][7]),
 .ena(ena[1]),
-.wea(wea[7]),
+.wea(wea[1][7]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[7]),
@@ -875,7 +898,7 @@ data2 D18 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][8]),
 .ena(ena[1]),
-.wea(wea[8]),
+.wea(wea[1][8]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[8]),
@@ -887,7 +910,7 @@ data2 D19 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][9]),
 .ena(ena[1]),
-.wea(wea[9]),
+.wea(wea[1][9]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[9]),
@@ -899,7 +922,7 @@ data2 D110 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][10]),
 .ena(ena[1]),
-.wea(wea[10]),
+.wea(wea[1][10]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[10]),
@@ -911,7 +934,7 @@ data2 D111 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][11]),
 .ena(ena[1]),
-.wea(wea[11]),
+.wea(wea[1][11]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[11]),
@@ -923,7 +946,7 @@ data2 D112 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][12]),
 .ena(ena[1]),
-.wea(wea[12]),
+.wea(wea[1][12]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[12]),
@@ -935,7 +958,7 @@ data2 D113 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][13]),
 .ena(ena[1]),
-.wea(wea[13]),
+.wea(wea[1][13]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[13]),
@@ -947,7 +970,7 @@ data2 D114 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][14]),
 .ena(ena[1]),
-.wea(wea[14]),
+.wea(wea[1][14]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[14]),
@@ -959,7 +982,7 @@ data2 D115 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[1][15]),
 .ena(ena[1]),
-.wea(wea[15]),
+.wea(wea[1][15]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[15]),
@@ -987,7 +1010,7 @@ data2 D20 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][0]),
 .ena(ena[2]),
-.wea(wea[0]),
+.wea(wea[2][0]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[0]),
@@ -999,7 +1022,7 @@ data2 D21 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][1]),
 .ena(ena[2]),
-.wea(wea[1]),
+.wea(wea[2][1]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[1]),
@@ -1011,7 +1034,7 @@ data2 D22 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][2]),
 .ena(ena[2]),
-.wea(wea[2]),
+.wea(wea[2][2]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[2]),
@@ -1023,7 +1046,7 @@ data2 D23 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][3]),
 .ena(ena[2]),
-.wea(wea[3]),
+.wea(wea[2][3]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[3]),
@@ -1035,7 +1058,7 @@ data2 D24 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][4]),
 .ena(ena[2]),
-.wea(wea[4]),
+.wea(wea[2][4]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[4]),
@@ -1047,7 +1070,7 @@ data2 D25 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][5]),
 .ena(ena[2]),
-.wea(wea[5]),
+.wea(wea[2][5]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[5]),
@@ -1059,7 +1082,7 @@ data2 D26 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][6]),
 .ena(ena[2]),
-.wea(wea[6]),
+.wea(wea[2][6]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[6]),
@@ -1071,7 +1094,7 @@ data2 D27 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][7]),
 .ena(ena[2]),
-.wea(wea[7]),
+.wea(wea[2][7]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[7]),
@@ -1083,7 +1106,7 @@ data2 D28 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][8]),
 .ena(ena[2]),
-.wea(wea[8]),
+.wea(wea[2][8]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[8]),
@@ -1095,7 +1118,7 @@ data2 D29 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][9]),
 .ena(ena[2]),
-.wea(wea[9]),
+.wea(wea[2][9]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[9]),
@@ -1107,7 +1130,7 @@ data2 D210 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][10]),
 .ena(ena[2]),
-.wea(wea[10]),
+.wea(wea[2][10]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[10]),
@@ -1119,7 +1142,7 @@ data2 D211 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][11]),
 .ena(ena[2]),
-.wea(wea[11]),
+.wea(wea[2][11]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[11]),
@@ -1131,7 +1154,7 @@ data2 D212 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][12]),
 .ena(ena[2]),
-.wea(wea[12]),
+.wea(wea[2][12]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[12]),
@@ -1143,7 +1166,7 @@ data2 D213 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][13]),
 .ena(ena[2]),
-.wea(wea[13]),
+.wea(wea[2][13]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[13]),
@@ -1155,7 +1178,7 @@ data2 D214 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][14]),
 .ena(ena[2]),
-.wea(wea[14]),
+.wea(wea[2][14]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[14]),
@@ -1167,7 +1190,7 @@ data2 D215 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[2][15]),
 .ena(ena[2]),
-.wea(wea[15]),
+.wea(wea[2][15]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[15]),
@@ -1195,7 +1218,7 @@ data2 D30 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][0]),
 .ena(ena[3]),
-.wea(wea[0]),
+.wea(wea[3][0]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[0]),
@@ -1207,7 +1230,7 @@ data2 D31 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][1]),
 .ena(ena[3]),
-.wea(wea[1]),
+.wea(wea[3][1]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[1]),
@@ -1219,7 +1242,7 @@ data2 D32 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][2]),
 .ena(ena[3]),
-.wea(wea[2]),
+.wea(wea[3][2]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[2]),
@@ -1231,7 +1254,7 @@ data2 D33 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][3]),
 .ena(ena[3]),
-.wea(wea[3]),
+.wea(wea[3][3]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[3]),
@@ -1243,7 +1266,7 @@ data2 D34 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][4]),
 .ena(ena[3]),
-.wea(wea[4]),
+.wea(wea[3][4]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[4]),
@@ -1255,7 +1278,7 @@ data2 D35 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][5]),
 .ena(ena[3]),
-.wea(wea[5]),
+.wea(wea[3][5]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[5]),
@@ -1267,7 +1290,7 @@ data2 D36 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][6]),
 .ena(ena[3]),
-.wea(wea[6]),
+.wea(wea[3][6]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[6]),
@@ -1279,7 +1302,7 @@ data2 D37 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][7]),
 .ena(ena[3]),
-.wea(wea[7]),
+.wea(wea[3][7]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[7]),
@@ -1291,7 +1314,7 @@ data2 D38 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][8]),
 .ena(ena[3]),
-.wea(wea[8]),
+.wea(wea[3][8]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[8]),
@@ -1303,7 +1326,7 @@ data2 D39 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][9]),
 .ena(ena[3]),
-.wea(wea[9]),
+.wea(wea[3][9]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[9]),
@@ -1315,7 +1338,7 @@ data2 D310 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][10]),
 .ena(ena[3]),
-.wea(wea[10]),
+.wea(wea[3][10]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[10]),
@@ -1327,7 +1350,7 @@ data2 D311 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][11]),
 .ena(ena[3]),
-.wea(wea[11]),
+.wea(wea[3][11]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[11]),
@@ -1339,7 +1362,7 @@ data2 D312 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][12]),
 .ena(ena[3]),
-.wea(wea[12]),
+.wea(wea[3][12]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[12]),
@@ -1351,7 +1374,7 @@ data2 D313 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][13]),
 .ena(ena[3]),
-.wea(wea[13]),
+.wea(wea[3][13]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[13]),
@@ -1363,7 +1386,7 @@ data2 D314 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][14]),
 .ena(ena[3]),
-.wea(wea[14]),
+.wea(wea[3][14]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[14]),
@@ -1375,7 +1398,7 @@ data2 D315 (.addra(suoyin),
 .dina(dw),
 .douta(cdat[3][15]),
 .ena(ena[3]),
-.wea(wea[15]),
+.wea(wea[3][15]),
 .addrb(suoyin2),
 .clkb(clk),
 .dinb(dr[15]),
