@@ -186,8 +186,8 @@ reg pause,pause1,pause2,pause3,pause4,pause5,pause6,pause7;//暂停信号[寄存
 reg pause1_1,pause2_1,pause3_1,pause4_1,pause5_1,pause6_1,pause7_1;//暂停信号的缓冲[寄存器]
 reg stall;
 //有效位
-wire va1;
-reg va,va2,va3,va4,va5,va6,va7;//有效位
+//wire va1;
+reg va,va1,va2,va3,va4,va5,va6,va7;//有效位
 reg r_va,r_va1,r_va2,r_va3;
 
 reg reins1,reins2b,reins2,r_reins2;//保留指令
@@ -553,7 +553,7 @@ begin
     va2 = va2_next;
 end 
 */
-
+/*
 reg va2_past;
 reg va2_lock_past;
 wire va2_lock;
@@ -574,8 +574,8 @@ begin
     end    
 end
 assign va2_lock = (resetn == 1) && (pause2 == 1);
+*/
 
-/*
 always@(*)
 begin
     if(~resetn) va2=0;//这就是分支延迟槽
@@ -583,7 +583,7 @@ begin
     else if (exc) va2=0;
     else va2=r_va1;
 end
-*/
+
 
 reg va3_curr,va3_next;
 always @(posedge clk)
@@ -1438,6 +1438,7 @@ assign inscode1 = InsConvert_inscode;
 
 ////////PART TWO////////////////
 //生成其它乱七八糟的控制码
+/*
 reg va1_curr,va1_next;
 always @(posedge clk)
     va1_curr <= va1_next;
@@ -1450,6 +1451,24 @@ begin
     else va1_next=r_va; 
 end
 assign va1 = va1_next;
+*/
+reg va1_past;
+reg va1_lock_past,va1_lock;
+always @(posedge clk)
+    va1_past <= va1;
+always @(*)
+begin
+    if(va1_lock_past && va1_lock)
+        va1 = va1_past;
+    else
+    begin
+        if(~resetn) va1 = 0;
+        else if(jump) va1 = 0;
+        else if(back || exc) va1 = 0;
+        else va1 = r_va;
+    end 
+end
+assign va1_lock = resetn && pause1;
 
 reg [31:0] ir1_curr,ir1_next;
 always @(posedge clk)
