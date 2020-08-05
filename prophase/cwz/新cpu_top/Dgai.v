@@ -513,7 +513,7 @@ begin
   end
   else if(ms==6'b110000)
   begin
-    sen=1;zd=linex2+ms[3:0];wet[mlux]=1;
+    sen=1;zd=linex2+ms[3:0];wet[mlux]=1;v[mlux][suoyin2]=0;
   end
   else if(ms[5:4]==2'b01)
   begin
