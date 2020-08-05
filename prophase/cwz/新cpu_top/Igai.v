@@ -215,9 +215,10 @@ case(s)
          else         ns=3'b00;
    3'b001:if(req&(suoyin!=suoyin1))  ns=3'b100; 
          else         ns=3'b10;
-   3'b011:if(j|~miss) ns=3'b10;
+   3'b011:if(j|~miss) ns=3'b111;
          else  ns=3'b11;
    3'b100:ns=3'b110;
+   3'b111:ns=3'b10;
    3'b110:if(miss&~j&deng&(ms!=0))    ns=3'b11;
          else if(miss&~j&deng&(ms==0))    ns=3'b0;
          else if(miss&~j&~deng&(ms==0))     ns=3'b00;
@@ -260,6 +261,15 @@ begin
         else if(ms==0) begin insaddr1=insaddr;mlux=lux;end
       end
     end
+  end
+  else if(s==3'b111)
+  begin
+      ins=(ms==0)?cdat[lux][linex]:dr[linex];ok=1;
+      if(lru[0]<=lru[lux]) wel[0]=1;
+      if(lru[1]<=lru[lux]) wel[1]=1;
+      if(lru[2]<=lru[lux]) wel[2]=1;
+      if(lru[3]<=lru[lux]) wel[3]=1;
+      wel[lux]=1;lruc[lux]=1;
   end
   else if(s==3'b110)
   begin
