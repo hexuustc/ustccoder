@@ -78,7 +78,7 @@ module mycpu_top
 wire cpu_i_req;
 wire [31:0] cpu_i_addr;
 wire [31:0] cpu_i_read_data;
-wire cpu_i_miss;
+wire cpu_i_ok;
 
 //icache
 wire icache_en, icache_wen;
@@ -133,7 +133,7 @@ wire [31:0] cpu_d_write_data;
 wire [31:0] cpu_d_addr;
 wire [31:0] cpu_d_read_data;
 wire [3:0] cpu_d_wbyte;
-wire cpu_d_miss;
+wire cpu_d_ok;
 //dcache
 wire dcache_en, dcache_wen;
 wire [31:0] dcache_read_data;
@@ -184,6 +184,48 @@ wire [1 :0] d_bresp;
 wire        d_bvalid;
 wire        d_bready;
 
+//ar
+wire [3 :0] un_arid;
+wire [31:0] un_araddr;
+wire [3 :0] un_arlen;
+wire [2 :0] un_arsize;
+wire [1 :0] un_arburst;
+wire [1 :0] un_arlock;
+wire [3 :0] un_arcache;
+wire [2 :0] un_arprot;
+wire        un_arvalid;
+wire        un_arready;
+//r
+wire [3 :0] un_rid;
+wire [31:0] un_rdata;
+wire [1 :0] un_rresp;
+wire        un_rlast;
+wire        un_rvalid;
+wire        un_rready;
+//aw
+wire [3 :0] un_awid;
+wire [31:0] un_awaddr;
+wire [3 :0] un_awlen;
+wire [2 :0] un_awsize;
+wire [1 :0] un_awburst;
+wire [1 :0] un_awlock;
+wire [3 :0] un_awcache;
+wire [2 :0] un_awprot;
+wire        un_awvalid;
+wire        un_awready;
+//w
+wire [3 :0] un_wid;
+wire [31:0] un_wdata;
+wire [3 :0] un_wstrb;
+wire        un_wlast;
+wire        un_wvalid;
+wire        un_wready;
+//b
+wire [3 :0] un_bid;
+wire [1 :0] un_bresp;
+wire        un_bvalid;
+wire        un_bready;
+
 cpu_hexu cpu_0(
     .ext_int    (ext_int),
     .aclk        (aclk  ),
@@ -215,7 +257,6 @@ Icache icache(
     .insaddr (cpu_i_addr        ),
     .ins     (cpu_i_read_data   ),
     .req     (cpu_i_req         ),
-    .miss    (cpu_i_miss        ),
     .ok      (cpu_i_ok          ),
     
     .sen     (icache_en         ),
@@ -279,18 +320,59 @@ icache_to_axi #(1'b1) icache_to_axi_0 (
     .bready     (i_bready )
 );
 
+wire [31:0] xaddr_cache_addr;
+wire [31:0] xaddr_cache_din;
+wire [31:0] xaddr_cache_data;
+wire        xaddr_cache_req;
+wire        xaddr_cache_wreq;
+wire [3 :0] xaddr_cache_wbyte;
+wire        xaddr_cache_ok;
+
+wire [31:0] xaddr_uncache_addr;
+wire [31:0] xaddr_uncache_din;
+wire [31:0] xaddr_uncache_data;
+wire        xaddr_uncache_req;
+wire        xaddr_uncache_wreq;
+wire [3 :0] xaddr_uncache_wbyte;
+wire        xaddr_uncache_ok;
+
+xaddr xaddr0(
+    .cpu_addr(cpu_d_addr),
+    .cpu_din(cpu_d_write_data),
+    .cpu_data(cpu_d_read_data),
+    .cpu_req(cpu_d_req),
+    .cpu_wreq(cpu_d_wreq),
+    .cpu_wbyte(cpu_d_wbyte),
+    .cpu_ok(cpu_d_ok),
+//cache
+    .cache_addr(xaddr_cache_addr),
+    .cache_din(xaddr_cache_din),
+    .cache_data(xaddr_cache_data),
+    .cache_req(xaddr_cache_req),
+    .cache_wreq(xaddr_cache_wreq),
+    .cache_wbyte(xaddr_cache_wbyte),
+    .cache_ok(xaddr_cache_ok),
+//uncache
+    .uncache_addr(xaddr_uncache_addr),
+    .uncache_din(xaddr_uncache_din),
+    .uncache_data(xaddr_uncache_data),
+    .uncache_req(xaddr_uncache_req),
+    .uncache_wreq(xaddr_uncache_wreq),
+    .uncache_wbyte(xaddr_uncache_wbyte),
+    .uncache_ok(xaddr_uncache_ok)
+);
+
 Dcache dcache(
     .clk    (aclk  ),
     .rst    (~aresetn ),
     
-    .insaddr (cpu_d_addr        ),
-    .din     (cpu_d_write_data  ),
-    .ins     (cpu_d_read_data   ),
-    .req     (cpu_d_req         ),
-    .wreq    (cpu_d_wreq        ),
-    .wbyte   (cpu_d_wbyte       ),
-    .miss    (cpu_d_miss        ),
-    .ok      (cpu_d_ok          ),
+    .insaddr (xaddr_cache_addr ),
+    .din     (xaddr_cache_din  ),
+    .ins     (xaddr_cache_data ),
+    .req     (xaddr_cache_req  ),
+    .wreq    (xaddr_cache_wreq ),
+    .wbyte   (xaddr_cache_wbyte),
+    .ok      (xaddr_cache_ok   ),
     
     .wen      (dcache_wen         ),
     .sen      (dcache_en          ),
@@ -306,7 +388,7 @@ Dcache dcache(
     .sdata    (dcache_read_data   )
 );
 
-dcache_to_axi #(1'b0) dcache_to_axi_0 (
+dcache_to_ram #(1'b0) dcache_to_ram_0 (
     .clk    (aclk   ),
     .rstn   (aresetn   ),
     
@@ -365,48 +447,102 @@ dcache_to_axi #(1'b0) dcache_to_axi_0 (
     .bready     (d_bready )
 );
 
+uncache_to_confreg #(1'b0) uncache_to_confreg_0 (
+    .clk    (aclk   ),
+    .rstn   (aresetn   ),
+    
+    .addr   (xaddr_uncache_addr ),
+    .din    (xaddr_uncache_din  ),
+    .data   (xaddr_uncache_data ),
+    .req    (xaddr_uncache_req  ),
+    .wreq   (xaddr_uncache_wreq ),
+    .wbyte  (xaddr_uncache_wbyte),
+    .ok     (xaddr_uncache_ok   ),
+    
+    .arid       (un_arid   ),
+    .araddr     (un_araddr ),
+    .arlen      (un_arlen  ),
+    .arsize     (un_arsize ),
+    .arburst    (un_arburst),
+    .arlock     (un_arlock ),
+    .arcache    (un_arcache),
+    .arprot     (un_arprot ),
+    .arvalid    (un_arvalid),
+    .arready    (un_arready),
+    
+    .rid        (un_rid    ),
+    .rdata      (un_rdata  ),
+    .rresp      (un_rresp  ),
+    .rlast      (un_rlast  ),
+    .rvalid     (un_rvalid ),
+    .rready     (un_rready ),
+    
+    .awid       (un_awid   ),
+    .awaddr     (un_awaddr ),
+    .awlen      (un_awlen  ),
+    .awsize     (un_awsize ),
+    .awburst    (un_awburst),
+    .awlock     (un_awlock ),
+    .awcache    (un_awcache),
+    .awprot     (un_awprot ),
+    .awvalid    (un_awvalid),
+    .awready    (un_awready),
+    
+    .wid        (un_wid    ),
+    .wdata      (un_wdata  ),
+    .wstrb      (un_wstrb  ),
+    .wlast      (un_wlast  ),
+    .wvalid     (un_wvalid ),
+    .wready     (un_wready ),
+    
+    .bid        (un_bid    ),
+    .bresp      (un_bresp  ),
+    .bvalid     (un_bvalid ),
+    .bready     (un_bready )
+);
+
 axi_crossbar_2x1 u_axi_crossbar_2x1(
     .aclk       (aclk   ),
     .aresetn    (aresetn   ),
     
-    .s_axi_awid     ({i_awid,    d_awid    }),
-    .s_axi_awaddr   ({i_awaddr,  d_awaddr  }),
-    .s_axi_awlen    ({i_awlen,   d_awlen   }),
-    .s_axi_awsize   ({i_awsize,  d_awsize  }),
-    .s_axi_awburst  ({i_awburst, d_awburst }),
-    .s_axi_awlock   ({i_awlock,  d_awlock  }),
-    .s_axi_awcache  ({i_awcache, d_awcache }),
-    .s_axi_awprot   ({i_awprot,  d_awprot  }),
-    .s_axi_awqos    (8'd0                   ),
-    .s_axi_awvalid  ({i_awvalid, d_awvalid }),
-    .s_axi_awready  ({i_awready, d_awready }),
-    .s_axi_wid      ({i_wid,     d_wid     }),
-    .s_axi_wdata    ({i_wdata,   d_wdata   }),
-    .s_axi_wstrb    ({i_wstrb,   d_wstrb   }),
-    .s_axi_wlast    ({i_wlast,   d_wlast   }),
-    .s_axi_wvalid   ({i_wvalid,  d_wvalid  }),
-    .s_axi_wready   ({i_wready,  d_wready  }),
-    .s_axi_bid      ({i_bid,     d_bid     }),
-    .s_axi_bresp    ({i_bresp,   d_bresp   }),
-    .s_axi_bvalid   ({i_bvalid,  d_bvalid  }),
-    .s_axi_bready   ({i_bready,  d_bready  }),
-    .s_axi_arid     ({i_arid,    d_arid    }),
-    .s_axi_araddr   ({i_araddr,  d_araddr  }),
-    .s_axi_arlen    ({i_arlen,   d_arlen   }),
-    .s_axi_arsize   ({i_arsize,  d_arsize  }),
-    .s_axi_arburst  ({i_arburst, d_arburst }),
-    .s_axi_arlock   ({i_arlock,  d_arlock  }),
-    .s_axi_arcache  ({i_arcache, d_arcache }),
-    .s_axi_arprot   ({i_arprot,  d_arprot  }),
-    .s_axi_arqos    (8'd0                   ),
-    .s_axi_arvalid  ({i_arvalid, d_arvalid }),
-    .s_axi_arready  ({i_arready, d_arready }),
-    .s_axi_rid      ({i_rid,     d_rid     }),
-    .s_axi_rdata    ({i_rdata,   d_rdata   }),
-    .s_axi_rresp    ({i_rresp,   d_rresp   }),
-    .s_axi_rlast    ({i_rlast,   d_rlast   }),
-    .s_axi_rvalid   ({i_rvalid,  d_rvalid  }),
-    .s_axi_rready   ({i_rready,  d_rready  }),
+    .s_axi_awid     ({i_awid,    d_awid    ,un_awid    }),
+    .s_axi_awaddr   ({i_awaddr,  d_awaddr  ,un_awaddr  }),
+    .s_axi_awlen    ({i_awlen,   d_awlen   ,un_awlen   }),
+    .s_axi_awsize   ({i_awsize,  d_awsize  ,un_awsize  }),
+    .s_axi_awburst  ({i_awburst, d_awburst ,un_awburst }),
+    .s_axi_awlock   ({i_awlock,  d_awlock  ,un_awlock  }),
+    .s_axi_awcache  ({i_awcache, d_awcache ,un_awcache }),
+    .s_axi_awprot   ({i_awprot,  d_awprot  ,un_awprot  }),
+    .s_axi_awqos    (12'd0                              ),
+    .s_axi_awvalid  ({i_awvalid, d_awvalid ,un_awvalid }),
+    .s_axi_awready  ({i_awready, d_awready ,un_awready }),
+    .s_axi_wid      ({i_wid,     d_wid     ,un_wid     }),
+    .s_axi_wdata    ({i_wdata,   d_wdata   ,un_wdata   }),
+    .s_axi_wstrb    ({i_wstrb,   d_wstrb   ,un_wstrb   }),
+    .s_axi_wlast    ({i_wlast,   d_wlast   ,un_wlast   }),
+    .s_axi_wvalid   ({i_wvalid,  d_wvalid  ,un_wvalid  }),
+    .s_axi_wready   ({i_wready,  d_wready  ,un_wready  }),
+    .s_axi_bid      ({i_bid,     d_bid     ,un_bid     }),
+    .s_axi_bresp    ({i_bresp,   d_bresp   ,un_bresp   }),
+    .s_axi_bvalid   ({i_bvalid,  d_bvalid  ,un_bvalid  }),
+    .s_axi_bready   ({i_bready,  d_bready  ,un_bready  }),
+    .s_axi_arid     ({i_arid,    d_arid    ,un_arid    }),
+    .s_axi_araddr   ({i_araddr,  d_araddr  ,un_araddr  }),
+    .s_axi_arlen    ({i_arlen,   d_arlen   ,un_arlen   }),
+    .s_axi_arsize   ({i_arsize,  d_arsize  ,un_arsize  }),
+    .s_axi_arburst  ({i_arburst, d_arburst ,un_arburst }),
+    .s_axi_arlock   ({i_arlock,  d_arlock  ,un_arlock  }),
+    .s_axi_arcache  ({i_arcache, d_arcache ,un_arcache }),
+    .s_axi_arprot   ({i_arprot,  d_arprot  ,un_arprot  }),
+    .s_axi_arqos    (12'd0                              ),
+    .s_axi_arvalid  ({i_arvalid, d_arvalid ,un_arvalid }),
+    .s_axi_arready  ({i_arready, d_arready ,un_arready }),
+    .s_axi_rid      ({i_rid,     d_rid     ,un_rid     }),
+    .s_axi_rdata    ({i_rdata,   d_rdata   ,un_rdata   }),
+    .s_axi_rresp    ({i_rresp,   d_rresp   ,un_rresp   }),
+    .s_axi_rlast    ({i_rlast,   d_rlast   ,un_rlast   }),
+    .s_axi_rvalid   ({i_rvalid,  d_rvalid  ,un_rvalid  }),
+    .s_axi_rready   ({i_rready,  d_rready  ,un_rready  }),
     
     .m_axi_awid     (awid    ),
     .m_axi_awaddr   (awaddr  ),
