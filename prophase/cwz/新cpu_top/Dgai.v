@@ -235,6 +235,8 @@ begin
   enb[mlux]=1;
 end
 
+reg counts;
+
 //Õý³£Ì¬
 always @ (posedge clk or posedge rst)
 if(rst) s<=3'b10;
@@ -253,7 +255,8 @@ case(s)
    3'b001:ns=3'b10;
    3'b011:if(j|~miss) ns=3'b111;
          else  ns=3'b11;
-   3'b100:ns=3'b110;
+   3'b100:if(counts) ns=3'b110;
+          else       ns=3'b100;
    3'b111:ns=3'b10;
    3'b110:if(miss&~j&deng&(ms!=0))    ns=3'b11;
          else if(miss&~j&deng&(ms==0))    ns=3'b0;
@@ -264,6 +267,11 @@ case(s)
           else            ns=3'b101;
    default:ns=3'b10;
 endcase
+
+always @ (posedge clk or posedge rst)
+if(rst) counts<=0;
+else if(s==3'b100) counts<=1;
+else counts<=0;
 
 always @ *
 begin
