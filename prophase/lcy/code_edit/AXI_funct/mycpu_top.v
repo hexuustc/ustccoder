@@ -1499,7 +1499,8 @@ else
 
     a1=a1_1;b1=b1_1;m1=m1_1;
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
-    if(delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
+    if(delay_hl||delay_hl1||stall) pause2=1;
+    //if(delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
     else pause2=0;
     if(rs2==0) r_ar=0;
     else if(rs2==aimaddr1) r_ar=aimdata1;
@@ -1724,6 +1725,7 @@ begin
     end
     else jump = 2'b00;
     
+    
     //此处电路用于生成delay_sendhl
     if (va3 )
     begin
@@ -1749,6 +1751,7 @@ begin
                           end
     else begin end
     end
+    
 end
 
 
