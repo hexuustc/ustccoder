@@ -243,7 +243,7 @@ else    s<=ns;
 always @ *
 case(s)
    3'b010:if(req&(suoyin!=suoyin1))  ns=3'b100; 
-         else if(miss&req&~j&deng&(ms!=0)&~wreq)    ns=3'b11;
+         else if(miss&req&~j&deng&(ms!=0)&~(wreq&&wbyte==4'b1111))    ns=3'b11;
          else if(miss&req&~j&deng&(ms==0))    ns=3'b0;
          else if(miss&req&~j&~deng&(ms==0))     ns=3'b00;
          else if(miss&req&~j&~deng&(ms!=0))     ns=3'b101; 
@@ -292,7 +292,7 @@ begin
       else if(wreq&miss&(suoyin==suoyin1)) 
       begin 
         we=1;dw=din;
-        if(deng)
+        if(j||(deng==1&&wbyte==4'b1111))
         begin
           wea[linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
@@ -534,7 +534,7 @@ else    ws<=nws;
 always @ *
 begin
   if(ws==0)
-    if(dir[mlux][suoyin]==1&&ns==2'b00) nws=5'b10000;
+    if(dir[mlux][suoyin]==1&&ns==2'b00&&s!=0) nws=5'b10000;
     else                                nws=5'b00000;
   else if(ws[4]==1)
     if(wdata_ok)                        nws=ws+1;
