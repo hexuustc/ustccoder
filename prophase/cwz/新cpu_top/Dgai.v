@@ -97,6 +97,7 @@ reg [31:0] firstd;
 wire  j,deng;
 reg [3:0] zd,zd1;
 wire [3:0] df;
+reg  [15:0]  wecj  [3:0];
 
 assign dfn=df;
 assign zdn=zd;
@@ -271,7 +272,7 @@ begin
   wea[0]=0;wea[1]=0;wea[2]=0;wea[3]=0;wea[4]=0;wea[5]=0;wea[6]=0;wea[7]=0;
   wea[8]=0;wea[9]=0;wea[10]=0;wea[11]=0;wea[12]=0;wea[13]=0;wea[14]=0;wea[15]=0;
   if(rst) begin dir[0]=0;dir[1]=0;dir[2]=0;dir[3]=0;suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;dw=0;we=0;wbyte1=0;mlux=0;ins=0;
-                dwb1[0]=0;dwb1[1]=0;dwb1[2]=0;dwb1[3]=0;dwb1[4]=0;dwb1[5]=0;dwb1[6]=0;dwb1[7]=0;
+                dwb1[0]=0;dwb1[1]=0;dwb1[2]=0;dwb1[3]=0;dwb1[4]=0;dwb1[5]=0;dwb1[6]=0;dwb1[7]=0;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
                 dwb1[8]=0;dwb1[9]=0;dwb1[10]=0;dwb1[11]=0;dwb1[12]=0;dwb1[13]=0;dwb1[14]=0;dwb1[15]=0;
                 end
   else if(s==3'b10)
@@ -293,14 +294,14 @@ begin
         we=1;dw=din;
         if(j)
         begin
-          wea[linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;
+          wea[linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
           if(lru[3]<=lru[lux]) wel[3]=1;
           wel[lux]=1;lruc[lux]=1;
         end
-        else if(ms==0) begin wbyte1=wbyte;insaddr1=insaddr;mlux=lux;
+        else if(ms==0) begin wbyte1=wbyte;insaddr1=insaddr;mlux=lux;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
                              dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
                              dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
                              dwb1[8]=dwb[lux][8];dwb1[9]=dwb[lux][9];dwb1[10]=dwb[lux][10];dwb1[11]=dwb[lux][11];
@@ -322,14 +323,14 @@ begin
         we=0;
         if(j)
         begin
-          ins=(ms==0)?cdat[lux][linex]:dr[linex];ok=1;
+          ins=(ms==0||wecj[lux][linex]==1)?cdat[lux][linex]:dr[linex];ok=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
           if(lru[3]<=lru[lux]) wel[3]=1;
           wel[lux]=1;lruc[lux]=1;
         end
-        else if(ms==0) begin insaddr1=insaddr;mlux=lux;
+        else if(ms==0) begin insaddr1=insaddr;mlux=lux;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
                              dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
                              dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
                              dwb1[8]=dwb[lux][8];dwb1[9]=dwb[lux][9];dwb1[10]=dwb[lux][10];dwb1[11]=dwb[lux][11];
@@ -342,7 +343,7 @@ begin
   begin
     if(we)
     begin
-      wea[linex]=wbyte1;dir[lux][suoyin]=1;ins=dw;ok=1;
+      wea[linex]=wbyte1;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -351,7 +352,7 @@ begin
     end
     else
     begin
-      ins=(ms==0)?cdat[lux][linex]:dr[linex];ok=1;
+      ins=(ms==0||wecj[lux][linex]==1)?cdat[lux][linex]:dr[linex];ok=1;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -376,14 +377,14 @@ begin
         we=1;dw=din;
         if(j)
         begin
-          wea[linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;
+          wea[linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
           if(lru[3]<=lru[lux]) wel[3]=1;
           wel[lux]=1;lruc[lux]=1;
         end
-        else if(ms==0) begin wbyte1=wbyte;insaddr1=insaddr;mlux=lux;
+        else if(ms==0) begin wbyte1=wbyte;insaddr1=insaddr;mlux=lux;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
                              dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
                              dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
                              dwb1[8]=dwb[lux][8];dwb1[9]=dwb[lux][9];dwb1[10]=dwb[lux][10];dwb1[11]=dwb[lux][11];
@@ -405,14 +406,14 @@ begin
         we=0;
         if(j)
         begin
-          ins=(ms==0)?cdat[lux][linex]:dr[linex];ok=1;
+          ins=(ms==0||wecj[lux][linex]==1)?cdat[lux][linex]:dr[linex];ok=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
           if(lru[3]<=lru[lux]) wel[3]=1;
           wel[lux]=1;lruc[lux]=1;
         end
-        else if(ms==0) begin insaddr1=insaddr;mlux=lux;
+        else if(ms==0) begin insaddr1=insaddr;mlux=lux;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
                              dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
                              dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
                              dwb1[8]=dwb[lux][8];dwb1[9]=dwb[lux][9];dwb1[10]=dwb[lux][10];dwb1[11]=dwb[lux][11];
@@ -424,7 +425,7 @@ begin
   begin
     if(we)
     begin
-      wea[linex]=wbyte1;dir[lux][suoyin]=1;ins=dw;ok=1;
+      wea[linex]=wbyte1;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -433,7 +434,7 @@ begin
     end
     else
     begin
-      ins=firstd;ok=1;dir[lux][suoyin]=0;
+      ins=firstd;ok=1;dir[lux][suoyin]=0;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -443,7 +444,7 @@ begin
   end
   else if(s==3'b100) begin suoyin=suoyin1; end
   else if(s==3'b101) begin 
-    if(ms==0) begin insaddr1=insaddr;mlux=lux;
+    if(ms==0) begin insaddr1=insaddr;mlux=lux;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
                     dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
                     dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
                     dwb1[8]=dwb[lux][8];dwb1[9]=dwb[lux][9];dwb1[10]=dwb[lux][10];dwb1[11]=dwb[lux][11];
