@@ -253,7 +253,12 @@ case(s)
          else         ns=3'b10;
    3'b011:if(j|~miss) ns=3'b10;
          else  ns=3'b11;
-   3'b100:ns=3'b10;
+   3'b100:ns=3'b110;
+   3'b110:if(miss&~j&deng&(ms!=0))    ns=3'b11;
+         else if(miss&~j&deng&(ms==0))    ns=3'b0;
+         else if(miss&~j&~deng&(ms==0))     ns=3'b00;
+         else if(miss&~j&~deng&(ms!=0))     ns=3'b101; 
+         else         ns=3'b10;
    3'b101:if(ms==0)       ns=3'b00;
           else            ns=3'b101;
    default:ns=3'b10;
@@ -331,6 +336,67 @@ begin
                              end
       end
     end
+  end
+  else if(s==3'b110)
+  begin
+      bj=bj1;linex=linex1;
+      if(wreq&(~miss)&(suoyin==suoyin1)) 
+      begin
+        we=1;wea[linex]=wbyte;dir[lux][suoyin]=1;dw=din;ins=dw;ok=1;
+        if(lru[0]<=lru[lux]) wel[0]=1;
+        if(lru[1]<=lru[lux]) wel[1]=1;
+        if(lru[2]<=lru[lux]) wel[2]=1;
+        if(lru[3]<=lru[lux]) wel[3]=1;
+        wel[lux]=1;lruc[lux]=1;
+      end
+      else if(wreq&miss&(suoyin==suoyin1)) 
+      begin 
+        we=1;dw=din;
+        if(j)
+        begin
+          wea[linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;
+          if(lru[0]<=lru[lux]) wel[0]=1;
+          if(lru[1]<=lru[lux]) wel[1]=1;
+          if(lru[2]<=lru[lux]) wel[2]=1;
+          if(lru[3]<=lru[lux]) wel[3]=1;
+          wel[lux]=1;lruc[lux]=1;
+        end
+        else if(ms==0) begin wbyte1=wbyte;insaddr1=insaddr;mlux=lux;
+                             dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
+                             dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
+                             dwb1[8]=dwb[lux][8];dwb1[9]=dwb[lux][9];dwb1[10]=dwb[lux][10];dwb1[11]=dwb[lux][11];
+                             dwb1[12]=dwb[lux][12];dwb1[13]=dwb[lux][13];dwb1[14]=dwb[lux][14];dwb1[15]=dwb[lux][15];
+                             end
+        else begin wbyte1=wbyte; end 
+      end
+      else if(~wreq&~miss&(suoyin==suoyin1)) 
+      begin
+        ok=1;ins=cdat[lux][linex];we=0;
+        if(lru[0]<=lru[lux]) wel[0]=1;
+        if(lru[1]<=lru[lux]) wel[1]=1;
+        if(lru[2]<=lru[lux]) wel[2]=1;
+        if(lru[3]<=lru[lux]) wel[3]=1;
+        wel[lux]=1;lruc[lux]=1;
+      end
+      else if(~wreq&miss&(suoyin==suoyin1))
+      begin
+        we=0;
+        if(j)
+        begin
+          ins=(ms==0)?cdat[lux][linex]:dr[linex];ok=1;
+          if(lru[0]<=lru[lux]) wel[0]=1;
+          if(lru[1]<=lru[lux]) wel[1]=1;
+          if(lru[2]<=lru[lux]) wel[2]=1;
+          if(lru[3]<=lru[lux]) wel[3]=1;
+          wel[lux]=1;lruc[lux]=1;
+        end
+        else if(ms==0) begin insaddr1=insaddr;mlux=lux;
+                             dwb1[0]=dwb[lux][0];dwb1[1]=dwb[lux][1];dwb1[2]=dwb[lux][2];dwb1[3]=dwb[lux][3];
+                             dwb1[4]=dwb[lux][4];dwb1[5]=dwb[lux][5];dwb1[6]=dwb[lux][6];dwb1[7]=dwb[lux][7];
+                             dwb1[8]=dwb[lux][8];dwb1[9]=dwb[lux][9];dwb1[10]=dwb[lux][10];dwb1[11]=dwb[lux][11];
+                             dwb1[12]=dwb[lux][12];dwb1[13]=dwb[lux][13];dwb1[14]=dwb[lux][14];dwb1[15]=dwb[lux][15];
+                             end
+      end
   end
   else if(s==3'b01)
   begin
