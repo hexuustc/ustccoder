@@ -194,8 +194,8 @@ assign addr    = insaddr1;
 
 always @ *
 begin
-  ena=4'b0;enb=4'b0;
-  ena[lux]=1;enb[mlux]=1;
+  ena=4'b1111;enb=4'b0;
+  enb[mlux]=1;
 end
 
 //?????
