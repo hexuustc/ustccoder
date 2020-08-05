@@ -213,8 +213,7 @@ case(s)
          else         ns=3'b10;
    3'b000:if(firsth)   ns=3'b01;
          else         ns=3'b00;
-   3'b001:if(req&(suoyin!=suoyin1))  ns=3'b100; 
-         else         ns=3'b10;
+   3'b001:ns=3'b10;
    3'b011:if(j|~miss) ns=3'b111;
          else  ns=3'b11;
    3'b100:ns=3'b110;

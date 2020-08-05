@@ -225,7 +225,7 @@ begin
 end
 
 assign addr0    = insaddr1;
-assign addr1    = {insaddr1[31:6],6'b0};
+assign addr1    = {tag[mlux],suoyin2,6'b0};
 assign raddr    = addr0;
 assign waddr    = addr1;
 
@@ -250,8 +250,7 @@ case(s)
          else         ns=3'b10;
    3'b000:if(firsth)   ns=3'b01;
          else         ns=3'b00;
-   3'b001:if(req&(suoyin!=suoyin1))  ns=3'b100; 
-         else         ns=3'b10;
+   3'b001:ns=3'b10;
    3'b011:if(j|~miss) ns=3'b111;
          else  ns=3'b11;
    3'b100:ns=3'b110;
@@ -280,7 +279,8 @@ begin
     if(req)
     begin
       bj=bj1;linex=linex1;
-      if(wreq&(~miss)&(suoyin==suoyin1)) 
+      if((suoyin!=suoyin1)&wreq) we=1; 
+      else if(wreq&(~miss)&(suoyin==suoyin1)) 
       begin
         we=1;wea[linex]=wbyte;dir[lux][suoyin]=1;dw=din;ins=dw;ok=1;
         if(lru[0]<=lru[lux]) wel[0]=1;
@@ -363,7 +363,7 @@ begin
   else if(s==3'b110)
   begin
       bj=bj1;linex=linex1;
-      if(wreq&(~miss)&(suoyin==suoyin1)) 
+      if(we&(~miss)&(suoyin==suoyin1)) 
       begin
         we=1;wea[linex]=wbyte;dir[lux][suoyin]=1;dw=din;ins=dw;ok=1;
         if(lru[0]<=lru[lux]) wel[0]=1;
@@ -372,7 +372,7 @@ begin
         if(lru[3]<=lru[lux]) wel[3]=1;
         wel[lux]=1;lruc[lux]=1;
       end
-      else if(wreq&miss&(suoyin==suoyin1)) 
+      else if(we&miss&(suoyin==suoyin1)) 
       begin 
         we=1;dw=din;
         if(j)
@@ -392,7 +392,7 @@ begin
                              end
         else begin wbyte1=wbyte; end 
       end
-      else if(~wreq&~miss&(suoyin==suoyin1)) 
+      else if(~we&~miss&(suoyin==suoyin1)) 
       begin
         ok=1;ins=cdat[lux][linex];we=0;
         if(lru[0]<=lru[lux]) wel[0]=1;
@@ -401,7 +401,7 @@ begin
         if(lru[3]<=lru[lux]) wel[3]=1;
         wel[lux]=1;lruc[lux]=1;
       end
-      else if(~wreq&miss&(suoyin==suoyin1))
+      else if(~we&miss&(suoyin==suoyin1))
       begin
         we=0;
         if(j)
@@ -534,7 +534,7 @@ else    ws<=nws;
 always @ *
 begin
   if(ws==0)
-    if(dir[mlux][suoyin]==1&&ns==2'b00&&s!=0) nws=5'b10000;
+    if(dir[mlux][suoyin]==1&&nms==6'b110000) nws=5'b10000;
     else                                nws=5'b00000;
   else if(ws[4]==1)
     if(wdata_ok)                        nws=ws+1;
