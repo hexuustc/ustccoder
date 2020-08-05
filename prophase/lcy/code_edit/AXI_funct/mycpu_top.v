@@ -1491,7 +1491,12 @@ end
 
 always@(*)//执行...之后化繁为简，需用到inscode,shamt     rt,rd
 begin
-    div_begin=0;
+//    div_begin=0;
+if(r_va1 == 1 && (inscode2 == 11 || inscode2 == 12))
+    div_begin = ~r_stall;
+else
+    div_begin = 0;
+
     a1=a1_1;b1=b1_1;m1=m1_1;
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
     if(delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
@@ -1520,7 +1525,8 @@ begin
     else if(inscode2==9) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end
     else if(inscode2==10) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end
     else if(inscode2==11) begin 
-                              a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=1;
+                              a=0;b=0;m=0;
+                              //if(r_stall) div_begin=0; else div_begin=1;
                               if(r_stall)
                               begin
                                 a1=a1_1;
@@ -1535,7 +1541,8 @@ begin
                               m1=11;
                           end//假设IP核是流水的
     else if(inscode2==12) begin 
-                              a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=1;
+                              a=0;b=0;m=0;
+                              //if(r_stall) div_begin=0; else div_begin=1;
                               if(r_stall)
                               begin
                                 a1=a1_1;
