@@ -292,9 +292,9 @@ begin
       else if(wreq&miss&(suoyin==suoyin1)) 
       begin 
         we=1;dw=din;
-        if(j||(deng==1&&wbyte==4'b1111))
+        if(j||(deng==1&&wbyte==4'b1111&&ms!=0))
         begin
-          wea[linex]=wbyte;dir[lux][suoyin]=1;ins=dw;ok=1;wecj[lux][linex]=1;
+          wea[linex]=wbyte;ins=dw;ok=1;wecj[lux][linex]=1;dir[lux][suoyin]=1;
           if(lru[0]<=lru[lux]) wel[0]=1;
           if(lru[1]<=lru[lux]) wel[1]=1;
           if(lru[2]<=lru[lux]) wel[2]=1;
