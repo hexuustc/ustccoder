@@ -556,7 +556,8 @@ else    ws<=nws;
 
 always @ *
 begin
-  if(ws==0)
+  if(rst)     begin bj3=0;nws=0; end
+  else if(ws==0)
     if(dir[mlux][suoyin]==1&&nms==6'b110000) begin nws=5'b10000;bj3=tag[mlux]; end
     else                                nws=5'b00000;
   else if(ws[4]==1)
