@@ -22,7 +22,7 @@
 
 module mycpu_top
     (input [5:0] ext_int,
-    input clk,
+    input aclk,
 	input aresetn,
 	
     //axi
@@ -89,9 +89,9 @@ reg [31:0] data_sram_wdata;
 wire [31:0] data_sram_rdata;
      
    
-//wire clk;
+wire clk;
 wire resetn;//低电平同步复位
-//assign clk=aclk;
+assign clk=aclk;
 assign resetn=aresetn;
 assign arlen=0;
 assign arburst=1;//到底是几。。。。。。。。。。。。。。。。。。。。。。。。。
@@ -168,7 +168,7 @@ reg [3:0] m1,m1_1;
 
 reg [2:0] c_pc,sel;
 reg [1:0] jump;//指令跳转信号
-reg div_begin;//除法开始信号
+reg [1:0] div_begin;//除法开始信号
 
 reg zero;//没什么卵用的zero，当做0的宏定义来用
 
@@ -186,8 +186,8 @@ reg pause,pause1,pause2,pause3,pause4,pause5,pause6,pause7;//暂停信号[寄存
 reg pause1_1,pause2_1,pause3_1,pause4_1,pause5_1,pause6_1,pause7_1;//暂停信号的缓冲[寄存器]
 reg stall;
 //有效位
-//wire va1;
-reg va,va1,va2,va3,va4,va5,va6,va7;//有效位
+wire va1;
+reg va,va2,va3,va4,va5,va6,va7;//有效位
 reg r_va,r_va1,r_va2,r_va3;
 
 reg reins1,reins2b,reins2,r_reins2;//保留指令
@@ -378,7 +378,7 @@ end
 
 //////////////////////////////
 /////EX to MEM:存储器访问///// 
-if(pause4||delay_hl||delay_hl1)
+if(pause4)
 begin
     r_y1<=r_y1;
     zf2<=zf2;
@@ -503,7 +503,7 @@ end
 always@(posedge clk)
 begin
     if(~resetn) r_va3<=0;
-    else if(pause4||delay_hl||delay_hl1) r_va3<=r_va3;
+    else if(pause4) r_va3<=r_va3;
     else r_va3<=va3;
 end
 
@@ -526,7 +526,7 @@ end
 always@(posedge clk,negedge resetn)
 begin
     if(~resetn) va5<=0;
-    else if(delay_hl||delay_hl1) va5<=0;
+    //else if(delay_hl||delay_hl1) va5<=0;
     else if(pause5) va5<=va5;
     else va5<=va4;
     
@@ -553,7 +553,7 @@ begin
     va2 = va2_next;
 end 
 */
-/*
+
 reg va2_past;
 reg va2_lock_past;
 wire va2_lock;
@@ -574,8 +574,8 @@ begin
     end    
 end
 assign va2_lock = (resetn == 1) && (pause2 == 1);
-*/
 
+/*
 always@(*)
 begin
     if(~resetn) va2=0;//这就是分支延迟槽
@@ -583,7 +583,7 @@ begin
     else if (exc) va2=0;
     else va2=r_va1;
 end
-
+*/
 
 reg va3_curr,va3_next;
 always @(posedge clk)
@@ -592,7 +592,7 @@ always @(*)
 begin
     if(~resetn) va3_next=0;
    // else if(delay_block_1) va3=0;
-    else if(delay_sendhl_1) va3_next=0;
+    //else if(delay_sendhl_1) va3_next=0;
     else if(pause3_1) va3_next=va3_curr;
     else if(exc) va3_next=0;
     else va3_next=r_va2;
@@ -619,7 +619,7 @@ always @(posedge clk)
 always @(*)
 begin
     if(~resetn) va4_next=0;
-    else if(pause4_1||delay_hl_1||delay_hl1_1) va4_next=va4_curr;
+    else if(pause4_1) va4_next=va4_curr;
     else va4_next=r_va3;
     va4 = va4_next;
 end
@@ -670,7 +670,7 @@ end
 
 always@(posedge clk)
 begin
-    if(pause4||delay_hl||delay_hl1) pc4<=pc4;
+    if(pause4) pc4<=pc4;
     else pc4<=pc3;
 end
 
@@ -702,7 +702,7 @@ begin
 end
 always@(*)
 begin
-    if(pause4_1||delay_hl_1||delay_hl1_1) aimaddr2_next=aimaddr2_curr;
+    if(pause4_1) aimaddr2_next=aimaddr2_curr;
     else if(~va4) aimaddr2_next=0;
     else aimaddr2_next=r_aimaddr1;    
 end
@@ -1382,7 +1382,7 @@ always@(*)//取指
 begin
     inst_sram_addr = pc;
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
-    if(delay_hl||delay_hl1||delay_sendhl||stall) pause=1;
+    if(stall) pause=1;
     else pause=0;
     if(~resetn)begin  va=0; end
     else 
@@ -1438,7 +1438,6 @@ assign inscode1 = InsConvert_inscode;
 
 ////////PART TWO////////////////
 //生成其它乱七八糟的控制码
-/*
 reg va1_curr,va1_next;
 always @(posedge clk)
     va1_curr <= va1_next;
@@ -1451,24 +1450,6 @@ begin
     else va1_next=r_va; 
 end
 assign va1 = va1_next;
-*/
-reg va1_past;
-reg va1_lock_past,va1_lock;
-always @(posedge clk)
-    va1_past <= va1;
-always @(*)
-begin
-    if(va1_lock_past && va1_lock)
-        va1 = va1_past;
-    else
-    begin
-        if(~resetn) va1 = 0;
-        else if(jump) va1 = 0;
-        else if(back || exc) va1 = 0;
-        else va1 = r_va;
-    end 
-end
-assign va1_lock = resetn && pause1;
 
 reg [31:0] ir1_curr,ir1_next;
 always @(posedge clk)
@@ -1487,7 +1468,7 @@ end
 always@(*)//需用到rs,rt,addr   rd,shamt
 begin    
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
-    if(delay_hl||delay_hl1||delay_sendhl||stall) pause1=1;
+    if(stall) pause1=1;
     else pause1=0;
      
      //if(pause1_1) ir1=ir1; else ir1=inst_sram_rdata;
@@ -1510,16 +1491,10 @@ end
 
 always@(*)//执行...之后化繁为简，需用到inscode,shamt     rt,rd
 begin
-//    div_begin=0;
-if(r_va1 == 1 && (inscode2 == 11 || inscode2 == 12))
-    div_begin = ~r_stall;
-else
-    div_begin = 0;
-
+    div_begin=0;
     a1=a1_1;b1=b1_1;m1=m1_1;
     //if(delay_block||delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
-    if(delay_hl||delay_hl1||stall) pause2=1;
-    //if(delay_hl||delay_hl1||delay_sendhl||stall) pause2=1;
+    if(stall) pause2=1;
     else pause2=0;
     if(rs2==0) r_ar=0;
     else if(rs2==aimaddr1) r_ar=aimdata1;
@@ -1545,8 +1520,7 @@ else
     else if(inscode2==9) begin a=r_ar; b=r_br; m=1; aimaddr=rd02; end
     else if(inscode2==10) begin a=r_ar; b=addr32; m=1; aimaddr=rt2; end
     else if(inscode2==11) begin 
-                              a=0;b=0;m=0;
-                              //if(r_stall) div_begin=0; else div_begin=1;
+                              a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=1;
                               if(r_stall)
                               begin
                                 a1=a1_1;
@@ -1561,8 +1535,7 @@ else
                               m1=11;
                           end//假设IP核是流水的
     else if(inscode2==12) begin 
-                              a=0;b=0;m=0;
-                              //if(r_stall) div_begin=0; else div_begin=1;
+                              a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=1;
                               if(r_stall)
                               begin
                                 a1=a1_1;
@@ -1576,15 +1549,31 @@ else
                               aimaddr=0;m1=7;
                           end
     else if(inscode2==13) begin 
-                              a=0;b=0;m=0;
+                              a=0;b=0;if(r_stall) div_begin=0; else div_begin=2;
+                              if(r_stall)
+                              begin
+                                a1=a1_1;
+                                b1=b1_1;
+                              end
+                              else
+                              begin
                                   a1=r_ar;
                                   b1=r_br;
+                              end
                               aimaddr=0;m1=5;
                           end
     else if(inscode2==14) begin 
-                              a=0;b=0;m=0;
+                              a=0;b=0;m=0;if(r_stall) div_begin=0; else div_begin=2;
+                              if(r_stall)
+                              begin
+                                a1=a1_1;
+                                b1=b1_1;
+                              end
+                              else
+                              begin
                                   a1=r_ar;
                                   b1=r_br;
+                              end
                               aimaddr=0;m1=6;
                           end
     else if(inscode2==15) begin a=r_ar; b=r_br; m=2; aimaddr=rd02; end
@@ -1675,7 +1664,7 @@ always@(*)//存储器访问...之后化繁为简，需用到inscode       rt,rd 
 begin
     //delay_block=0;
     delay_sendhl=0;
-    if(delay_hl||delay_hl1||stall) pause3=1;
+    if(stall) pause3=1;
     else pause3=0;
     if(pause3) begin c_inscode3=0; c_ir3=0; end 
     else begin c_inscode3=1; c_ir3=1; end
@@ -1744,33 +1733,31 @@ begin
     end
     else jump = 2'b00;
     
-    
     //此处电路用于生成delay_sendhl
     if (va3 )
     begin
     if(inscode3==41) begin  //MFHI指令
-                              if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
+                             /* if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
                                   else if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) delay_sendhl=1;
                                   else if(va6&&((inscode6==11)||(inscode6==12)||(inscode6==13)||(inscode6==14)||(inscode6==43)||(inscode6==44))) delay_sendhl=1;
                                   else delay_sendhl=0;
                               end
-                              else delay_sendhl=0;
+                              else delay_sendhl=0;*/
                           end
     else if(inscode3==42) begin   //MFLO指令
-                              if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
+                            /*  if(va2&&((rs2==aimaddr1)||(rt2==aimaddr1)))
                               begin
                                   if(va4&&((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)||(inscode4==43)||(inscode4==44))) delay_sendhl=1;
                                   else if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) delay_sendhl=1;
                                   else if(va6&&((inscode6==11)||(inscode6==12)||(inscode6==13)||(inscode6==14)||(inscode6==43)||(inscode6==44))) delay_sendhl=1;
                                   else delay_sendhl=0;
                               end
-                              else delay_sendhl=0; 
+                              else delay_sendhl=0; */
                           end
     else begin end
     end
-    
 end
 
 
@@ -1795,7 +1782,7 @@ begin
     else if(rt4==aimaddr5) r_b2r=aimdata5;
     else r_b2r=r_b2;
     
-    if(pause4||delay_hl||delay_hl1||stall) c_inscode4=0; else  c_inscode4=1;
+    if(pause4||stall) c_inscode4=0; else  c_inscode4=1;
     
     if(va4==0) begin we=0; wa=r_wa; wd=r_wd; end
     else if(pause4) begin we=0; wa=r_wa; wd=r_wd; end
@@ -1828,16 +1815,16 @@ begin
     else if(inscode4==38) begin we=1; wa=31; wd=r_pc_8; end
     else if(inscode4==40) begin we=1; wa=rd04; wd=r_pc_8; end
     else if(inscode4==41) begin
-                              wa=rd04; wd=HI; 
-                              if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) begin delay_hl=1; c_inscode4=0; we=0; end
+                              wa=rd04; wd=HI; we=1;
+                              /*if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) begin delay_hl=1; c_inscode4=0; we=0; end
                               else if(va6&&((inscode6==11)||(inscode6==12)||(inscode6==13)||(inscode6==14)||(inscode6==43)||(inscode6==44))) begin delay_hl1=1;c_inscode4=0; we=0; end
-                              else begin we=1; end
+                              else begin we=1; end*/
                           end
     else if(inscode4==42) begin 
-                              wa=rd04; wd=LO; 
-                              if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) begin delay_hl=1;c_inscode4=0; we=0; end
+                              wa=rd04; wd=LO; we=1;
+                              /*if(va5&&((inscode5==11)||(inscode5==12)||(inscode5==13)||(inscode5==14)||(inscode5==43)||(inscode5==44))) begin delay_hl=1;c_inscode4=0; we=0; end
                               else if(va6&&((inscode6==11)||(inscode6==12)||(inscode6==13)||(inscode6==14)||(inscode6==43)||(inscode6==44))) begin delay_hl1=1;c_inscode4=0; we=0; end
-                              else begin we=1;  end
+                              else begin we=1;  end*/
                           end
     else if((inscode4==47)||(inscode4==48)) 
         begin 
@@ -1870,10 +1857,10 @@ end
 
 always @(*)//HI,LO在这里写回
 begin
-    if(va7==0) begin HI=r_HI;LO=r_LO; end
-    else if(inscode7==43) begin HI=r_a5r; LO=r_LO; end
-    else if(inscode7==44) begin LO=r_a5r; HI=r_HI; end
-    else if((inscode7==11)||(inscode7==12)||(inscode7==13)||(inscode7==14)) begin HI=hi; LO=lo; end
+    if(va4==0) begin HI=r_HI;LO=r_LO; end
+    else if(inscode4==43) begin HI=r_a2r; LO=r_LO; end
+    else if(inscode4==44) begin LO=r_a2r; HI=r_HI; end
+    else if((inscode4==11)||(inscode4==12)||(inscode4==13)||(inscode4==14)) begin HI=hi; LO=lo; end
     else begin HI=r_HI; LO=r_LO; end
 end
 
