@@ -31,15 +31,15 @@ module Icache
     //??CPU
     input [31:0] insaddr,         //CPU??????
     output reg [31:0] ins,       //??????????
-    input req,                   //???? ???????§Õ????1??1???????
+    input req,                   //???? ???????§?????1??1???????
     output miss,                 //?????            //stall?1?????????????
-    output reg ok,               //????§Õ??????ok=1?????????????
+    output reg ok,               //????§???????ok=1?????????????
     //??????
-    output reg sen,              //????????§Õ??????1
+    output reg sen,              //????????§???????1
     input addr_ok,               
     input data_ok,
     input burst,
-    output [31:0] addr,         //????§Õ????
+    output [31:0] addr,         //????§?????
     input [31:0] sdata,          //?????????????
     //debug
     output [31:0] adn,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,
@@ -194,9 +194,11 @@ assign addr    = insaddr1;
 
 always @ *
 begin
-  ena=4'b0;enb=4'b0;
-  ena[lux]=1;enb[mlux]=1;
+  ena=4'b1111;enb=4'b0;
+  enb[mlux]=1;
 end
+
+reg counts;
 
 //?????
 always @ (posedge clk or posedge rst)
@@ -213,11 +215,11 @@ case(s)
          else         ns=3'b10;
    3'b000:if(firsth)   ns=3'b01;
          else         ns=3'b00;
-   3'b001:if(req&(suoyin!=suoyin1))  ns=3'b100; 
-         else         ns=3'b10;
+   3'b001:ns=3'b10;
    3'b011:if(j|~miss) ns=3'b111;
          else  ns=3'b11;
-   3'b100:ns=3'b110;
+   3'b100:if(counts) ns=3'b110;
+          else ns=3'b100;
    3'b111:ns=3'b10;
    3'b110:if(miss&~j&deng&(ms!=0))    ns=3'b11;
          else if(miss&~j&deng&(ms==0))    ns=3'b0;
@@ -228,6 +230,11 @@ case(s)
           else            ns=3'b101;
    default:ns=3'b10;
 endcase
+
+always @ (posedge clk or posedge rst)
+if(rst) counts<=0;
+else if(s==3'b100) counts<=1;
+else counts<=0;
 
 always @ *
 begin
@@ -330,7 +337,7 @@ begin
     if(data_ok) nms=ms+1;
     else        nms=ms;
   else if(ms==6'b011111) nms=6'b111111;
-  else if(ms==6'b111111) nms=6'b001111;
+  else if(ms==6'b111111) nms=6'b0;
   else nms=6'b0;
 end
 
@@ -347,7 +354,7 @@ begin
   end
   else if(ms==6'b110000)
   begin
-    sen=1;zd=linex2+ms[3:0];
+    sen=1;zd=linex2+ms[3:0];wet[mlux]=1;v[mlux][suoyin2]=0;
   end
   else if(ms[5:4]==2'b01)
   begin
@@ -358,7 +365,7 @@ begin
   end
   else if(ms==6'b111111)
   begin
-    v[mlux][suoyin2]=1;wet[mlux]=1;
+    v[mlux][suoyin2]=1;
   end
 end
 
