@@ -78,7 +78,7 @@ reg  [31            :0]    dwb1  [line_c-1      :0];
 wire [line_len-1    :0]    linex1,linex2;
 wire [tag_len - 1   :0]    bj1,bj2      ;
 reg [line_len-1    :0]    linex          ;
-reg [tag_len - 1   :0]    bj       ;
+reg [tag_len - 1   :0]    bj,bj3       ;
 reg [suoyin_len - 1:0]    suoyin;
 reg [31:0] dw;
 wire [1:0]                 lruin [3:0] ;
@@ -225,7 +225,7 @@ begin
 end
 
 assign addr0    = insaddr1;
-assign addr1    = {tag[mlux],suoyin2,6'b0};
+assign addr1    = {bj3,suoyin2,6'b0};
 assign raddr    = addr0;
 assign waddr    = addr1;
 
@@ -456,7 +456,7 @@ begin
     end
     else
     begin
-      ins=firstd;ok=1;dir[lux][suoyin]=0;wecj[0]=0;wecj[1]=0;wecj[2]=0;wecj[3]=0;
+      ins=firstd;ok=1;dir[lux][suoyin]=0;
       if(lru[0]<=lru[lux]) wel[0]=1;
       if(lru[1]<=lru[lux]) wel[1]=1;
       if(lru[2]<=lru[lux]) wel[2]=1;
@@ -495,7 +495,7 @@ begin
     else        nms=ms;
   else if(ms==6'b011111) nms=6'b111111;
   else if(ms==6'b111111) 
-    if(nws==5'b0)   nms=6'b001111;
+    if(nws==5'b0)   nms=6'b0;
     else            nms=6'b111111;
   else nms=6'b0;
 end
@@ -513,7 +513,7 @@ begin
   end
   else if(ms==6'b110000)
   begin
-    sen=1;zd=linex2+ms[3:0];
+    sen=1;zd=linex2+ms[3:0];wet[mlux]=1;
   end
   else if(ms[5:4]==2'b01)
   begin
@@ -524,7 +524,7 @@ begin
   end
   else if(ms==6'b111111)
   begin
-    v[mlux][suoyin2]=1;wet[mlux]=1;
+    v[mlux][suoyin2]=1;
   end
 end
 
@@ -556,7 +556,7 @@ else    ws<=nws;
 always @ *
 begin
   if(ws==0)
-    if(dir[mlux][suoyin]==1&&nms==6'b110000) nws=5'b10000;
+    if(dir[mlux][suoyin]==1&&nms==6'b110000) begin nws=5'b10000;bj3=tag[mlux]; end
     else                                nws=5'b00000;
   else if(ws[4]==1)
     if(wdata_ok)                        nws=ws+1;
