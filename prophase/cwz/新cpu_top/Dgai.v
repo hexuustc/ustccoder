@@ -275,7 +275,7 @@ else counts<=0;
 
 always @ *
 begin
-  wel=4'b0;lruc=4'b0;ok=0;
+  wel=4'b0;lruc=4'b0;ok=0;ins=0;
   wea[0][0]=0;wea[1][0]=0;wea[2][0]=0;wea[3][0]=0;
   wea[0][1]=0;wea[1][1]=0;wea[2][1]=0;wea[3][1]=0;
   wea[0][2]=0;wea[1][2]=0;wea[2][2]=0;wea[3][2]=0;

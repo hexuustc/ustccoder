@@ -238,7 +238,7 @@ else counts<=0;
 
 always @ *
 begin
-  wel=4'b0;lruc=4'b0;ok=0;
+  wel=4'b0;lruc=4'b0;ok=0;ins=0;
   if(rst) begin suoyin=suoyin1;bj=0;linex=0;insaddr1=insaddr;mlux=0;ins=0; end
   else if(s==3'b10)
   begin
