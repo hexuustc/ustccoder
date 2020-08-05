@@ -302,6 +302,7 @@ begin
     begin
       bj=bj1;linex=linex1;
       if((suoyin!=suoyin1)&wreq) we=1; 
+      else if((suoyin!=suoyin1)&~wreq) we=0;
       else if(wreq&(~miss)&(suoyin==suoyin1)) 
       begin
         we=1;wea[lux][linex]=wbyte;dir[lux][suoyin]=1;dw=din;ins=dw;ok=1;
